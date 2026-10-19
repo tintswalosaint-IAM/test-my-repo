@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Log_Error_when_setting_case_default_from_email_address</name>
+        <label>Log Error when setting case default from email address</label>
+        <locationX>440</locationX>
+        <locationY>575</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>SVC Set Case Default Email Address</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <description>Updates the Default From Email Address of the Team working on the case.</description>
+        <name>Update_Team_From_Default_Email_Address</name>
+        <label>Update Team From Default Email Address</label>
+        <locationX>176</locationX>
+        <locationY>575</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>SVC Set Case Default Email Address</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>INFO</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <stringValue>The case Default From Email Address Address Was Updated to: {!Get_Team.CMN_Email__c}</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Set the default from email address for cases that are set on the related team record</description>
+    <environments>Default</environments>
+    <interviewLabel>SVC Set Case Default Email Address {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SVC Set Case Default Email Address</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Team</name>
+        <label>Get Team</label>
+        <locationX>176</locationX>
+        <locationY>335</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Update_Default_Email_Address</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.SVC_CaseOwnerTeam__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CMN_Team__c</object>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>CMN_Email__c</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Update_Default_Email_Address</name>
+        <label>Update Default Email Address</label>
+        <locationX>176</locationX>
+        <locationY>455</locationY>
+        <connector>
+            <targetReference>Update_Team_From_Default_Email_Address</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Error_when_setting_case_default_from_email_address</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>SVC_FromDefaultEmailAddress__c</field>
+            <value>
+                <elementReference>Get_Team.CMN_Email__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Team</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>SVC_CaseOwnerTeam__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

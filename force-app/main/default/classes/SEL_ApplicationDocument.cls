@@ -1,0 +1,137 @@
+/**
+ * @description       : Selector Class for ApplicationDocument Entity
+ * @author            : Narendra Teja
+ * @last modified on  : 27-03-2023
+ * @last modified by  : Narendra Teja
+**/
+
+public inherited sharing class SEL_ApplicationDocument extends sbgplatform.fflib_SObjectSelector{
+    
+    private static Set<String> fields = new Set<String>{
+        'Id', 
+        'Name', 
+        'Document_Type__c', 
+        'Application__c',
+        'Application_Participant__c',
+        'Document_Type__c',
+        'External_Id__c',
+        'CreatedDate'
+    };
+        
+    /**
+    * @description Implementation method for ApplicationDocument Object as part of fflib framework
+    * @author Narendra Teja | 03-07-2023 
+    * @return Schema.SObjectType 
+    **/
+    public override Schema.SObjectType getSObjectType() {
+    	return Application_Document__c.sObjectType;
+    }
+    
+    /**
+    * @description Method to get list of fields to be part of response
+    * @author Narendra Teja | 03-07-2023 
+    * @return List<Schema.SObjectField> 
+    **/
+    public override List<Schema.SObjectField> getSObjectFieldList() {
+        return new List<Schema.SObjectField> {
+            Application_Document__c.Id,
+            Application_Document__c.Name,
+            Application_Document__c.Application__c,
+            Application_Document__c.Application_Participant__c,
+            Application_Document__c.CreatedById,
+            Application_Document__c.CurrencyIsoCode,
+            Application_Document__c.AOB_DocumentCode__c,
+            Application_Document__c.AOB_DocumentCodeDescription__c,
+            Application_Document__c.Document_Type__c,
+            Application_Document__c.AOB_DocumentTypeDescription__c,
+            Application_Document__c.External_Id__c,
+            Application_Document__c.LastModifiedById,
+            Application_Document__c.OwnerId,
+            Application_Document__c.CreatedDate
+        };
+    }
+    
+    /**
+     * @description Method to fetch list of ApplicationDocument based on Id
+     * @param documentIds
+     * @return List<Application_Document__c>
+     */
+    public List<Application_Document__c> selectApplicationDocumentById(List<Id> documentIds) {
+    	sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+    	fieldQueryFactory.setCondition('Id in :documentIds');
+    	fieldQueryFactory.selectFields(fields);
+    	return Database.query(fieldQueryFactory.toSOQL());
+    }
+
+
+    /**
+     * @description Select by AppId & DocumentType
+     * @param appId
+     * @param doctype
+     * @return List<Application_Document__c>
+     */
+    public List<Application_Document__c> selectAppsByIdAndDoctype(String appId,String doctype) {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+		FieldQueryFactory.setCondition('Application__c = :appId and Document_Type__c=:doctype');
+		FieldQueryFactory.selectFields(fields);  
+        return Database.query(FieldQueryFactory.toSOQL());
+        
+    }
+
+      /**
+     * @description Select by AppParticipantId & DocumentType
+     * @param appId
+     * @param doctype
+     * @return List<Application_Document__c>
+     */
+    public List<Application_Document__c> selectAppsParticipantByIdAndDoctype(String appId,String doctype) {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+		FieldQueryFactory.setCondition('Application_Participant__c = :appId and Document_Type__c=:doctype');
+		FieldQueryFactory.selectFields(fields);  
+        return Database.query(FieldQueryFactory.toSOQL());
+        
+    }
+    
+    
+    /**
+     * @description Select by Application__c
+     *  @param appId
+     * @return List<Application_Document__c>
+     */
+    public List<Application_Document__c> selectAppsByIdApplication(String appId) {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+		FieldQueryFactory.setCondition('Application__c = :appId');
+		FieldQueryFactory.selectFields(fields);  
+        return Database.query(FieldQueryFactory.toSOQL());
+        
+    }
+    
+    
+    /**
+     * @description Select by Application_Participant
+     * @param appId
+     * @return List<Application_Document__c>
+     */
+    public List<Application_Document__c> selectAppsByIdApplicationParcipant(String appId) {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+		FieldQueryFactory.setCondition('Application_Participant__c = :appId');
+		FieldQueryFactory.selectFields(fields);  
+        FieldQueryFactory.setOrdering('CreatedDate', sbgplatform.fflib_QueryFactory.SortOrder.ASCENDING, true);
+        return Database.query(FieldQueryFactory.toSOQL());
+        
+    }
+        /**
+   * @description Method to fetch list of Application_Document__c based on linkedEntityId
+   * 
+   * @param participantId 
+   * @param doctype 
+   * @return List<Application_Document__c> 
+   **/
+  public List<Application_Document__c> getDocumentTypeByParticipantId(Id participantId,string doctype) {
+    sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+    fieldQueryFactory.setCondition('Application_Participant__c =:participantId and Document_Type__c=:doctype');
+    fieldQueryFactory.selectFields(fields);
+    FieldQueryFactory.setOrdering('CreatedDate', sbgplatform.fflib_QueryFactory.SortOrder.DESCENDING, true);
+    return Database.query(fieldQueryFactory.toSOQL());
+}
+}

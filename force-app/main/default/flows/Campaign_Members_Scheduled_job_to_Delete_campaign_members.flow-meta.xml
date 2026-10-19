@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Err_Delete_campaign_members</name>
+        <label>Err - Delete campaign members</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Delete Campaign Members</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Assignment of a business hour campaign to the variable</description>
+        <name>Assign_business_campaign</name>
+        <label>Assign business campaign</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>BusinessCampaign</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Iterate_Campaigns</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Iterate_Campaigns</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assignment of a business hour campaign to the variable</description>
+        <name>Assign_non_business_campaign</name>
+        <label>Assign non business campaign</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>NonBusinessCampaign</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Iterate_Campaigns</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Iterate_Campaigns</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Checks campaign details to set the correct variable accordingly.</description>
+        <name>Check_business_hour_campaign</name>
+        <label>Check business hour campaign</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Assign_non_business_campaign</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Iterate_Campaigns.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>INS_CRTSY_BUSHR_SMS</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_business_campaign</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-48666 - This schedule flow deletes Campaign Members whose status has changed from &apos;Sent&apos; to &apos;Responded&apos;.</description>
+    <environments>Default</environments>
+    <interviewLabel>Campaign Members - Scheduled job to Delete campaign members {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Campaign Members - Scheduled job to Delete campaign members</label>
+    <loops>
+        <name>Iterate_Campaigns</name>
+        <label>Iterate Campaigns</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>Get_Campaigns</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_business_hour_campaign</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_Campaign_Members</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordDeletes>
+        <description>Delete all the fetched campaigns</description>
+        <name>Delete_All_Campaigns</name>
+        <label>Delete All Campaigns</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <faultConnector>
+            <targetReference>Err_Delete_campaign_members</targetReference>
+        </faultConnector>
+        <inputReference>Get_Campaign_Members</inputReference>
+    </recordDeletes>
+    <recordLookups>
+        <description>Get campaign members whose status is &apos;Responded&apos; and who are associated with campaigns &apos;business or non-business hours&apos;.</description>
+        <name>Get_Campaign_Members</name>
+        <label>Get Campaign Members</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Delete_All_Campaigns</targetReference>
+        </connector>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Responded</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CampaignId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>BusinessCampaign.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>CampaignId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>NonBusinessCampaign.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>CampaignMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get business and non business hours campaign.</description>
+        <name>Get_Campaigns</name>
+        <label>Get Campaigns</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Iterate_Campaigns</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>INS_CRTSY_BUSHR_SMS</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>INS_CRTSY_NONBUSHR_SMS</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Campaign</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Campaigns</targetReference>
+        </connector>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2025-06-18</startDate>
+            <startTime>20:00:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>BusinessCampaign</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Campaign</objectType>
+    </variables>
+    <variables>
+        <name>NonBusinessCampaign</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Campaign</objectType>
+    </variables>
+</Flow>

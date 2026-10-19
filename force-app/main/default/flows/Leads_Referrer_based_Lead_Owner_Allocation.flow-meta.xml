@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>SFP-44503 - Assign the employee number retrieved from the referrers user record to the SBG Employee Number field on the lead record</description>
+        <name>Set_SBG_Employee_No</name>
+        <label>Set SBG Employee No.</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.SBG_Employee_Number__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_User_Employee_Number.EmployeeNumber</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Referral_Allocation_Record</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>To determine if the user who should become the designated lead owner has an active user profile.</description>
+        <name>Is_Designated_Lead_Owner_Active</name>
+        <label>Is Designated Lead Owner Active</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Is Inactive</defaultConnectorLabel>
+        <rules>
+            <name>Is_Active</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_User_of_Designated_Lead_Owner.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Lead_Owner_with_Designated_User</targetReference>
+            </connector>
+            <label>Is Active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-44503 - Is there a value for the SBG Employee Number field existing on the lead record</description>
+        <name>Is_SBG_Employee_Number_Populated</name>
+        <label>Is SBG Employee Number Populated</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Employee No. found</defaultConnectorLabel>
+        <rules>
+            <name>Lead_Has_SBG_Employee_Number</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SBG_Employee_Number__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.FinServ__ReferredByUser__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Referral_Allocation_Record</targetReference>
+            </connector>
+            <label>Lead Has SBG Employee Number</label>
+        </rules>
+        <rules>
+            <name>SBG_Employee_Number_Is_Blank</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SBG_Employee_Number__c</leftValueReference>
+                <operator>IsBlank</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.FinServ__ReferredByUser__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.FinServ__ReferredByUser__r.EmployeeNumber</leftValueReference>
+                <operator>IsBlank</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Leads_by_Expressed_Interest_Lead_Type</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_User_Employee_Number</targetReference>
+            </connector>
+            <label>SBG Employee Number Is Blank</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-44503 - To determine whether a Referral Allocation relationship record exists for the lead referrer</description>
+        <name>Referral_Allocation_Relationship_Exists</name>
+        <label>Referral Allocation Relationship Exists</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Referral Allocation Found</defaultConnectorLabel>
+        <rules>
+            <name>Referral_Allocation_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Referral_Allocation_Record</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_User_of_Designated_Lead_Owner</targetReference>
+            </connector>
+            <label>Referral Allocation Exists</label>
+        </rules>
+    </decisions>
+    <description>SFP-44503 - Before‑Save Flow that sets a user as the Lead Owner for referred Leads when a Referral Allocation relationship between a referrer and an assigned/designated lead owner is present.
+
+When no relationship owner is found, the Flow takes no action, allowing downstream rules (Lead_Allocate flow or other) to handle routing.</description>
+    <environments>Default</environments>
+    <interviewLabel>Leads - Referral based Lead Owner Allocation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Leads - Referrer based Lead Owner Allocation</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>SFP-44503 - Gets all insurance lead records where the Lead Type field value is &quot;SBIB Dialler&quot; on it&apos;s related expressed interest record</description>
+        <name>Get_Leads_by_Expressed_Interest_Lead_Type</name>
+        <label>Get Leads by Expressed Interest Lead Type</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_SBG_Employee_Number_Populated</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Lead_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SBIB Dialler</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Leads_Product_Family__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Insurance</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Leads_ProductQueueAllocation__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>SFP-44503 - Get the Referral Allocation relationship records to determine if a referral allocation record for the referrer and a designated lead owner exists</description>
+        <name>Get_Referral_Allocation_Record</name>
+        <label>Get Referral Allocation Record</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Referral_Allocation_Relationship_Exists</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>CMN_Active__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CMN_Referrer_Employee_Number__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.SBG_Employee_Number__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>INS_Campaign_Source_ID__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Campaign_Source_ID__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>CMN_Assigned_Referral_Owner__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CMN_Referral_Allocations__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>SFP-44503 - Get record to retrieve the Internal Referrers Employee Number from their User record</description>
+        <name>Get_User_Employee_Number</name>
+        <label>Get User Employee Number</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Set_SBG_Employee_No</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.FinServ__ReferredByUser__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>SFP-44503 - Get the User record of the user to who the record must be assigned based on the referral allocation relationship</description>
+        <name>Get_User_of_Designated_Lead_Owner</name>
+        <label>Get User of Designated Lead Owner</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_Designated_Lead_Owner_Active</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Referral_Allocation_Record.CMN_Assigned_Referral_Owner__r.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsActive</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>SFP-44503 - Update the Lead Owner to the Assigned Referral Owner Based on the Referral Allocation record</description>
+        <name>Update_Lead_Owner_with_Designated_User</name>
+        <label>Update Lead Owner with Designated User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>CMN_Lead_Owner_Assigned_via_Referral__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>Get_Referral_Allocation_Record.CMN_Assigned_Referral_Owner__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Leads_by_Expressed_Interest_Lead_Type</targetReference>
+        </connector>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
+        <filters>
+            <field>Expressed_Interest_Product__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CMN_Lead_Owner_Assigned_via_Referral__c</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CMN_Lead_Owner_Assigned_via_Referral__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

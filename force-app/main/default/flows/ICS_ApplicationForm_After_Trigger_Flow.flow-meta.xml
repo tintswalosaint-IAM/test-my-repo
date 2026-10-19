@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Logs any error that occurs during the flow execution using sbgplatform__rflib_LoggerFlowAction. The log includes the context (&quot;ICS ApplicationForm After Trigger Flow&quot;) and the fault message for troubleshooting.</description>
+        <name>Log_Flow_Errors</name>
+        <label>Log Flow Errors</label>
+        <locationX>2162</locationX>
+        <locationY>539</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <elementReference>ErrorElement</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue> ICS ApplicationForm After Trigger Flow</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Sends a custom notification to the Opportunity Owner after updating the Opportunity, asking them to upload the FAIS document. The notification includes the title &quot;FAIS Approval&quot; and a body message, targeting the Opportunity record.</description>
+        <name>Send_FAIS_Custom_Notification</name>
+        <label>Send FAIS Custom Notification</label>
+        <locationX>50</locationX>
+        <locationY>1187</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element05</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Retrieve_Custom_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>FAIS Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <elementReference>Notification_Body</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>Get_Opportunity.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>2162</locationX>
+        <locationY>431</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Opportunity</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element01</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>1898</locationX>
+        <locationY>539</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Applicant</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element03</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>1634</locationX>
+        <locationY>647</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Party Profile</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element05</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>314</locationX>
+        <locationY>1295</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Send FAIS Custom Notification</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element06</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>578</locationX>
+        <locationY>1187</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Retrieve Custom Notification Message</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element07</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>842</locationX>
+        <locationY>971</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Retrieve Custom Notification Type</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Assing_Error_Log_Current_Element08</name>
+        <label>Assing Error Log Current Element</label>
+        <locationX>1106</locationX>
+        <locationY>863</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorElement</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update Opportunity for FAIS Approval</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Retrieves the OwnerId of the current Opportunity and assigns it to the OwnerId variable.</description>
+        <name>Retrieve_Opportunity_Owner</name>
+        <label>Retrieve Opportunity Owner</label>
+        <locationX>50</locationX>
+        <locationY>971</locationY>
+        <assignmentItems>
+            <assignToReference>OwnerId</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_Opportunity.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Retrieve_Custom_Notification_Message</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Checks whether FAIS approval is required based on the Opportunity Owner&apos;s country, Party Profile&apos;s country, and specific values in the Required_Approval_Processes__c field on the Opportunity.</description>
+        <name>Is_FAIS_Approval_Required</name>
+        <label>Is FAIS Approval Required?</label>
+        <locationX>710</locationX>
+        <locationY>647</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>YesFAISNeeded</name>
+            <conditionLogic>(1 OR 2 OR 7) AND NOT 3 AND NOT 4 AND 5 AND 6</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Opportunity.Owner.User_Country__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZA</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Party_Profile.Country_of_Residence__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZA</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Opportunity.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>FAIS Approval Confirmed;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Opportunity.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need FAIS Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Opportunity.LeadSource</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Direct</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Opportunity.LeadSource</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Website</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Opportunity.Sales_Code__r.Sales_Code_Country__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ZA</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Opportunity_for_FAIS_Approval</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>This flow automates the FAIS approval process. When an Opportunity tied to an ApplicationForm is in the &quot;Awaiting Signature&quot; stage, the flow checks if FAIS approval is required (based on conditions involving country and existing approval processes). If needed, it updates the Opportunity and sends a notification to the business user (Opportunity Owner) to upload the FAIS document. The flow also logs any errors that occur. SFP-34711
+
+Modification Date:15-10-2025
+Modified By: Tushar Walse
+Modificaiton Description:
+SFP-53780 UAT BUG: Needed improvement on Joint opp with GSD Prohibited country and CASE: GSD Sanctioned and GSD Prohibited in the same application
+Reverting to old flow</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>A formula that appends &quot;Need FAIS Approval;&quot; to the processed Required_Approval_Processes__c string along with the Party Profile ID.</description>
+        <name>Append_FAIS_Approval_String</name>
+        <dataType>String</dataType>
+        <expression>{!ReplaceDollarwithSemicolon} + &apos;Need FAIS Approval;&apos; + {!Get_Party_Profile.Id} + &apos;;&apos;</expression>
+    </formulas>
+    <formulas>
+        <description>To send notification to owner</description>
+        <name>Notification_Body</name>
+        <dataType>String</dataType>
+        <expression>{!Retrieve_Custom_Notification_Message.Description__c}+&apos; for &apos;+{!$Record.Account.FirstName}+&apos; &apos;+{!$Record.Account.LastName}</expression>
+    </formulas>
+    <formulas>
+        <description>Formula to replace the $ symbol with a semicolon (;) in the Required_Approval_Processes__c field for consistent formatting.</description>
+        <name>ReplaceDollarwithSemicolon</name>
+        <dataType>String</dataType>
+        <expression>IF(ISBLANK({!Get_Opportunity.Required_Approval_Processes__c}), &apos;;&apos;, SUBSTITUTE({!Get_Opportunity.Required_Approval_Processes__c}, &apos;$&apos;, &apos;;&apos;))</expression>
+    </formulas>
+    <formulas>
+        <description>Updated Required Approval Processes Field Value</description>
+        <name>UpdatedRequiredApprovalProcessesFieldValue</name>
+        <dataType>String</dataType>
+        <expression>{!Get_Opportunity.Required_Approval_Processes__c} + &apos;All Applications Signed;&apos;</expression>
+    </formulas>
+    <interviewLabel>ICS ApplicationForm After Trigger Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>ICS ApplicationForm After Trigger Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Flow fetches relevant data by performing record lookups on Applicant: Linked to the ApplicationForm via its ApplicationFormId.</description>
+        <name>Get_Applicant</name>
+        <label>Get Applicant</label>
+        <locationX>710</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Party_Profile</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element01</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ApplicationFormId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Applicant</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Flow fetches relevant data by performing record lookups on Opportunity:
+Based on the OpportunityId from the triggering ApplicationForm record.</description>
+        <name>Get_Opportunity</name>
+        <label>Get Opportunity</label>
+        <locationX>710</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Applicant</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.OpportunityId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Opportunity</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Flow fetches relevant data by performing record lookups on Party Profile: Fetched using the PartyProfileId from the Applicant record.</description>
+        <name>Get_Party_Profile</name>
+        <label>Get Party Profile</label>
+        <locationX>710</locationX>
+        <locationY>539</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_FAIS_Approval_Required</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element03</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Applicant.PartyProfileId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>PartyProfile</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the custom label ICS_FAIS_Approval_Notification_Message, which contains the notification body text for FAIS approval.</description>
+        <name>Retrieve_Custom_Notification_Message</name>
+        <label>Retrieve Custom Notification Message</label>
+        <locationX>50</locationX>
+        <locationY>1079</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_FAIS_Custom_Notification</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element06</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_FAIS_Approval_Notification_Message</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>ics_customlabel__mdt</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Flow fetches relevant data by performing record lookups on Custom Notification Type: A lookup is done to fetch the notification type with the DeveloperName as ICS_Approval_Flow_Notifications.</description>
+        <name>Retrieve_Custom_Notification_Type</name>
+        <label>Retrieve Custom Notification Type</label>
+        <locationX>50</locationX>
+        <locationY>863</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Retrieve_Opportunity_Owner</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element07</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_Approval_Flow_Notifications</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>If FAIS approval is needed, the flow appends &quot;Need FAIS Approval;&quot; to the Required_Approval_Processes__c field of the Opportunity record.</description>
+        <name>Update_Opportunity_for_FAIS_Approval</name>
+        <label>Update Opportunity for FAIS Approval</label>
+        <locationX>50</locationX>
+        <locationY>755</locationY>
+        <connector>
+            <targetReference>Retrieve_Custom_Notification_Type</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Assing_Error_Log_Current_Element08</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>Append_FAIS_Approval_String</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record.Opportunity</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>584</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Opportunity</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Stage</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Awaiting Form Filling</stringValue>
+            </value>
+        </filters>
+        <object>ApplicationForm</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>ErrorElement</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>Stores the OwnerId of the Opportunity for use in the flow.</description>
+        <name>OwnerId</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>

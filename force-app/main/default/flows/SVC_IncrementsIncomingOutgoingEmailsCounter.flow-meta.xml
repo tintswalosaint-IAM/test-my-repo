@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>51.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>SVC_IncrementIncomingEmails</name>
+        <label>Increment Incoming Emails</label>
+        <locationX>50</locationX>
+        <locationY>621</locationY>
+        <assignmentItems>
+            <assignToReference>SVC_GetCase.SVC_IncomingEmails__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>SVC_PopulateIncomingEmails</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>SVC_IncrementCounter</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>SVC_IncrementOutgoingEmails</name>
+        <label>Increment Outgoing Emails</label>
+        <locationX>396</locationX>
+        <locationY>622</locationY>
+        <assignmentItems>
+            <assignToReference>SVC_GetCase.SVC_OutgoingEmails__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>SVC_PopulateOutgoingEmails</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>SVC_IncrementCounter</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>SVC_FilterEmail</name>
+        <label>Filter Email</label>
+        <locationX>221</locationX>
+        <locationY>463</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>SVC_IncomingEmail</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Incoming</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>0</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SVC_IncrementIncomingEmails</targetReference>
+            </connector>
+            <label>Incoming Email</label>
+        </rules>
+        <rules>
+            <name>SVC_OutgoingEmail</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>3</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SVC_IncrementOutgoingEmails</targetReference>
+            </connector>
+            <label>Outgoing Email</label>
+        </rules>
+    </decisions>
+    <description>SFP-4616 - Increments the field # Incoming Emails when a new email is received to a case from a customer OR the field # Outgoing Emails when a new email is sent from a case to a customer</description>
+    <formulas>
+        <name>SVC_PopulateIncomingEmails</name>
+        <dataType>Number</dataType>
+        <expression>IF(ISBLANK({!SVC_GetCase.SVC_IncomingEmails__c}), 1, {!SVC_GetCase.SVC_IncomingEmails__c} + 1)</expression>
+        <scale>0</scale>
+    </formulas>
+    <formulas>
+        <name>SVC_PopulateOutgoingEmails</name>
+        <dataType>Number</dataType>
+        <expression>IF(ISBLANK({!SVC_GetCase.SVC_OutgoingEmails__c}), 1, {!SVC_GetCase.SVC_OutgoingEmails__c} + 1)</expression>
+        <scale>0</scale>
+    </formulas>
+    <interviewLabel>SVC Increments Incoming/ Emails Counter {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SVC Increments Incoming/Outgoing Emails Counter</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>SVC_GetCase</name>
+        <label>Get Case</label>
+        <locationX>229</locationX>
+        <locationY>327</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>SVC_FilterEmail</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ParentId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Case</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>SVC_IncrementCounter</name>
+        <label>Increment Counter</label>
+        <locationX>236</locationX>
+        <locationY>792</locationY>
+        <inputReference>SVC_GetCase</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>101</locationX>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>SVC_GetCase</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ParentId</field>
+            <operator>StartsWith</operator>
+            <value>
+                <stringValue>500</stringValue>
+            </value>
+        </filters>
+        <object>EmailMessage</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

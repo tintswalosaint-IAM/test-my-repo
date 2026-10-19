@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>It update the Staff Indicator field when the email contains @standardbank.co.za/ @liblink.co.za/ @stanlib.co.za/ @liberty.co.za  domain and the Staff Indicator checkbox is not selected.</description>
+    <environments>Default</environments>
+    <interviewLabel>Staff Indicator Test {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Staff Indicator</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>Update staff indicator field if the email contains &quot;@standaerdbank.co.za&quot; domain</description>
+        <name>Staff_Indicator</name>
+        <label>Staff Indicator</label>
+        <locationX>176</locationX>
+        <locationY>287</locationY>
+        <inputAssignments>
+            <field>LS_Staff_Indicator__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Staff_Indicator</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Email</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>@standardbank.co.za</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Email</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>@stanlib.co.za</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Email</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>@liblink.co.za</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Email</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>@liberty</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Draft</status>
+</Flow>

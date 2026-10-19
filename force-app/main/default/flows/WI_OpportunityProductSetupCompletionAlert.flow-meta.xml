@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Error</name>
+        <label>Error</label>
+        <locationX>530</locationX>
+        <locationY>350</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>WI_OpportunityProductSetupCompletionAlert</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>Error</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Notify</name>
+        <label>Notify</label>
+        <locationX>138</locationX>
+        <locationY>458</locationY>
+        <actionName>chatterPost</actionName>
+        <actionType>chatterPost</actionType>
+        <connector>
+            <targetReference>Loop_members</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>text</name>
+            <value>
+                <elementReference>genericTemplate</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subjectNameOrId</name>
+            <value>
+                <elementReference>Loop_members.UserId</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>chatterPost</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Setup_stage_completed</name>
+        <label>Setup stage completed</label>
+        <locationX>422</locationX>
+        <locationY>134</locationY>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordPrior</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.WI_Status__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>record.WI_Status__c</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.WI_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Setup</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Members</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-21375 - Opportunity Process | Opportunity Assignment Email Alert</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>domainLink</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Enterprise_Server_URL_540},FIND(&quot;/services&quot;, {!$Api.Enterprise_Server_URL_540}))</expression>
+    </formulas>
+    <interviewLabel>W&amp;I Opportunity Product Setup Сompletion Alert {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>W&amp;I Opportunity Product Setup Completion Alert</label>
+    <loops>
+        <name>Loop_members</name>
+        <label>Loop members</label>
+        <locationX>50</locationX>
+        <locationY>350</locationY>
+        <collectionReference>Get_Members</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Notify</targetReference>
+        </nextValueConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Members</name>
+        <label>Get Members</label>
+        <locationX>50</locationX>
+        <locationY>242</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_members</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OpportunityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>record.OpportunityId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>OpportunityTeamMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>296</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Setup_stage_completed</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>amTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the Account Manager on the Opportunity {!record.Opportunity.Name}
+Please have a look at the record:
+{!domainLink}{!record.OpportunityId}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>genericTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the {!Loop_members.TeamMemberRole} on the Opportunity {!record.Opportunity.Name}
+Please have a look at the record:
+{!domainLink}{!record.OpportunityId}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>psTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the Product Specialist on the Opportunity Product {!record.Name}
+Please have a look at the record:
+{!domainLink}{!record.Id}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>rmTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the Relationship Manager on the Opportunity {!record.Opportunity.Name}
+Please have a look at the record:
+{!domainLink}{!record.OpportunityId}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>waTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the Wealth Assistant on the Opportunity {!record.Opportunity.Name}
+Please have a look at the record:
+{!domainLink}{!record.OpportunityId}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>wmTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>You have been set as the Wealth Manager on the Opportunity {!record.Opportunity.Name}
+Please have a look at the record:
+{!domainLink}{!record.OpportunityId}</text>
+    </textTemplates>
+    <variables>
+        <name>record</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>OpportunityLineItem</objectType>
+    </variables>
+    <variables>
+        <name>recordPrior</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>OpportunityLineItem</objectType>
+    </variables>
+</Flow>

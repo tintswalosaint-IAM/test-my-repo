@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <customErrors>
+        <description>The Account Name doesn&apos;t match</description>
+        <name>Account_Name_doesnt_Match</name>
+        <label>Account Name doesnt Match</label>
+        <locationX>842</locationX>
+        <locationY>755</locationY>
+        <customErrorMessages>
+            <errorMessage>The Name on the Party Profile does not match the Name on the selected Account</errorMessage>
+            <fieldSelection>Name</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <description>The Account doesn&apos;t exist in Salesforce yet</description>
+        <name>Account_Not_Found</name>
+        <label>Account Not Found</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <customErrorMessages>
+            <errorMessage>The account has not been created yet from the partner sync, or the CIF Number was added incorrectly.</errorMessage>
+            <fieldSelection>Pending_Client_ID__c</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <description>The Account Registration doesn&apos;t match</description>
+        <name>Account_Registration_doesnt_match</name>
+        <label>Account Registration doesnt match</label>
+        <locationX>578</locationX>
+        <locationY>863</locationY>
+        <customErrorMessages>
+            <errorMessage>The Registration Number on the selected Account does not match the Registration Number on the Party Profile</errorMessage>
+            <fieldSelection>WI_Entity_Registration_Number__c</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <description>Check whether the Account Name Matches the Pending Client ID</description>
+        <name>Does_the_Account_Name_Match</name>
+        <label>Does the Account Name Match</label>
+        <locationX>644</locationX>
+        <locationY>647</locationY>
+        <defaultConnector>
+            <targetReference>Account_Name_doesnt_Match</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>Get_Account_Record.Name</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Registration_number_doesnt_match</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_Account_Found</name>
+        <label>Is Account Found</label>
+        <locationX>347</locationX>
+        <locationY>539</locationY>
+        <defaultConnector>
+            <targetReference>Does_the_Account_Name_Match</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Yes</defaultConnectorLabel>
+        <rules>
+            <name>No1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Record.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Account_Not_Found</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check whether a match is Found</description>
+        <name>is_Match_Found</name>
+        <label>is Match Found</label>
+        <locationX>726</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Legal_Entity</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.WI_Entity_Registration_Number__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.AccountId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Pending_Client_ID__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Pending_Client_ID__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Account_Record</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Registration number doesn&apos;t match</description>
+        <name>Registration_number_doesnt_match</name>
+        <label>Registration number doesnt match</label>
+        <locationX>446</locationX>
+        <locationY>755</locationY>
+        <defaultConnector>
+            <targetReference>Account_Registration_doesnt_match</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.WI_Entity_Registration_Number__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>Get_Account_Record.Registration_Number__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Related_Account</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-31502 - New Legal Account Creation</description>
+    <environments>Default</environments>
+    <interviewLabel>WI Party Profile Before Create/Update Account Matching {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>WI Party Profile After Create/Update Account Matching</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Account_Record</name>
+        <label>Get Account Record</label>
+        <locationX>347</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_Account_Found</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ExternalCIFId__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Pending_Client_ID__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Updates the related account details</description>
+        <name>Update_Related_Account</name>
+        <label>Update Related Account</label>
+        <locationX>314</locationX>
+        <locationY>863</locationY>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <elementReference>Get_Account_Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>600</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>is_Match_Found</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>WI_Entity_Registration_Number__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>PartyProfile</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

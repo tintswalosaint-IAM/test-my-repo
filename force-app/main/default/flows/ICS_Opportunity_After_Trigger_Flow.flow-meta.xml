@@ -1,0 +1,4373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Verifies if Group Sanctions Desk (GSD) approval is required using ICS_CTRL_ApprovalFlow.</description>
+        <name>Check_GSD_Approval</name>
+        <label>Check GSD Approval</label>
+        <locationX>4142</locationX>
+        <locationY>2856</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Get_Custom_Notification_Types</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name41</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Group Sanctions Desk</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Calls the ICS_CTRL_ApprovalFlow to check if motivation is required for the Opportunity approval.</description>
+        <name>Check_Motivation_Requirement</name>
+        <label>Check Motivation Requirement</label>
+        <locationX>10430</locationX>
+        <locationY>2016</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Determine_Motivation_Requirement</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name18</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Check Motivation Required</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Calls the ICS_CTRL_ApprovalFlow Apex class to verify if the Opportunity meets specific queue conditions, using the Opportunity ID.</description>
+        <name>Check_Queue_Conditions</name>
+        <label>Check Queue Conditions</label>
+        <locationX>974</locationX>
+        <locationY>2016</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Process_Type</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name30</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Check Queue Conditions</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Update the Required_Approval_Processes__c field and remove the string &quot;Need GSD Approval;&quot; if present to indicate that this opportunity doesn&apos;t need GSD approval</description>
+        <name>Clear_GSD_Approval_Requirement</name>
+        <label>Clear GSD Approval Requirement</label>
+        <locationX>4010</locationX>
+        <locationY>3396</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <faultConnector>
+            <targetReference>Error_Element_Name111</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Update Required Approval Process(Unset)</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>value</name>
+            <value>
+                <stringValue>Need GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Using sbgplatform__rflib_LoggerFlowAction, capturing the context and fault message for error tracking.</description>
+        <name>Flow_Log</name>
+        <label>Flow Log</label>
+        <locationX>13725</locationX>
+        <locationY>7535</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Error_Opp_Info</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <elementReference>LogArea</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue> ICS Opportunity After Trigger Flow</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Log Opp Info</description>
+        <name>Flow_Log_Opp</name>
+        <label>Flow Log Opp</label>
+        <locationX>13725</locationX>
+        <locationY>7751</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <elementReference>LogArea</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue> ICS Opportunity After Trigger Flow</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>WARN</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <stringValue>Opportunity Info</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Retrieves the next queue name for the Opportunity using the ICS_CTRL_ApprovalFlow class, based on the current queue string.</description>
+        <name>Get_Next_Queue_Name</name>
+        <label>Get Next Queue Name</label>
+        <locationX>10013</locationX>
+        <locationY>5478</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Evaluate_Stage_Change</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name36</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Get Queue Code</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>value</name>
+            <value>
+                <elementReference>QueueString</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Triggers approval checks for the Opportunity, using the ICS_CTRL_ApprovalFlow to verify risk factors.</description>
+        <name>Invoke_Approval_Process_Checks</name>
+        <label>Invoke Approval Process Checks</label>
+        <locationX>6980</locationX>
+        <locationY>2016</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Additional_risk_factors_check</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name20</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Check Additional Risk Factors</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Check whether first signatory Compliance approval is required</description>
+        <name>Invoke_Approval_Process_Checks2</name>
+        <label>Invoke Approval Process Checks</label>
+        <locationX>7310</locationX>
+        <locationY>2232</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Compliance_Approval_Required_Check</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name51</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>QC 08 AC=&gt;CN</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Retrieves the next queue name for the Opportunity using the ICS_CTRL_ApprovalFlow class, based on the current queue string.</description>
+        <name>Last_approver_not_a_Client_Manager</name>
+        <label>Last approver not a Client Manager</label>
+        <locationX>9837</locationX>
+        <locationY>4878</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Is_Last_approver_not_a_Client_Manager</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Last approver not a Client Manager</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>value</name>
+            <value>
+                <elementReference>QueueString</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Sends a custom notification to the Opportunity owner to prompt processing of required actions.</description>
+        <name>Notify_Opportunity_Owner</name>
+        <label>Notify Opportunity Owner</label>
+        <locationX>2954</locationX>
+        <locationY>3504</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <connector>
+            <targetReference>Send_The_GSD_Notification_Email</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name31</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Custom_Notification_Types.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>Please Process</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <stringValue>Please complete and upload GSD form</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Sends a custom notification to the Opportunity owner to prompt processing of required actions.</description>
+        <name>Notify_Opportunity_Owner2</name>
+        <label>Notify Opportunity Owner</label>
+        <locationX>11993</locationX>
+        <locationY>5910</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Custom_Notification_Types2.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>Please Process</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <stringValue>Compliance has rejected this opportunity</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Sends a custom notification to specific recipients about SLA breach, using the notification type and body content.</description>
+        <name>Send_SLA_Breach_Notification</name>
+        <label>Send SLA Breach Notification</label>
+        <locationX>13417</locationX>
+        <locationY>7319</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <faultConnector>
+            <targetReference>Error_Element_Name09</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Custom_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>GroupIds</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>SLA Breach Alert</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <elementReference>notificationText</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>ProcessInstanceWorkItem.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Send The Application Unsuccessful Email</description>
+        <name>Send_The_Application_Unsuccessful_Email</name>
+        <label>Send The Application Unsuccessful Email</label>
+        <locationX>8674</locationX>
+        <locationY>2448</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Each_ApplicationForm</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name50</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>no-reply@standardbank.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>useEmailTemplate</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailTemplateId</name>
+            <value>
+                <elementReference>Get_EMAIL_Template_ID.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientId</name>
+            <value>
+                <elementReference>Each_ApplicationForm.Account.PersonContact.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>relatedRecordId</name>
+            <value>
+                <elementReference>Each_ApplicationForm.Account.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <description>Send The GSD Notification Email</description>
+        <name>Send_The_GSD_Notification_Email</name>
+        <label>Send The GSD Notification Email</label>
+        <locationX>2954</locationX>
+        <locationY>3612</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <faultConnector>
+            <targetReference>Error_Element_Name54</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Owner.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>no-reply@standardbank.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>emailBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientId</name>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>relatedRecordId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>1.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <description>Submits the Opportunity for Straight-Through approval, bypassing entry criteria.</description>
+        <name>Submit_for_Approval_Straight_Through</name>
+        <label>Submit for Approval (Straight-Through)</label>
+        <locationX>50</locationX>
+        <locationY>2340</locationY>
+        <actionName>submit</actionName>
+        <actionType>submit</actionType>
+        <connector>
+            <targetReference>Update_Stage_to_Closed_Won</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name22</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>objectId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>comment</name>
+            <value>
+                <stringValue>Approved Straight Through</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>submitterId</name>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>nextApproverIds</name>
+            <value>
+                <elementReference>approverIds</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>processDefinitionNameOrId</name>
+            <value>
+                <stringValue>ICS_Straight_Through_Approval_Process</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>skipEntryCriteria</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>submit</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Adds the Compliance Group ID to the collection of Group IDs for notifications.</description>
+        <name>Add_Compliance_Group_ID</name>
+        <label>Add Compliance Group ID</label>
+        <locationX>16546</locationX>
+        <locationY>492</locationY>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_Compliance_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Notification_Text2</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Adds the Fast Track Group ID to the collection of Group IDs for notifications.</description>
+        <name>Add_Fast_Track_Group_ID</name>
+        <label>Add Fast Track Group ID</label>
+        <locationX>14258</locationX>
+        <locationY>492</locationY>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_Fast_Track_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assess_Fast_Track_Status</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Adds the Lead Group ID to the collection of Group IDs for notifications.</description>
+        <name>Add_Lead_Group_ID</name>
+        <label>Add Lead Group ID</label>
+        <locationX>15138</locationX>
+        <locationY>708</locationY>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_Lead_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_New_Client_Manager_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>notificationText</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>2 hour SLA for an outcome on onboarding decision by Fast Track has been breached</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Assess_Fast_Track_Status</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>add_to_Collection</name>
+        <label>add to Collection</label>
+        <locationX>4956</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>applicationFormIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Loop_Through_Application_Forms.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Through_Application_Forms</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Application_Forms_Ids</name>
+        <label>Application Forms</label>
+        <locationX>10958</locationX>
+        <locationY>2664</locationY>
+        <assignmentItems>
+            <assignToReference>applicationFormIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Loop_Application_Forms2.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>EDD_Required_Check</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Adds the Lead Group ID to the collection of Group IDs for notifications.</description>
+        <name>Assign_Everything</name>
+        <label>Assign Everything</label>
+        <locationX>17426</locationX>
+        <locationY>708</locationY>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_Client_Lead_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>GroupIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_New_Client_Senior_Manager_Group.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>notificationText</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>2 Business Days SLA for an outcome on onboarding decision by New Client Onboarding team has been breached</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Custom_Notification_Type</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assigns the Opportunity owner&apos;s ID to the corresponding variable for later use in notifications.</description>
+        <name>Assign_Opportunity_Owner_ID</name>
+        <label>Assign Opportunity Owner ID</label>
+        <locationX>3482</locationX>
+        <locationY>3180</locationY>
+        <assignmentItems>
+            <assignToReference>OwnerId</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Evaluate_GSD_Criteria</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assigns the Opportunity owner&apos;s ID to the corresponding variable for later use in notifications.</description>
+        <name>Assign_Opportunity_Owner_ID2</name>
+        <label>Assign Opportunity Owner ID</label>
+        <locationX>11993</locationX>
+        <locationY>5694</locationY>
+        <assignmentItems>
+            <assignToReference>OwnerId</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Custom_Notification_Types2</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assigns approver IDs for the Straight-Through approval process based on the SBO queue.</description>
+        <name>Assign_Straight_Through_Approver_IDs</name>
+        <label>Assign Straight-Through Approver IDs</label>
+        <locationX>50</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>approverIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Submit_for_Approval_Straight_Through</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Change NC to CM</description>
+        <name>Change_NC_to_CM</name>
+        <label>Change NC to CM</label>
+        <locationX>9925</locationX>
+        <locationY>5094</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>QueueStringNCReplacedByCM</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Opportunity_Req</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Counts the number of application forms linked to the Opportunity and assigns it for further processing.</description>
+        <name>Count_Application_Forms</name>
+        <label>Count Application Forms</label>
+        <locationX>4868</locationX>
+        <locationY>2424</locationY>
+        <assignmentItems>
+            <assignToReference>application_form_ids_count</assignToReference>
+            <operator>AssignCount</operator>
+            <value>
+                <elementReference>Retrieve_Application_Forms</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Signed_Application_Form</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Counts the number of records in the approval process and assigns it to the corresponding variable.</description>
+        <name>Count_Approval_Process_Records</name>
+        <label>Count Approval Process Records</label>
+        <locationX>9859</locationX>
+        <locationY>492</locationY>
+        <assignmentItems>
+            <assignToReference>RecordsCount</assignToReference>
+            <operator>AssignCount</operator>
+            <value>
+                <elementReference>Get_Records_ProcessInstance</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_for_Additional_Pending_Approvals</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Counts the number of signed application forms associated with the Opportunity for processing.</description>
+        <name>Count_Signed_Application_Forms</name>
+        <label>Count Signed Application Forms</label>
+        <locationX>4142</locationX>
+        <locationY>2748</locationY>
+        <assignmentItems>
+            <assignToReference>signed_application_form_ids_count</assignToReference>
+            <operator>AssignCount</operator>
+            <value>
+                <elementReference>Get_Signed_Application_Form</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_GSD_Approval</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set  the EDD Fast Track Id to False</description>
+        <name>EDD_Flag</name>
+        <label>EDD Flag</label>
+        <locationX>10738</locationX>
+        <locationY>2448</locationY>
+        <assignmentItems>
+            <assignToReference>EDD_Flag_Variable</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Application_Forms2</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name</name>
+        <label>Error Element Name</label>
+        <locationX>13906</locationX>
+        <locationY>384</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Records ProcessInstance</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name07</name>
+        <label>Error Element Name</label>
+        <locationX>16194</locationX>
+        <locationY>384</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get New Client Manager Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name08</name>
+        <label>Error Element Name</label>
+        <locationX>19010</locationX>
+        <locationY>6479</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Custom Notification Type</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name09</name>
+        <label>Error Element Name</label>
+        <locationX>13725</locationX>
+        <locationY>7427</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Send SLA Breach Notification</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name10</name>
+        <label>Error Element Name</label>
+        <locationX>11729</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed Lost</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name11</name>
+        <label>Error Element Name</label>
+        <locationX>10673</locationX>
+        <locationY>5910</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed Declined</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name111</name>
+        <label>Error Element Name</label>
+        <locationX>4274</locationX>
+        <locationY>3504</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Clear_GSD_Approval_Requirement</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name12</name>
+        <label>Error Element Name</label>
+        <locationX>10145</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed Won</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name13</name>
+        <label>Error Element Name</label>
+        <locationX>9617</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Sign-Off</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name14</name>
+        <label>Error Element Name</label>
+        <locationX>9089</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Documents upload</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name15</name>
+        <label>Error Element Name</label>
+        <locationX>8561</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>ID &amp; Address Verification</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name16</name>
+        <label>Error Element Name</label>
+        <locationX>8033</locationX>
+        <locationY>5802</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Risk Rating</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name17</name>
+        <label>Error Element Name</label>
+        <locationX>11530</locationX>
+        <locationY>2340</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Application Forms</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name18</name>
+        <label>Error Element Name</label>
+        <locationX>11794</locationX>
+        <locationY>2124</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Check Motivation Requirement</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name19</name>
+        <label>Error Element Name</label>
+        <locationX>10122</locationX>
+        <locationY>2340</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update_Required_Approval_Process_Field</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name2</name>
+        <label>Error Element Name</label>
+        <locationX>14874</locationX>
+        <locationY>384</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Fast Track Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name20</name>
+        <label>Error Element Name</label>
+        <locationX>7970</locationX>
+        <locationY>2124</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Invoke_Approval_Process_Checks</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name21</name>
+        <label>Error Element Name</label>
+        <locationX>314</locationX>
+        <locationY>2556</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update Stage to Closed Won</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name22</name>
+        <label>Error Element Name</label>
+        <locationX>578</locationX>
+        <locationY>2448</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Submit for Approval (Straight-Through)</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name25</name>
+        <label>Error Element Name</label>
+        <locationX>15666</locationX>
+        <locationY>600</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Lead Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name26</name>
+        <label>Error Element Name</label>
+        <locationX>1106</locationX>
+        <locationY>2448</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update Queue to Fast Track</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name28</name>
+        <label>Error Element Name</label>
+        <locationX>1634</locationX>
+        <locationY>2448</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update Queue to New Client Onboarding Review</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name3</name>
+        <label>Error Element Name</label>
+        <locationX>17162</locationX>
+        <locationY>384</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Compliance Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name30</name>
+        <label>Error Element Name</label>
+        <locationX>2162</locationX>
+        <locationY>2124</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Check Queue Conditions</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name31</name>
+        <label>Error Element Name</label>
+        <locationX>3482</locationX>
+        <locationY>3612</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Notify Opportunity Owner</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name35</name>
+        <label>Error Element Name</label>
+        <locationX>12586</locationX>
+        <locationY>4488</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update Required Approval Processes</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name36</name>
+        <label>Error Element Name</label>
+        <locationX>13642</locationX>
+        <locationY>5586</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Next Queue Name</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name38</name>
+        <label>Error Element Name</label>
+        <locationX>10738</locationX>
+        <locationY>3372</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Opportunity Stage To Review</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name39</name>
+        <label>Error Element Name</label>
+        <locationX>6386</locationX>
+        <locationY>2016</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Retrieve Application Forms</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name4</name>
+        <label>Error Element Name</label>
+        <locationX>17954</locationX>
+        <locationY>600</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get New Client Senior Manager Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name40</name>
+        <label>Error Element Name</label>
+        <locationX>5858</locationX>
+        <locationY>2640</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Signed Application Form</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name41</name>
+        <label>Error Element Name</label>
+        <locationX>5330</locationX>
+        <locationY>2964</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Check GSD Approval</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name42</name>
+        <label>Error Element Name</label>
+        <locationX>5066</locationX>
+        <locationY>3072</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Custom Notification Types</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set element name to log error</description>
+        <name>Error_Element_Name43</name>
+        <label>Error Element Name</label>
+        <locationX>11201</locationX>
+        <locationY>5910</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed_Declined2</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name45</name>
+        <label>Error Element Name</label>
+        <locationX>9594</locationX>
+        <locationY>2124</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed_Declined3</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name46</name>
+        <label>Error Element Name</label>
+        <locationX>2690</locationX>
+        <locationY>3504</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update_Group_Sanctions_Desk_Prohibited_Countries</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name47</name>
+        <label>Error Element Name</label>
+        <locationX>3746</locationX>
+        <locationY>3504</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Update_GSD_Required</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name48</name>
+        <label>Error Element Name</label>
+        <locationX>9330</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get_EMAIL_Template_ID</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Error_Element_Name5</name>
+        <label>Error Element Name</label>
+        <locationX>18482</locationX>
+        <locationY>384</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get Client Lead Group</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name50</name>
+        <label>Error Element Name</label>
+        <locationX>8938</locationX>
+        <locationY>2556</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Send_The_Application_Unsuccessful_Email</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name51</name>
+        <label>Error Element Name</label>
+        <locationX>7706</locationX>
+        <locationY>2340</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Invoke_Approval_Process_Checks2</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Element Name</description>
+        <name>Error_Element_Name52</name>
+        <label>Error Element Name</label>
+        <locationX>14517</locationX>
+        <locationY>6695</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Get_Records_ProcessInstance2</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name54</name>
+        <label>Error Element Name</label>
+        <locationX>3218</locationX>
+        <locationY>3720</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Send The GSD Notification Email</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <description>Error Log Current Element Name Assignment for Better User Analysis.</description>
+        <name>Error_Element_Name55</name>
+        <label>Error Element Name</label>
+        <locationX>9066</locationX>
+        <locationY>2340</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>ApplicationForm</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Flow_Log</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Error Opp Info</description>
+        <name>Error_Opp_Info</name>
+        <label>Error Opp Info</label>
+        <locationX>13725</locationX>
+        <locationY>7643</locationY>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Opportunity ID: </stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue> Opportunity Name: </stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>LogArea</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.Name</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Flow_Log_Opp</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>storing  the opportunity Ids</description>
+        <name>Get_opportunity_Ids</name>
+        <label>Get opportunity Ids</label>
+        <locationX>10013</locationX>
+        <locationY>1584</locationY>
+        <assignmentItems>
+            <assignToReference>opportunityids</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Evaluate_Stage_Change1</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set the Notification Text Body</description>
+        <name>Notification_Text2</name>
+        <label>Notification Text</label>
+        <locationX>16546</locationX>
+        <locationY>600</locationY>
+        <assignmentItems>
+            <assignToReference>notificationText</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>1 Business Day SLA for an outcome on onboarding decision by Compliance has been breached</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assess_Compliance_Status</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Sets the Enhanced Due Diligence (EDD) requirement flag to true for the Opportunity.</description>
+        <name>Set_EDD_Requirement</name>
+        <label>Set EDD Requirement</label>
+        <locationX>10826</locationX>
+        <locationY>2880</locationY>
+        <assignmentItems>
+            <assignToReference>EDD_Flag_Variable</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Application_Forms2</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set for Review 2nd Level</description>
+        <name>Set_for_Review_2nd_Level</name>
+        <label>Set for Review 2nd Level</label>
+        <locationX>974</locationX>
+        <locationY>1908</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_Queue_Conditions</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Updates the QueueString variable by appending the prefix for the Full Onboarding Review queue.</description>
+        <name>Set_Full_Onboarding_Review_Queue_String</name>
+        <label>Set Full Onboarding Review Queue String</label>
+        <locationX>1370</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>;FR$</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Queue_to_New_Client_Onboarding_Review</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set the Notification Text Body</description>
+        <name>Set_Notification_Text</name>
+        <label>Set Notification Text</label>
+        <locationX>13285</locationX>
+        <locationY>7127</locationY>
+        <assignmentItems>
+            <assignToReference>notificationText</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>SLA to Assign a Compliance User has been breached</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_SLA_Breach_Notification</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Updates the QueueString variable based on the current Opportunity status, used for routing to the appropriate queue.</description>
+        <name>Set_Queue_String</name>
+        <label>Set Queue String</label>
+        <locationX>842</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>;FT$</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Queue_to_Fast_Track</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Sets the QueueString based on the current Opportunity&apos;s approval processes to manage routing.</description>
+        <name>Set_Queue_String_for_Approval_Processes</name>
+        <label>Set Queue String for Approval Processes</label>
+        <locationX>13114</locationX>
+        <locationY>1800</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.Required_Approval_Processes__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Is_processed_by_NC</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set Queue String for Compliance</description>
+        <name>Set_Queue_String_for_Compliance</name>
+        <label>Set Queue String for Compliance</label>
+        <locationX>7178</locationX>
+        <locationY>2448</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>;AC$</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Required_Approval_Processes</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Sets the QueueString for processing related to additional risk factors.</description>
+        <name>Set_Queue_String_for_Risk_Factors</name>
+        <label>Set Queue String for Risk Factors</label>
+        <locationX>6650</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>;AN$</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Required_Approval_Processes</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set Queue String for Risk Factors ATM</description>
+        <name>Set_Queue_String_for_Risk_Factors_ATM</name>
+        <label>Set Queue String for Risk Factors ATM</label>
+        <locationX>6914</locationX>
+        <locationY>2232</locationY>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>DollarReplacedString</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>QueueString</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>;AS$</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Required_Approval_Processes</targetReference>
+        </connector>
+    </assignments>
+    <customErrors>
+        <description>Displays an error message if an approval request is pending, preventing further actions.</description>
+        <name>Approval_Request_Pending_Error</name>
+        <label>Approval Request Pending Error</label>
+        <locationX>9727</locationX>
+        <locationY>708</locationY>
+        <connector>
+            <targetReference>Validate_Documentation_Assessment</targetReference>
+        </connector>
+        <customErrorMessages>
+            <errorMessage>Cannot proceed as approval request is pending</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <description>Triggers an error if documentation has not been assessed by the new client user.</description>
+        <name>Documentation_Not_Assessed_Error</name>
+        <label>Documentation Not Assessed Error</label>
+        <locationX>9881</locationX>
+        <locationY>1092</locationY>
+        <connector>
+            <targetReference>Validation_for_Motivation_Provision</targetReference>
+        </connector>
+        <customErrorMessages>
+            <errorMessage>Documentation not assessed by new client user</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <description>Displays an error message when motivation has not been provided by the Opportunity owner.</description>
+        <name>Motivation_Not_Provided_by_Owner_Error</name>
+        <label>Motivation Not Provided by Owner Error</label>
+        <locationX>9881</locationX>
+        <locationY>1392</locationY>
+        <connector>
+            <targetReference>Get_opportunity_Ids</targetReference>
+        </connector>
+        <customErrorMessages>
+            <errorMessage>Cannot proceed as motivation has not been provided by the opportunity owner</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <description>Evaluates additional risk factors for the Opportunity and routes the flow based on the result.</description>
+        <name>Additional_risk_factors_check</name>
+        <label>Additional risk factors check</label>
+        <locationX>6980</locationX>
+        <locationY>2124</locationY>
+        <defaultConnector>
+            <targetReference>Invoke_Approval_Process_Checks2</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Invoke_Approval_Process_Checks</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Yes</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Queue_String_for_Risk_Factors</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>Africa</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Invoke_Approval_Process_Checks</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Africa</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Queue_String_for_Risk_Factors_ATM</targetReference>
+            </connector>
+            <label>Africa</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Evaluates the compliance status of the Opportunity to determine the next action.</description>
+        <name>Assess_Compliance_Status</name>
+        <label>Assess Compliance Status</label>
+        <locationX>16546</locationX>
+        <locationY>708</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Compliance_Pending</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>EndsWith</operator>
+                <rightValue>
+                    <stringValue>.CN$</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Custom_Notification_Type</targetReference>
+            </connector>
+            <label>Compliance Pending</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Evaluates the Fast Track status of the Opportunity to determine next steps.</description>
+        <name>Assess_Fast_Track_Status</name>
+        <label>Assess Fast Track Status</label>
+        <locationX>14258</locationX>
+        <locationY>600</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Fast_Track_Pending</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>;FT.NC$</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Custom_Notification_Type</targetReference>
+            </connector>
+            <label>Is Fast Track Pending</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks the current status of the Opportunity to determine the next processing steps.</description>
+        <name>Assess_Opportunity_Status</name>
+        <label>Assess Opportunity Status</label>
+        <locationX>6648</locationX>
+        <locationY>1800</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Review_2nd_Level</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Review</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>EndsWith</operator>
+                <rightValue>
+                    <stringValue>.R2$</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_for_Review_2nd_Level</targetReference>
+            </connector>
+            <label>Review 2nd Level</label>
+        </rules>
+        <rules>
+            <name>Risk_Rating</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Risk Rating</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Retrieve_Application_Forms</targetReference>
+            </connector>
+            <label>Risk Rating</label>
+        </rules>
+        <rules>
+            <name>Review</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Review</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_for_Pending_Approvals</targetReference>
+            </connector>
+            <label>Review</label>
+        </rules>
+        <rules>
+            <name>Document_Upload</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Documents upload</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>GSD_Prohibited_Countries_Encountered</targetReference>
+            </connector>
+            <label>Document Upload</label>
+        </rules>
+        <rules>
+            <name>Sign_Off</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Sign-Off</stringValue>
+                </rightValue>
+            </conditions>
+            <label>Sign-Off</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks if there are any pending approval processes for the Opportunity after any stage change.</description>
+        <name>Check_for_Additional_Pending_Approvals</name>
+        <label>Check for Additional Pending Approvals</label>
+        <locationX>9859</locationX>
+        <locationY>600</locationY>
+        <defaultConnector>
+            <targetReference>Validate_Documentation_Assessment</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RecordsCount</leftValueReference>
+                <operator>GreaterThan</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.StageName</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.StageName</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Approval_Request_Pending_Error</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks if there are any pending approval processes for the Opportunity.</description>
+        <name>Check_for_Pending_Approvals</name>
+        <label>Check for Pending Approvals</label>
+        <locationX>7607</locationX>
+        <locationY>1908</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RecordsCount</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <numberValue>0.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Invoke_Approval_Process_Checks</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check If Decline Reason is Not Set then set it to IOM Other Reasons</description>
+        <name>Check_Is_Decline_Reason_Not_Set</name>
+        <label>Check Is Decline Reason Not Set</label>
+        <locationX>10673</locationX>
+        <locationY>5694</locationY>
+        <defaultConnector>
+            <targetReference>Closed_Declined2</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Decline_Reason_is_Not_Set</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ICS_Decline_Reason__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ClosedDeclined</targetReference>
+            </connector>
+            <label>Decline Reason is Not Set</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Compliance Approval Required Check</description>
+        <name>Compliance_Approval_Required_Check</name>
+        <label>Compliance Approval Required Check</label>
+        <locationX>7310</locationX>
+        <locationY>2340</locationY>
+        <defaultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Check_Queue_Conditions</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes5</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Invoke_Approval_Process_Checks2</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>true</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Queue_String_for_Compliance</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Evaluates the compliance status of the Opportunity to determine the next action.</description>
+        <name>Compliance_User_Not_Assigned</name>
+        <label>Compliance User Not Assigned</label>
+        <locationX>13417</locationX>
+        <locationY>7019</locationY>
+        <defaultConnector>
+            <targetReference>Send_SLA_Breach_Notification</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Compliance_User_Not_Assigned_Yet</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>EndsWith</operator>
+                <rightValue>
+                    <stringValue>.CN$</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>ComplianceUserAssigned</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Notification_Text</targetReference>
+            </connector>
+            <label>Compliance User Not Assigned</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Evaluates if motivation is necessary for the current Opportunity&apos;s approval process.</description>
+        <name>Determine_Motivation_Requirement</name>
+        <label>Determine Motivation Requirement</label>
+        <locationX>10430</locationX>
+        <locationY>2124</locationY>
+        <defaultConnector>
+            <targetReference>Application_Forms</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Motivation_Required</name>
+            <conditionLogic>1 AND (NOT 2)</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Motivation_Requirement</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Motivation Required</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Show Provide Motivation;</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Required_Approval_Process_Field</targetReference>
+            </connector>
+            <label>Motivation Required</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check if applicant is supposed to upload enhanced due diligence documents</description>
+        <name>EDD_Required_Check</name>
+        <label>EDD Required Check</label>
+        <locationX>10958</locationX>
+        <locationY>2772</locationY>
+        <defaultConnector>
+            <targetReference>Loop_Application_Forms2</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Loop_Application_Forms2.Enhanced_Due_Diligence_Required__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_EDD_Requirement</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks the EDD flag status to determine if further EDD actions are required.</description>
+        <name>Evaluate_EDD_Flag_Status</name>
+        <label>Evaluate EDD Flag Status</label>
+        <locationX>10738</locationX>
+        <locationY>3156</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>EDD_Not_Required</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>EDD_Flag_Variable</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>EDD_Flag_Variable</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Opportunity_Stage_To_Review</targetReference>
+            </connector>
+            <label>EDD Not Required</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Evaluates if GSD criteria are met for the Opportunity, determining if GSD approval is needed.</description>
+        <name>Evaluate_GSD_Criteria</name>
+        <label>Evaluate GSD Criteria</label>
+        <locationX>3482</locationX>
+        <locationY>3288</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>GSD_Prohibited_Countries</name>
+            <conditionLogic>1 AND NOT 2</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_GSD_Approval</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Group Sanctions Desk - Prohibited Countries;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Group Sanctions Desk - Prohibited Countries;</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Group_Sanctions_Desk_Prohibited_Countries</targetReference>
+            </connector>
+            <label>GSD Prohibited Countries</label>
+        </rules>
+        <rules>
+            <name>GSD_criteria_met</name>
+            <conditionLogic>1 AND (NOT 2)</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_GSD_Approval</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need GSD Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need GSD Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_GSD_Required</targetReference>
+            </connector>
+            <label>GSD criteria met</label>
+        </rules>
+        <rules>
+            <name>GSD_not_required</name>
+            <conditionLogic>(NOT 1) AND 2</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_GSD_Approval</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need GSD Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need GSD Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Clear_GSD_Approval_Requirement</targetReference>
+            </connector>
+            <label>GSD not required</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Assesses if the Opportunity stage has changed to trigger the necessary follow-up actions</description>
+        <name>Evaluate_Stage_Change</name>
+        <label>Evaluate Stage Change</label>
+        <locationX>10013</locationX>
+        <locationY>5586</locationY>
+        <defaultConnector>
+            <targetReference>Subflow_Opportunity_Put_In_Queue</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>RM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RM</stringValue>
+                </rightValue>
+            </conditions>
+            <label>RM</label>
+        </rules>
+        <rules>
+            <name>Risk_Rating2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RR</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Stage_Risk_Rating</targetReference>
+            </connector>
+            <label>Risk Rating</label>
+        </rules>
+        <rules>
+            <name>ID_Address</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>IA</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>IDAddressVerification</targetReference>
+            </connector>
+            <label>ID &amp; Address</label>
+        </rules>
+        <rules>
+            <name>Document_Upload1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>DU</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Documentsupload</targetReference>
+            </connector>
+            <label>Document Upload</label>
+        </rules>
+        <rules>
+            <name>Sign_Off2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SO</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SignOff</targetReference>
+            </connector>
+            <label>Sign Off</label>
+        </rules>
+        <rules>
+            <name>Closed_Won</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>CW</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ClosedWon</targetReference>
+            </connector>
+            <label>Closed Won</label>
+        </rules>
+        <rules>
+            <name>Closed_Declined</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>CD</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Is_Decline_Reason_Not_Set</targetReference>
+            </connector>
+            <label>Closed Declined</label>
+        </rules>
+        <rules>
+            <name>Closed_Lost</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>CL</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ClosedLost</targetReference>
+            </connector>
+            <label>Closed Lost</label>
+        </rules>
+        <rules>
+            <name>Notify_RM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>NR</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Opportunity_Owner_ID2</targetReference>
+            </connector>
+            <label>Notify RM</label>
+        </rules>
+        <rules>
+            <name>Review_2nd_Level2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetStageCode</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>R2</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <isGoTo>true</isGoTo>
+                <targetReference>Set_for_Review_2nd_Level</targetReference>
+            </connector>
+            <label>Review 2nd Level</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Determines if the Opportunity stage has changed, routing the flow based on the new stage.</description>
+        <name>Evaluate_Stage_Change1</name>
+        <label>Evaluate Stage Change</label>
+        <locationX>10013</locationX>
+        <locationY>1692</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes4</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assess_Opportunity_Status</targetReference>
+            </connector>
+            <label>Stage has Changed</label>
+        </rules>
+        <rules>
+            <name>Document_Upload_Stage_And_Motivation_Provided</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Documents upload</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <isGoTo>true</isGoTo>
+                <targetReference>Check_Motivation_Requirement</targetReference>
+            </connector>
+            <label>Document Upload Stage And Motivation Provided</label>
+        </rules>
+        <rules>
+            <name>Required_Approval_Processes_has_Changed</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Queue_String_for_Approval_Processes</targetReference>
+            </connector>
+            <label>Required Approval Processes has Changed</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check whether GSD Prohibited Countries Encountered and change stage to Closed Declined if so.</description>
+        <name>GSD_Prohibited_Countries_Encountered</name>
+        <label>GSD Prohibited Countries Encountered</label>
+        <locationX>9508</locationX>
+        <locationY>1908</locationY>
+        <defaultConnector>
+            <targetReference>Check_Motivation_Requirement</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Outcome_1_of_GSD_Prohibited_Countries_Encountered</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Group Sanctions Desk - Prohibited Countries;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.StageName</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Closed_Declined3</targetReference>
+            </connector>
+            <label>Outcome 1 of GSD Prohibited Countries Encountered</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Is Last approver not a Client Manager</description>
+        <name>Is_Last_approver_not_a_Client_Manager</name>
+        <label>Is Last approver not a Client Manager</label>
+        <locationX>9837</locationX>
+        <locationY>4986</locationY>
+        <defaultConnector>
+            <targetReference>Change_NC_to_CM</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Last_approver_not_a_Client_Manager2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Last_approver_not_a_Client_Manager</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>true</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Next_Queue_Name</targetReference>
+            </connector>
+            <label>Is Last approver not a Client Manager</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check who approved previosly. If it&apos;s NC then next check whether he is also a member of Client Manager queue. If he is then consider that the approval has also been processed by Client Manager Queue and replace NC with CM so that we don&apos;t end up triggering approval request to Client Manager again</description>
+        <name>Is_processed_by_NC</name>
+        <label>Is processed by NC</label>
+        <locationX>10013</locationX>
+        <locationY>4770</locationY>
+        <defaultConnector>
+            <targetReference>Get_Next_Queue_Name</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_processed_by_NC2</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>QueueString</leftValueReference>
+                <operator>EndsWith</operator>
+                <rightValue>
+                    <stringValue>.NCA$</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>QueueString</leftValueReference>
+                <operator>EndsWith</operator>
+                <rightValue>
+                    <stringValue>.NCR$</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Last_approver_not_a_Client_Manager</targetReference>
+            </connector>
+            <label>Is processed by NC</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check</name>
+        <label>Null Check</label>
+        <locationX>4142</locationX>
+        <locationY>3072</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Custom_Notification_Types</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Opportunity_Owner_ID</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check10</name>
+        <label>Null Check</label>
+        <locationX>11002</locationX>
+        <locationY>2340</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null10</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Application_Forms</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>EDD_Flag</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check11</name>
+        <label>Null Check</label>
+        <locationX>5495</locationX>
+        <locationY>2016</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null11</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Retrieve_Application_Forms</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Loop_Through_Application_Forms</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check12</name>
+        <label>Null Check</label>
+        <locationX>16722</locationX>
+        <locationY>384</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null12</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Compliance_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Add_Compliance_Group_ID</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check13</name>
+        <label>Null Check</label>
+        <locationX>14379</locationX>
+        <locationY>6479</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null13</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Custom_Notification_Type</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Records_ProcessInstance2</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check14</name>
+        <label>Null Check</label>
+        <locationX>17888</locationX>
+        <locationY>384</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null14</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Client_Lead_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_New_Client_Senior_Manager_Group</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check15</name>
+        <label>Null Check</label>
+        <locationX>15600</locationX>
+        <locationY>384</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null15</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_New_Client_Manager_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Lead_Group</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check16</name>
+        <label>Null Check</label>
+        <locationX>15270</locationX>
+        <locationY>600</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null16</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Lead_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Add_Lead_Group_ID</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check17</name>
+        <label>Null Check</label>
+        <locationX>13978</locationX>
+        <locationY>6695</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null18</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Records_ProcessInstance2</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ProcessInstanceWorkItem</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check19</name>
+        <label>Null Check</label>
+        <locationX>13703</locationX>
+        <locationY>6911</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null20</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>ProcessInstanceWorkItem</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Compliance_User_Not_Assigned</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check3</name>
+        <label>Null Check</label>
+        <locationX>17558</locationX>
+        <locationY>600</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_New_Client_Senior_Manager_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Everything</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check7</name>
+        <label>Null Check</label>
+        <locationX>10013</locationX>
+        <locationY>384</locationY>
+        <defaultConnector>
+            <targetReference>Validate_Documentation_Assessment</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null7</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Records_ProcessInstance</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Count_Approval_Process_Records</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check8</name>
+        <label>Null Check</label>
+        <locationX>4868</locationX>
+        <locationY>2640</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null8</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Signed_Application_Form</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Signed_Application_Form</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Count_Signed_Application_Forms</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Handle Null Values</description>
+        <name>Null_Check9</name>
+        <label>Null Check</label>
+        <locationX>14434</locationX>
+        <locationY>384</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null9</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Fast_Track_Group</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Add_Fast_Track_Group_ID</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Process_Type</name>
+        <label>Process Type</label>
+        <locationX>974</locationX>
+        <locationY>2124</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Straight_Through_Process</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Queue_Conditions</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Eligible For Straight Through Process</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Straight_Through_Approver_IDs</targetReference>
+            </connector>
+            <label>Straight Through Process</label>
+        </rules>
+        <rules>
+            <name>Fast_Track_Queue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Queue_Conditions</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Eligible For Fast Track Queue</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Queue_String</targetReference>
+            </connector>
+            <label>Fast Track Queue</label>
+        </rules>
+        <rules>
+            <name>Full_Onboarding_Review_Queue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Queue_Conditions</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Eligible For Full Onboarding Review Queue</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Set_Full_Onboarding_Review_Queue_String</targetReference>
+            </connector>
+            <label>Full Onboarding Review Queue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks if documentation has been assessed before proceeding in the approval process.</description>
+        <name>Validate_Documentation_Assessment</name>
+        <label>Validate Documentation Assessment</label>
+        <locationX>10013</locationX>
+        <locationY>984</locationY>
+        <defaultConnector>
+            <targetReference>Validation_for_Motivation_Provision</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Documentation_Not_Assessed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Documentation Not Assessed;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.StageName</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.StageName</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Documentation_Not_Assessed_Error</targetReference>
+            </connector>
+            <label>Documentation Not Assessed</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>(Blocking)
+The approval process action will try to append the string &quot;Motivation Not Provided;&quot; intending to block Approve/Reject on approval request. The idea is make the approve/reject buttons to fail if motivation isn&apos;t provided by currently logged in user.
+Note: This validation in effect will never allow the string &quot;Motivation Not Provided;&quot; to become a part of the Required_Approval_Processes__c field.</description>
+        <name>Validation_for_Motivation_Provision</name>
+        <label>Validation for Motivation Provision</label>
+        <locationX>10013</locationX>
+        <locationY>1284</locationY>
+        <defaultConnector>
+            <targetReference>Get_opportunity_Ids</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Motivation_Not_Provided_By_The_Opportunity_Owner</name>
+            <conditionLogic>(NOT 1) AND 2 AND 3</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Motivation Provided;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Motivation Not Provided;</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.StageName</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.StageName</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Motivation_Not_Provided_by_Owner_Error</targetReference>
+            </connector>
+            <label>Motivation Not Provided By The Opportunity Owner</label>
+        </rules>
+    </decisions>
+    <description>SFP-34698
+Application Approval flow, Queues and Sign off
+Opportunity record triggered flow to drive the entire approval feature including checking into which Approval process an Opportunity falls in - Straight through, Fast Track and Full onboarding
+
+Entry Conditions:
+RecordType = ICS_Applicant,
+StageName Not Closed Lost or Closed Declined
+
+Modification Date:13-10-2025
+Modified By: Tushar Walse
+Modificaiton Description:
+SFP-52492 Reconfigure the GSD Referral Process
+Decline immediately if prohibited countries encountered after all application form records change stage to Awaiting Document Upload
+
+Modification Date:15-10-2025
+Modified By: Tushar Walse
+Modificaiton Description:
+SFP-53780 UAT BUG: Needed improvement on Joint opp with GSD Prohibited country and CASE: GSD Sanctioned and GSD Prohibited in the same application
+Reverting to old flow</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Check where Compliance user has been assigned to the Approval request</description>
+        <name>ComplianceUserAssigned</name>
+        <dataType>Boolean</dataType>
+        <expression>LEFT({!ProcessInstanceWorkItem.ActorId}, 3) == &apos;005&apos;</expression>
+    </formulas>
+    <formulas>
+        <name>DollarReplacedString</name>
+        <dataType>String</dataType>
+        <expression>IF(ISBLANK({!$Record.Required_Approval_Processes__c}), &apos;;&apos;, SUBSTITUTE({!$Record.Required_Approval_Processes__c}, &apos;$&apos;, &apos;;&apos;))</expression>
+    </formulas>
+    <formulas>
+        <name>FAISStringAppended</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Required_Approval_Processes__c} + &apos;Need FAIS Approval;&apos;</expression>
+    </formulas>
+    <formulas>
+        <name>GetStageCode</name>
+        <dataType>String</dataType>
+        <expression>{!Get_Next_Queue_Name}</expression>
+    </formulas>
+    <formulas>
+        <description>Append string to Required_Approval_Processes__c field</description>
+        <name>GSDString</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Required_Approval_Processes__c} + {!Check_GSD_Approval}</expression>
+    </formulas>
+    <formulas>
+        <name>MotivationStringAppended</name>
+        <dataType>String</dataType>
+        <expression>IF(CONTAINS({!$Record.Required_Approval_Processes__c}, &apos;Show Provide Motivation;&apos;), {!$Record.Required_Approval_Processes__c}, {!$Record.Required_Approval_Processes__c} + &apos;Show Provide Motivation;Motivation Not Provided;&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Replace NC by CM as NC who approved the request was also CM and hence we need to bypass the CM approval</description>
+        <name>QueueStringNCReplacedByCM</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(SUBSTITUTE({!QueueString}, &apos;.NCA$&apos;, &apos;.NCA.CMA$&apos;), &apos;.NCR$&apos;, &apos;.NCR.CMR$&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Replace NC by CM in Required_Approval_Processes__c as NC who approved the request was also CM and hence we need to bypass the CM approval</description>
+        <name>QueueStringNCReplacedByCM2</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(SUBSTITUTE({!$Record.Required_Approval_Processes__c}, &apos;.NCA$&apos;, &apos;.NCA.CMA$&apos;), &apos;.NCR$&apos;, &apos;.NCR.CMR$&apos;)</expression>
+    </formulas>
+    <interviewLabel>ICS Opportunity After Trigger Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>ICS Opportunity After Trigger Flow</label>
+    <loops>
+        <description>Loop each ApplicationForm under the Opportunity</description>
+        <name>Each_ApplicationForm</name>
+        <label>Each ApplicationForm</label>
+        <locationX>8586</locationX>
+        <locationY>2340</locationY>
+        <collectionReference>ApplicationForm</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Send_The_Application_Unsuccessful_Email</targetReference>
+        </nextValueConnector>
+    </loops>
+    <loops>
+        <description>Iterates through all application forms related to the Opportunity to process them.</description>
+        <name>Loop_Application_Forms2</name>
+        <label>Loop Application Forms</label>
+        <locationX>10738</locationX>
+        <locationY>2556</locationY>
+        <collectionReference>Application_Forms</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Application_Forms_Ids</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Evaluate_EDD_Flag_Status</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Iterates through all application forms related to the Opportunity for processing.</description>
+        <name>Loop_Through_Application_Forms</name>
+        <label>Loop Through Application Forms</label>
+        <locationX>4868</locationX>
+        <locationY>2124</locationY>
+        <collectionReference>Retrieve_Application_Forms</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>add_to_Collection</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Count_Application_Forms</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Get All the Application Forms which are related to Currrent OpportunityId</description>
+        <name>Application_Forms</name>
+        <label>Application Forms</label>
+        <locationX>11002</locationX>
+        <locationY>2232</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check10</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name17</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OpportunityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ApplicationForm</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get ApplicationForm records for the Opportunity</description>
+        <name>ApplicationForm</name>
+        <label>ApplicationForm</label>
+        <locationX>8586</locationX>
+        <locationY>2232</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Each_ApplicationForm</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name55</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OpportunityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ApplicationForm</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the Client Lead Group for managing notifications related to the Opportunity.</description>
+        <name>Get_Client_Lead_Group</name>
+        <label>Get Client Lead Group</label>
+        <locationX>17888</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check14</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name5</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_IOM_Lead</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieve the Group of ICS_UK_Compliance</description>
+        <name>Get_Compliance_Group</name>
+        <label>Get Compliance Group</label>
+        <locationX>16722</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check12</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name3</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_Compliance</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the custom notification type record for sending notifications related to the approval flow.</description>
+        <name>Get_Custom_Notification_Type</name>
+        <label>Get Custom Notification Type</label>
+        <locationX>14379</locationX>
+        <locationY>6371</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check13</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name08</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_Approval_Flow_Notifications</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the custom notification type records for sending notifications about the Opportunity.</description>
+        <name>Get_Custom_Notification_Types</name>
+        <label>Get Custom Notification Types</label>
+        <locationX>4142</locationX>
+        <locationY>2964</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name42</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_Approval_Flow_Notifications</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the custom notification type records for sending notifications about the Opportunity.</description>
+        <name>Get_Custom_Notification_Types2</name>
+        <label>Get Custom Notification Types</label>
+        <locationX>11993</locationX>
+        <locationY>5802</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Notify_Opportunity_Owner2</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_Approval_Flow_Notifications</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get EMAIL Template ID</description>
+        <name>Get_EMAIL_Template_ID</name>
+        <label>Get EMAIL Template ID</label>
+        <locationX>8586</locationX>
+        <locationY>2124</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>ApplicationForm</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name48</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SBO_ApplicationUnsuccessfulTemplate</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>EmailTemplate</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the Fast Track Group for managing expedited approvals related to the Opportunity.</description>
+        <name>Get_Fast_Track_Group</name>
+        <label>Get Fast Track Group</label>
+        <locationX>14434</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check9</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name2</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_New_Client_Officer</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the Lead Group to include in notifications for managing opportunities.</description>
+        <name>Get_Lead_Group</name>
+        <label>Get Lead Group</label>
+        <locationX>15270</locationX>
+        <locationY>492</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check16</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name25</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_IOM_Lead</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the New Client Manager Group responsible for handling new client approvals.</description>
+        <name>Get_New_Client_Manager_Group</name>
+        <label>Get New Client Manager Group</label>
+        <locationX>15600</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check15</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name07</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_New_Client_Manager</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves the Senior Manager Group responsible for overseeing new client approvals.</description>
+        <name>Get_New_Client_Senior_Manager_Group</name>
+        <label>Get New Client Senior Manager Group</label>
+        <locationX>17558</locationX>
+        <locationY>492</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check3</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name4</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ICS_UK_New_Client_Senior_Manager</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves ProcessInstance records related to Opportunity which are pending</description>
+        <name>Get_Records_ProcessInstance</name>
+        <label>Get Records ProcessInstance</label>
+        <locationX>10013</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check7</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>TargetObjectId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Pending</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ProcessInstance</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves ProcessInstance records related to Opportunity which are pending</description>
+        <name>Get_Records_ProcessInstance2</name>
+        <label>Get Records ProcessInstance</label>
+        <locationX>13978</locationX>
+        <locationY>6587</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check17</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name52</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>TargetObjectId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Pending</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>ProcessInstance</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves application forms that are in the &quot;Signed&quot; stage associated with the current Opportunity.</description>
+        <name>Get_Signed_Application_Form</name>
+        <label>Get Signed Application Form</label>
+        <locationX>4868</locationX>
+        <locationY>2532</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check8</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name40</targetReference>
+        </faultConnector>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
+        <filters>
+            <field>OpportunityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Stage</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Signed</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Stage</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Completed</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ApplicationForm</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>ProcessInstanceWorkItem</description>
+        <name>ProcessInstanceWorkItem</name>
+        <label>ProcessInstanceWorkItem</label>
+        <locationX>13703</locationX>
+        <locationY>6803</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check19</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ProcessInstanceId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Records_ProcessInstance2.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>ProcessInstanceWorkitem</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Retrieves all Application Forms associated with the current Opportunity.</description>
+        <name>Retrieve_Application_Forms</name>
+        <label>Retrieve Application Forms</label>
+        <locationX>5495</locationX>
+        <locationY>1908</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Null_Check11</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name39</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OpportunityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ApplicationForm</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Update Opportunity Stage to Closed Declined</description>
+        <name>Closed_Declined2</name>
+        <label>Closed Declined</label>
+        <locationX>10937</locationX>
+        <locationY>5802</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name43</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Declined</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Opportunity Stage to Closed Declined</description>
+        <name>Closed_Declined3</name>
+        <label>Closed Declined</label>
+        <locationX>8586</locationX>
+        <locationY>2016</locationY>
+        <connector>
+            <targetReference>Get_EMAIL_Template_ID</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name45</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>ICS_Decline_Reason__c</field>
+            <value>
+                <stringValue>Business Risk Appetite</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Declined</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Opportunity Stage with ICS_Decline_Reason__c</description>
+        <name>ClosedDeclined</name>
+        <label>Closed Declined</label>
+        <locationX>10409</locationX>
+        <locationY>5802</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name11</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>ICS_Decline_Reason__c</field>
+            <value>
+                <stringValue>IOM Other reasons</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Declined</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Opportunity Stage to Closed Lost</description>
+        <name>ClosedLost</name>
+        <label>Closed Lost</label>
+        <locationX>11465</locationX>
+        <locationY>5694</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name10</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Lost</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Opportunity  Stage to the Closed Won</description>
+        <name>ClosedWon</name>
+        <label>Closed Won</label>
+        <locationX>9881</locationX>
+        <locationY>5694</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name12</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Won</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the Opportunity stage to  Documents upload</description>
+        <name>Documentsupload</name>
+        <label>Documents upload</label>
+        <locationX>8825</locationX>
+        <locationY>5694</locationY>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Check_Motivation_Requirement</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name14</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Documents upload</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the Opportunity stage to  ID &amp; Address Verification</description>
+        <name>IDAddressVerification</name>
+        <label>ID &amp; Address Verification</label>
+        <locationX>8297</locationX>
+        <locationY>5694</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name15</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>ID &amp; Address Verification</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Opportunity_Stage_To_Review</name>
+        <label>Opportunity Stage To Review</label>
+        <locationX>10474</locationX>
+        <locationY>3264</locationY>
+        <connector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Check_for_Pending_Approvals</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name38</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Review</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the Opportunity stage to the  Sign-Off</description>
+        <name>SignOff</name>
+        <label>Sign-Off</label>
+        <locationX>9353</locationX>
+        <locationY>5694</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name13</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Sign-Off</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the Opportunity stage to the Risk Rating</description>
+        <name>Stage_Risk_Rating</name>
+        <label>Risk Rating</label>
+        <locationX>7769</locationX>
+        <locationY>5694</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name16</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Risk Rating </stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Required_Approval_Processes__c field with Group Sanctions Desk - Prohibited Countries; + PartyProfileIds of GSD Applicants delimited with semicolon + End Group Sanctions Desk - Prohibited Countries;</description>
+        <name>Update_Group_Sanctions_Desk_Prohibited_Countries</name>
+        <label>Update Group Sanctions Desk - Prohibited Countries</label>
+        <locationX>2426</locationX>
+        <locationY>3396</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name46</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>GSDString</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Required_Approval_Processes__c field with Need GSD Approval; + PartyProfileIds of GSD Applicants delimited with semicolon + End Need GSD Approval;</description>
+        <name>Update_GSD_Required</name>
+        <label>Update GSD Required</label>
+        <locationX>2954</locationX>
+        <locationY>3396</locationY>
+        <connector>
+            <targetReference>Notify_Opportunity_Owner</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name47</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>GSDString</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Opportunity</description>
+        <name>Update_Opportunity_Req</name>
+        <label>Update Opportunity</label>
+        <locationX>9925</locationX>
+        <locationY>5202</locationY>
+        <connector>
+            <targetReference>Get_Next_Queue_Name</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>QueueStringNCReplacedByCM2</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Queue_to_Fast_Track</name>
+        <label>Update Queue to Fast Track</label>
+        <locationX>842</locationX>
+        <locationY>2340</locationY>
+        <connector>
+            <targetReference>Update_Required_Approval_Processes</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name26</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Queue__c</field>
+            <value>
+                <stringValue>Fast Track</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the opportunity Queue Name to New Client Onboarding Review</description>
+        <name>Update_Queue_to_New_Client_Onboarding_Review</name>
+        <label>Update Queue to New Client Onboarding Review</label>
+        <locationX>1370</locationX>
+        <locationY>2340</locationY>
+        <connector>
+            <targetReference>Update_Required_Approval_Processes</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name28</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Queue__c</field>
+            <value>
+                <stringValue>New Client Onboarding Review</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update opportunity record with Required Approval Process Field as per the Motivation String Appended Formula</description>
+        <name>Update_Required_Approval_Process_Field</name>
+        <label>Update Required Approval Process Field</label>
+        <locationX>9858</locationX>
+        <locationY>2232</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name19</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>MotivationStringAppended</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update the Current Opportunity Required_Approval_Processes__c</description>
+        <name>Update_Required_Approval_Processes</name>
+        <label>Update Required Approval Processes</label>
+        <locationX>6648</locationX>
+        <locationY>4380</locationY>
+        <connector>
+            <targetReference>Is_processed_by_NC</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error_Element_Name35</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Required_Approval_Processes__c</field>
+            <value>
+                <elementReference>QueueString</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Updates the Opportunity stage to &quot;Closed Won&quot; upon successful approval.</description>
+        <name>Update_Stage_to_Closed_Won</name>
+        <label>Update Stage to Closed Won</label>
+        <locationX>50</locationX>
+        <locationY>2448</locationY>
+        <faultConnector>
+            <targetReference>Error_Element_Name21</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Queue__c</field>
+            <value>
+                <stringValue>Straight Through</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>StageName</field>
+            <value>
+                <stringValue>Closed Won</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>14253</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Records_ProcessInstance</targetReference>
+        </connector>
+        <filterFormula>AND(
+{!$Record.RecordType.DeveloperName} = &apos;ICS_Applicant&apos;,
+NOT(ISPICKVAL({!$Record.StageName}, &quot;Closed Lost&quot;)),
+NOT(ISPICKVAL({!$Record.StageName}, &quot;Closed Declined&quot;))
+)</filterFormula>
+        <object>Opportunity</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Fast_track_1hr_SLA_breached</name>
+            <connector>
+                <targetReference>Get_Fast_Track_Group</targetReference>
+            </connector>
+            <label>Fast track 1hr SLA breached</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Hours</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>Fast_track_2hr_SLA_breached</name>
+            <connector>
+                <targetReference>Get_New_Client_Manager_Group</targetReference>
+            </connector>
+            <label>Fast track 2hr SLA breached</label>
+            <offsetNumber>2</offsetNumber>
+            <offsetUnit>Hours</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>Compliance_1_Day_SLA_breached</name>
+            <connector>
+                <targetReference>Get_Compliance_Group</targetReference>
+            </connector>
+            <label>Compliance 1 Day SLA breached</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>Full_Review_2_Day_SLA_Breached</name>
+            <connector>
+                <targetReference>Get_Client_Lead_Group</targetReference>
+            </connector>
+            <label>Full Review 2 Day SLA Breached</label>
+            <offsetNumber>2</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <scheduledPaths>
+            <name>Compliance_1_Day_After_User_Assignment_SLA_Breached</name>
+            <connector>
+                <isGoTo>true</isGoTo>
+                <targetReference>Get_Compliance_Group</targetReference>
+            </connector>
+            <label>Compliance 1 Day After User Assignment SLA Breached</label>
+            <offsetNumber>2</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>LastModifiedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <subflows>
+        <description>Handles the placement of an Opportunity into the appropriate queue based on its current state and predefined criteria. This subflow ensures efficient routing for timely processing and updates Opportunity records as needed</description>
+        <name>Subflow_Opportunity_Put_In_Queue</name>
+        <label>Subflow Opportunity Put In Queue</label>
+        <locationX>12521</locationX>
+        <locationY>5694</locationY>
+        <flowName>ICS_Opportunity_Put_In_Queue_Subflow</flowName>
+        <inputAssignments>
+            <name>ApproverGroupCodeFromParentFlow</name>
+            <value>
+                <elementReference>Get_Next_Queue_Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <name>OpportunityRecordFromParentFlow</name>
+            <value>
+                <elementReference>$Record</elementReference>
+            </value>
+        </inputAssignments>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </subflows>
+    <textTemplates>
+        <description>Body of the email to RM</description>
+        <name>emailBody</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi,
+A new opportunity named {!$Record.Name} has come up for Group Sanction Desk approval.
+To view, click on the Salesforce notification.</text>
+    </textTemplates>
+    <textTemplates>
+        <description>Subject of the email that the RM will see</description>
+        <name>EmailSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Group Sanction Desk Triggered for {!$Record.Name}</text>
+    </textTemplates>
+    <variables>
+        <name>application_form_ids_count</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+    </variables>
+    <variables>
+        <name>applicationFormIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>approverIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>EDD_Flag_Variable</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
+    </variables>
+    <variables>
+        <name>GroupIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>LogArea</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>notificationText</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <stringValue>1 hour SLA for an outcome on onboarding decision by Fast Track has been breached</stringValue>
+        </value>
+    </variables>
+    <variables>
+        <name>opportunityids</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>OwnerId</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>partyProfileIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>QueueString</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>RecordsCount</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+        <value>
+            <numberValue>0.0</numberValue>
+        </value>
+    </variables>
+    <variables>
+        <name>signed_application_form_ids_count</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>0</scale>
+    </variables>
+</Flow>

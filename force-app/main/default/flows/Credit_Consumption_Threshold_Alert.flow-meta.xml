@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Retrieves data on Digital Wallet consumption cards and alerts.</description>
+        <name>Compute_Consumption</name>
+        <label>Compute Consumption</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>computeConsumption</actionName>
+        <actionType>computeConsumption</actionType>
+        <connector>
+            <targetReference>Check_for_Cards</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <nameSegment>computeConsumption</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Creates an alert and sends a notification to the provided list of users.</description>
+        <name>Create_Alert_and_Notify</name>
+        <label>Create Alert and Notify</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>createConsumptionAlert</actionName>
+        <actionType>createConsumptionAlert</actionType>
+        <connector>
+            <targetReference>Thresholds</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>cardDefinitionDeveloperName</name>
+            <value>
+                <elementReference>Cards.cardDefinitionDeveloperName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>businessEnvType</name>
+            <value>
+                <elementReference>Cards.businessEnvType</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>usageModel</name>
+            <value>
+                <elementReference>Cards.usageModel</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>alertTriggerType</name>
+            <value>
+                <elementReference>AlertTriggerType</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>alertTriggerValue</name>
+            <value>
+                <elementReference>Thresholds</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendNotification</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>Collect_User_IDs</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>createConsumptionAlert</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Declare threshold values to compare to the card&apos;s consumption.</description>
+        <name>Assign_Thresholds</name>
+        <label>Assign Thresholds</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>ThresholdValues</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <numberValue>70.0</numberValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>ThresholdValues</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <numberValue>90.0</numberValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Find_Exceeded_Thresholds</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set the alert trigger type to be percent consumed.</description>
+        <name>Assign_Type_Percent</name>
+        <label>Assign Type (Percent)</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>AlertTriggerType</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>AlertTriggerType_ThresholdPercent</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assign_Thresholds</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Set the alert trigger type to be units consumed.</description>
+        <name>Assign_Type_Units</name>
+        <label>Assign Type (Units)</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>AlertTriggerType</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>AlertTriggerType_ThresholdUnits</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Find_Exceeded_Thresholds</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Clear the ThresholdValues collection. Each iteration should set its own thresholds.</description>
+        <name>Clear_Threshold_Values</name>
+        <label>Clear Threshold Values</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>ThresholdValues</assignToReference>
+            <operator>RemoveAll</operator>
+            <value>
+                <elementReference>ThresholdValues</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_Card_Conditions</targetReference>
+        </connector>
+    </assignments>
+    <collectionProcessors>
+        <description>Find existing alerts whose value is equal to or higher than the current threshold value in the loop.</description>
+        <name>Find_Equal_or_Higher_Alerts</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Find Equal or Higher Alerts</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNextValueToReference>currentItem_Find_Equal_or_Higher_Alerts</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>Cards.consumptionAlerts</collectionReference>
+        <conditionLogic>and</conditionLogic>
+        <conditions>
+            <leftValueReference>currentItem_Find_Equal_or_Higher_Alerts.alertTriggerType</leftValueReference>
+            <operator>EqualTo</operator>
+            <rightValue>
+                <elementReference>AlertTriggerType</elementReference>
+            </rightValue>
+        </conditions>
+        <conditions>
+            <leftValueReference>currentItem_Find_Equal_or_Higher_Alerts.alertTriggerValue</leftValueReference>
+            <operator>GreaterThanOrEqualTo</operator>
+            <rightValue>
+                <elementReference>Thresholds</elementReference>
+            </rightValue>
+        </conditions>
+        <connector>
+            <targetReference>Check_Alert_Conditions</targetReference>
+        </connector>
+    </collectionProcessors>
+    <collectionProcessors>
+        <description>Find thresholds that the card&apos;s consumption value has exceeded.</description>
+        <name>Find_Exceeded_Thresholds</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Find Exceeded Thresholds</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNextValueToReference>currentItem_Find_Exceeded_Thresholds</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>ThresholdValues</collectionReference>
+        <conditionLogic>and</conditionLogic>
+        <conditions>
+            <leftValueReference>currentItem_Find_Exceeded_Thresholds</leftValueReference>
+            <operator>LessThanOrEqualTo</operator>
+            <rightValue>
+                <elementReference>CardConsumption</elementReference>
+            </rightValue>
+        </conditions>
+        <connector>
+            <targetReference>Sort_Thresholds_Descending</targetReference>
+        </connector>
+    </collectionProcessors>
+    <collectionProcessors>
+        <description>Sort threshold values descending. The thresholds loop assumes that the highest-valued threshold appears first.</description>
+        <name>Sort_Thresholds_Descending</name>
+        <elementSubtype>SortCollectionProcessor</elementSubtype>
+        <label>Sort Thresholds Descending</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionProcessorType>SortCollectionProcessor</collectionProcessorType>
+        <collectionReference>Find_Exceeded_Thresholds</collectionReference>
+        <connector>
+            <targetReference>Thresholds</targetReference>
+        </connector>
+        <limit>1</limit>
+        <sortOptions>
+            <doesPutEmptyStringAndNullFirst>false</doesPutEmptyStringAndNullFirst>
+            <sortOrder>Desc</sortOrder>
+        </sortOptions>
+    </collectionProcessors>
+    <constants>
+        <description>Constant &quot;ThresholdPercent&quot;. A type of alert that fires when a consumption card&apos;s percentage consumed exceeds a provided threshold. Note that some cards don&apos;t support percentage consumed.</description>
+        <name>AlertTriggerType_ThresholdPercent</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>ThresholdPercent</stringValue>
+        </value>
+    </constants>
+    <constants>
+        <description>Constant &quot;ThresholdUnits&quot;. A type of alert that fires when a consumption card&apos;s units consumed exceeds a provided threshold.</description>
+        <name>AlertTriggerType_ThresholdUnits</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>ThresholdUnits</stringValue>
+        </value>
+    </constants>
+    <constants>
+        <description>Constant &quot;PrePurchased&quot;. The value of the &quot;usageModel&quot; field for prepaid cards.</description>
+        <name>UsageModel_PrePurchased</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>PrePurchased</stringValue>
+        </value>
+    </constants>
+    <decisions>
+        <description>Determines if an alert is created for a consumption card when its usage exceeds the provided threshold. When a card exceeds a threshold, alerts are only created if the card has either gone into overage or the card doesn&apos;t have any existing alerts with an equal or higher threshold value.</description>
+        <name>Check_Alert_Conditions</name>
+        <label>Check Alert Conditions</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Thresholds</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Alert Already Exists</defaultConnectorLabel>
+        <rules>
+            <name>Above_Existing_Alerts</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>Find_Equal_or_Higher_Alerts</leftValueReference>
+                <operator>IsEmpty</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>IsOverage</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Wait_Before_Create_Alert</targetReference>
+            </connector>
+            <label>Above Existing Alerts</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks conditions that determine which threshold value and type is used for this card.</description>
+        <name>Check_Card_Conditions</name>
+        <label>Check Card Conditions</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Assign_Type_Units</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Units Threshold</defaultConnectorLabel>
+        <rules>
+            <name>Percentage_Threshold</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>PercentConsumed</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Type_Percent</targetReference>
+            </connector>
+            <label>Percentage Threshold</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks if any consumption cards exist. Exit the flow if false.</description>
+        <name>Check_for_Cards</name>
+        <label>Check for Cards</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Cards</defaultConnectorLabel>
+        <rules>
+            <name>Has_Cards</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Compute_Consumption.cards</leftValueReference>
+                <operator>IsEmpty</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Credit_Consumption_Notification_Group</targetReference>
+            </connector>
+            <label>Has Cards</label>
+        </rules>
+    </decisions>
+    <description>SFP-54221 : This flow is created to track the consumption of credits across various cards, and trigger an alert to user group.</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>The card’s consumption value based on the alert trigger type. This result is compared to each threshold to determine whether an alert trigger has been met.</description>
+        <name>CardConsumption</name>
+        <dataType>Number</dataType>
+        <expression>IF({!AlertTriggerType}={!AlertTriggerType_ThresholdPercent}, {!PercentConsumed}, IF({!AlertTriggerType}={!AlertTriggerType_ThresholdUnits}, {!Cards.unitsConsumed}, null))</expression>
+        <scale>2</scale>
+    </formulas>
+    <formulas>
+        <description>Describes whether the current element in the thresholds&apos; loop indicates a consumption overage scenario.</description>
+        <name>IsOverage</name>
+        <dataType>Boolean</dataType>
+        <expression>AND({!Thresholds}==100, {!AlertTriggerType}=={!AlertTriggerType_ThresholdPercent}, {!Cards.usageModel}=={!UsageModel_PrePurchased})</expression>
+    </formulas>
+    <formulas>
+        <description>The percent consumed for a given consumption card.</description>
+        <name>PercentConsumed</name>
+        <dataType>Number</dataType>
+        <expression>IF({!Cards.totalEntitlement} &gt; 0, 100*{!Cards.unitsConsumed}/{!Cards.totalEntitlement}, null)</expression>
+        <scale>2</scale>
+    </formulas>
+    <interviewLabel>Credit Consumption Threshold Alert {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Credit Consumption Threshold Alert</label>
+    <loops>
+        <description>Loops over the consumption cards.</description>
+        <name>Cards</name>
+        <label>Cards</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>Compute_Consumption.cards</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Clear_Threshold_Values</targetReference>
+        </nextValueConnector>
+    </loops>
+    <loops>
+        <description>Loops over the exceeded thresholds.</description>
+        <name>Thresholds</name>
+        <label>Thresholds</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>Find_Exceeded_Thresholds</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Find_Equal_or_Higher_Alerts</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Cards</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Gets the public group with the name &quot;Credit Consumption Notification Group&quot;</description>
+        <name>Get_Credit_Consumption_Notification_Group</name>
+        <label>Get Credit Consumption Notification Group</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Users</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Credit_Consumption_Notification_Group</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <queriedFields>Id</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Gets all users which are member of public group &apos;Credit Consumption Notification Group&apos; in this org.</description>
+        <name>Get_Users</name>
+        <label>Get Users</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Collect_User_IDs</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>GroupId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Credit_Consumption_Notification_Group.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <limit>
+            <numberValue>1000.0</numberValue>
+        </limit>
+        <object>GroupMember</object>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>UserOrGroupId</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <sourceTemplate>sfdw__ConsumptionThresholdAlerts</sourceTemplate>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Wait_Before_Compute_Consumption</targetReference>
+        </connector>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2024-09-01</startDate>
+            <startTime>07:00:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+    </start>
+    <status>Active</status>
+    <transforms>
+        <description>Collects User IDs from the collection of users.</description>
+        <name>Collect_User_IDs</name>
+        <label>Collect User IDs</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Cards</targetReference>
+        </connector>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <scale>0</scale>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+        <transformValues>
+            <transformValueActions>
+                <transformType>Map</transformType>
+                <value>
+                    <elementReference>Get_Users[$EachItem].UserOrGroupId</elementReference>
+                </value>
+            </transformValueActions>
+        </transformValues>
+    </transforms>
+    <variables>
+        <description>The type of alert trigger being processed.</description>
+        <name>AlertTriggerType</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>currentItem_Find_Equal_or_Higher_Alerts</name>
+        <apexClass>sfdw__ConsumptionAlert</apexClass>
+        <dataType>Apex</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>currentItem_Find_Exceeded_Thresholds</name>
+        <dataType>Number</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>2</scale>
+    </variables>
+    <variables>
+        <description>The threshold values to trigger the alert on. The values in this collection can be customized for each consumption card.</description>
+        <name>ThresholdValues</name>
+        <dataType>Number</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <scale>2</scale>
+    </variables>
+    <waits>
+        <description>Pauses the flow for one minute to commit the current transaction. Required before calling the Compute Consumption action because it makes a callout.</description>
+        <name>Wait_Before_Compute_Consumption</name>
+        <elementSubtype>WaitDuration</elementSubtype>
+        <label>Wait</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Path</defaultConnectorLabel>
+        <waitEvents>
+            <conditionLogic>and</conditionLogic>
+            <connector>
+                <targetReference>Compute_Consumption</targetReference>
+            </connector>
+            <label>el_0</label>
+            <offset>1</offset>
+            <offsetUnit>Minutes</offsetUnit>
+        </waitEvents>
+    </waits>
+    <waits>
+        <description>Pauses the flow for one minute to commit the current transaction. Required before calling the Create Consumption Alert action because it makes a callout.</description>
+        <name>Wait_Before_Create_Alert</name>
+        <elementSubtype>WaitDuration</elementSubtype>
+        <label>Wait</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Path</defaultConnectorLabel>
+        <waitEvents>
+            <conditionLogic>and</conditionLogic>
+            <connector>
+                <targetReference>Create_Alert_and_Notify</targetReference>
+            </connector>
+            <label>el_1</label>
+            <offset>1</offset>
+            <offsetUnit>Minutes</offsetUnit>
+        </waitEvents>
+    </waits>
+</Flow>

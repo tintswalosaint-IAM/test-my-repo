@@ -1,0 +1,390 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email</name>
+        <label>Send Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Request_World_Checks</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Request_World_Checks_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>template</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>CurrentUser</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>subject</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Business_Variables</name>
+        <label>Assign Business Variables</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>businessSubject</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>businessTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Assign_Legal_Entity_Variables</name>
+        <label>Assign Legal Entity Variables</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>LegalEntitySubject</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>LegalEntityTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Assign_Person_Variables</name>
+        <label>Assign Person Variables</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>personSubject</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>personTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Check_Person_or_Bussines</name>
+        <label>Check Business, Person or Legal Entity</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Request_World_Checks_3</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>None</defaultConnectorLabel>
+        <rules>
+            <name>Business</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.Application__r.WI_CompanyName__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordId.Application__r.WI_CompanyRegistrationNumber__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Business_Variables</targetReference>
+            </connector>
+            <label>Business</label>
+        </rules>
+        <rules>
+            <name>Person</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.Application__r.WI_IdentificationNumber__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordId.RecordType.DeveloperName</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Legal_Entity</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Person_Variables</targetReference>
+            </connector>
+            <label>Person</label>
+        </rules>
+        <rules>
+            <name>Legal_Entity</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.WI_Entity_Registration_Number__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordId.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Legal_Entity</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Legal_Entity_Variables</targetReference>
+            </connector>
+            <label>Legal Entity</label>
+        </rules>
+    </decisions>
+    <description>SFP-20429 - Client Engagement Report | World checks notification email
+SFP-40947 - CRA check buttons must not be the creator of party screening fields.
+SFP-50319 - Intermittent email notifications delivery issues, running context of the flow altered to minimize issues.
+SFP-50491 -  Change the email template sent to due deligence team to reference &quot;Media check&quot; instead of &quot;World Check&quot;</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>email</name>
+        <dataType>String</dataType>
+        <expression>{!$Setup.WI_Settings__c.WI_WorldChecksNotificationEmail__c} +&apos;,&apos;+ {!$User.Email}</expression>
+    </formulas>
+    <formulas>
+        <name>IdTypePicklistLabel</name>
+        <dataType>String</dataType>
+        <expression>CASE( TEXT( {!recordId.PrimaryIdentifierType} ),
+&apos;1&apos;, &apos;National Identity Document&apos;, 
+&apos;6&apos;, &apos;Passport Number&apos;,
+&apos;20&apos;, &apos;Refugee Permit Document&apos;,
+&apos;2&apos;, &apos;Identity Card&apos;,
+&apos;10&apos;, &apos;Enterprise Registration Number&apos;,
+&apos;11&apos;, &apos;Enterprise Identity Number&apos;, 
+&apos;21&apos;, &apos;Asylum Seeker Permit Document&apos;,
+&apos;22&apos;, &apos;Voters Id Card&apos;,
+&apos;98&apos;, &apos;Id Number Not Available/Not Applicable&apos;,
+&apos;Other&apos;)</expression>
+    </formulas>
+    <interviewLabel>W&amp;I PartyProfile Request World Checks {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>W&amp;I PartyProfile Request World Checks</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <screens>
+        <name>Request_World_Checks</name>
+        <label>Request World Checks</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Notification</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;color: rgb(15, 170, 1);&quot;&gt;Your Request World Checks have been sent. You will be notified via email when it has been completed.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>OK</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Request_World_Checks_3</name>
+        <label>Request World Checks</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>WarnMessage</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;color: rgb(255, 0, 0);&quot;&gt;Please enter a valid Company Registration Number and Company Name OR Identification Number on Application record&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>OK</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Request_World_Checks_Error</name>
+        <label>Request World Checks Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Error</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;color: rgb(255, 0, 0);&quot;&gt;Something went wrong. Please contact with your admin.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(255, 0, 0);&quot;&gt;Error: {!$Flow.FaultMessage}&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>OK</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Person_or_Bussines</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>businessSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Wealth and Investment Media check request: {!recordId.Application__r.WI_CompanyName__c}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>businessTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Media Check request for Legal Entity 
+Business Name:{!recordId.Application__r.WI_CompanyName__c}
+Registration Number:{!recordId.Application__r.WI_CompanyRegistrationNumber__c}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>LegalEntitySubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Wealth and Investment Media check request: {!recordId.Name}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>LegalEntityTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Media Check request for Legal Entity 
+Legal Entity Name: {!recordId.Name}
+Entity Registration Number: {!recordId.WI_Entity_Registration_Number__c}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>personSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Wealth and Investment Media check request</text>
+    </textTemplates>
+    <textTemplates>
+        <name>personTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Good day
+Please complete a Media check for:
+Firstname:
+{!recordId.FirstName}
+Middlename:
+{!recordId.MiddleName}
+Lastname:
+{!recordId.LastName}
+ID Type:
+{!IdTypePicklistLabel}
+ID/Passport Number:
+{!recordId.WI_PrimaryIdentificationName__c}
+Regards
+Wealth and Investment</text>
+    </textTemplates>
+    <variables>
+        <name>recordId</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>PartyProfile</objectType>
+    </variables>
+    <variables>
+        <name>subject</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>template</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

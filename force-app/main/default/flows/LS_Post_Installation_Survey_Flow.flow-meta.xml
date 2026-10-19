@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Installation_Survey</name>
+        <label>Installation Survey</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <actionName>Opportunity.Post_Installation_Survey</actionName>
+        <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>Update_Set_Survey_Status_Field</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Opportunity.Post_Installation_Survey</nameSegment>
+    </actionCalls>
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SFP-30904 - Send Survey email (until WhatsApp survey is in place) – immediately after the Opportunity Stage changes to Closed Won</description>
+    <environments>Default</environments>
+    <interviewLabel>Post Installation Survey Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Post Installation Survey Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Set_Survey_Status_Field</name>
+        <label>Update Set Survey Status Field</label>
+        <locationX>176</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>Set_Survey_Status__c</field>
+            <value>
+                <stringValue>Sent</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Installation_Survey</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>{!$Record.RecordType.DeveloperName} = &apos;LookSee_Opportunity&apos; &amp;&amp;  ISPICKVAL({!$Record.StageName}, &apos;Closed Won&apos;)</filterFormula>
+        <object>Opportunity</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>InstallationSurveyEmailBody</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Dear {{{Recipient.FirstName}}},
+
+We are so pleased that your solar installation is now complete, and we wish you many hours of enjoying your always-on home and lower electricity bills.
+Your feedback is really important to us, and we would really appreciate it if you would complete this short survey to help us improve our offerings and service.
+
+              Tell us what you think
+
+We’d also like to take this opportunity to advise you to get in touch with your insurer to inform them of your new solar installation. If you are insured with Standard Insurance Limited, please send your request to: SILPolicy.admin@standardbank.co.za and a consultant will contact you.
+
+Insurers will typically require the following information:
+
+Final quote with details of the equipment as well as value.
+Final invoice which clearly shows your details and that of the installer.
+Supplementary electrical Certificate of Compliance.
+Whether you wish to amend the insured value of your home.
+If you are uncertain of whether the insured value of your house is accurate, Standard Bank has partnered with trusted providers who can assist with the valuation of your home for insurance purposes.  You can find this service on the Looksee platform.
+
+While our Solar partners do provide surge protection for the inverter, sometimes the incoming power surge is far greater than what the surge protection can cater for, so we encourage you to discuss surge protection options with your Insurer, not only for the inverter but for all your valuable household appliances. Please see this informative article on Surge protection in the home
+
+Thank you once again for going on this journey with us. If you have any questions or require additional assistance, please feel free to get in touch with me.
+
+Warm regards,
+{{{Sender.FirstName}}}</text>
+    </textTemplates>
+</Flow>

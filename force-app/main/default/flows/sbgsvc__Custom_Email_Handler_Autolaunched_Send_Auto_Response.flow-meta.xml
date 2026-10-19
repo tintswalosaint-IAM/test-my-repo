@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <description>Autolaunched flow to send auto-response emails for the SBG Common Services Inbound Email Handler</description>
+    <environments>Default</environments>
+    <label>Custom Email Handler - Autolaunched - Send Auto Response</label>
+    <processType>AutoLaunchedFlow</processType>
+</Flow>

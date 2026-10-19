@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email</name>
+        <label>Send Email</label>
+        <locationX>1175</locationX>
+        <locationY>773</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>EmailBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddressesArray</name>
+            <value>
+                <elementReference>ccAddresses</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>Inactive Agent&apos;s status</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Email_PT</name>
+        <label>Send Email PT</label>
+        <locationX>1174</locationX>
+        <locationY>637</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>EmailBodyPT</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddressesArray</name>
+            <value>
+                <elementReference>ccAddresses</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>Estado do Agente Inativo</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>52.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Manager</name>
+        <label>Assign Manager</label>
+        <locationX>764</locationX>
+        <locationY>748</locationY>
+        <assignmentItems>
+            <assignToReference>ccAddresses</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Get_User.Email</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>ccAddresses</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>teamMember.CMN_Team__r.CMN_TeamManager__r.Email</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Agent_Country</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Check the User Country</description>
+        <name>Agent_Country</name>
+        <label>Agent Country</label>
+        <locationX>1001</locationX>
+        <locationY>743</locationY>
+        <defaultConnector>
+            <targetReference>Send_Email</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Angola</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>userPresence.User.User_Country__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>AO</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_Email_PT</targetReference>
+            </connector>
+            <label>Is Angola</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_Status_Duration</name>
+        <label>Check Status Duration</label>
+        <locationX>166</locationX>
+        <locationY>573</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Status_Busy</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Presence_Status.StatusDuration</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_User</targetReference>
+            </connector>
+            <label>Is Status Busy</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_Team_Member</name>
+        <label>Check Team Member</label>
+        <locationX>536</locationX>
+        <locationY>745</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_Exist_Team_Member</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>teamMember</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Manager</targetReference>
+            </connector>
+            <label>Is Exist Team Member</label>
+        </rules>
+    </decisions>
+    <formulas>
+        <name>is90MinsPassed</name>
+        <dataType>DateTime</dataType>
+        <expression>{!userPresence.CreatedDate}  + (90/60/24)</expression>
+    </formulas>
+    <interviewLabel>SVC Is Away Status 90 mins {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SVC Is Away Status 90 mins</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Presence_Status</name>
+        <label>Get Presence Status</label>
+        <locationX>174</locationX>
+        <locationY>401</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Status_Duration</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>userPresence.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>UserServicePresence</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Team_Member</name>
+        <label>Get Team Member</label>
+        <locationX>543</locationX>
+        <locationY>571</locationY>
+        <assignNullValuesIfNoRecordsFound>true</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Team_Member</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>CMN_Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>User</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CMN_User__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_User.Id</elementReference>
+            </value>
+        </filters>
+        <object>CMN_TeamMember__c</object>
+        <outputReference>teamMember</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>CMN_Team__c</queriedFields>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_User</name>
+        <label>Get User</label>
+        <locationX>385</locationX>
+        <locationY>572</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Team_Member</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>userPresence.UserId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>50</locationX>
+        <locationY>50</locationY>
+        <connector>
+            <targetReference>Is_Changed_Status</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>EmailBody</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Dear Agent,
+
+Please note you have been &quot;unavailable&quot; for more than 90 minutes, kindly update your status accordingly.
+
+ System Generated</text>
+    </textTemplates>
+    <textTemplates>
+        <name>EmailBodyPT</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Caro agente,
+Por favor note que está &quot;indisponível&quot; há mais de 90 minutos, por favor actualize o seu estado em conformidade.
+Gerado pelo Sistema</text>
+    </textTemplates>
+    <variables>
+        <name>ccAddresses</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>teamMember</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>CMN_TeamMember__c</objectType>
+    </variables>
+    <variables>
+        <name>userPresence</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>UserServicePresence</objectType>
+    </variables>
+    <waits>
+        <name>Is_Changed_Status</name>
+        <label>Is Changed Status</label>
+        <locationX>176</locationX>
+        <locationY>225</locationY>
+        <defaultConnectorLabel>Default Path</defaultConnectorLabel>
+        <waitEvents>
+            <name>X90_mins_passed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>userPresence.IsAway</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Presence_Status</targetReference>
+            </connector>
+            <eventType>AlarmEvent</eventType>
+            <inputParameters>
+                <name>AlarmTime</name>
+                <value>
+                    <elementReference>is90MinsPassed</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>TimeOffset</name>
+            </inputParameters>
+            <inputParameters>
+                <name>TimeOffsetUnit</name>
+            </inputParameters>
+            <label>90 mins passed</label>
+        </waitEvents>
+    </waits>
+</Flow>

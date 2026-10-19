@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <customErrors>
+        <name>DML_Error</name>
+        <label>DML Error</label>
+        <locationX>2162</locationX>
+        <locationY>503</locationY>
+        <customErrorMessages>
+            <errorMessage>Error: {!$Flow.FaultMessage}</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <name>Duplicate_Producer_Found</name>
+        <label>Duplicate Producer Found</label>
+        <locationX>314</locationX>
+        <locationY>719</locationY>
+        <customErrorMessages>
+            <errorMessage>Failed: Can Not Create Producer because another Producer with the same details exists</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <name>Throw_Validation_Error</name>
+        <label>Throw Validation Error</label>
+        <locationX>50</locationX>
+        <locationY>395</locationY>
+        <customErrorMessages>
+            <errorMessage>You must Select a Contact or a User to Create a Producer</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <name>Check_for_Existing_Producer</name>
+        <label>Check for Existing Producer</label>
+        <locationX>644</locationX>
+        <locationY>611</locationY>
+        <defaultConnector>
+            <targetReference>Contact_is_Filled</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Existing Producer</defaultConnectorLabel>
+        <rules>
+            <name>Found_Producers</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>Producer_with_Currently_Linked_User.Id</leftValueReference>
+                <operator>WasSet</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Producer_with_Linked_Contact.Id</leftValueReference>
+                <operator>WasSet</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Duplicate_Producer_Found</targetReference>
+            </connector>
+            <label>Found Producers</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Check_if_User_or_Contact_is_added</name>
+        <label>Check if User or Contact is added</label>
+        <locationX>347</locationX>
+        <locationY>287</locationY>
+        <defaultConnector>
+            <targetReference>Get_Producer_with_Linked_Contact</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Both_are_missing</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.InternalUserId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.ContactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Throw_Validation_Error</targetReference>
+            </connector>
+            <label>Both are missing</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Contact_is_Filled</name>
+        <label>Contact is Filled</label>
+        <locationX>974</locationX>
+        <locationY>719</locationY>
+        <defaultConnector>
+            <targetReference>Was_a_User_Found</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Contact Found</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.ContactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Contact_Name</targetReference>
+            </connector>
+            <label>Contact Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Was_a_User_Found</name>
+        <label>Was a User Found?</label>
+        <locationX>1370</locationX>
+        <locationY>827</locationY>
+        <defaultConnectorLabel>No User Found</defaultConnectorLabel>
+        <rules>
+            <name>User_was_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.InternalUserId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_User_Name</targetReference>
+            </connector>
+            <label>User was Found</label>
+        </rules>
+    </decisions>
+    <description>Validates Linked User or Contact
+Checks for Duplicates
+Updates Producer Name from Related User or Contact</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Used to get the</description>
+        <name>relatedRecordFullName</name>
+        <dataType>String</dataType>
+        <expression>IF({!Producer_with_Currently_Linked_User.Id} != NULL, {!Producer_with_Currently_Linked_User.InternalUser.Name}, IF({!Get_Producer_with_Linked_Contact.Id} != NULL, {!Get_Producer_with_Linked_Contact.Contact.Name},&quot;&quot;))</expression>
+    </formulas>
+    <interviewLabel>INS Producer Management Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>INS Producer Management Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Contact_Name</name>
+        <label>Get Contact Name</label>
+        <locationX>578</locationX>
+        <locationY>827</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Update_Identifier_Name_from_Contact</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>DML_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ContactId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Producer_with_Linked_Contact</name>
+        <label>Get Producer with Linked Contact</label>
+        <locationX>644</locationX>
+        <locationY>395</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Producer_with_Currently_Linked_User</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>DML_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ContactId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ContactId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>ContactId</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Producer</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_User_Name</name>
+        <label>Get User Name</label>
+        <locationX>1106</locationX>
+        <locationY>935</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Update_Identifier_Name_from_User</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>DML_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.InternalUserId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Producer_with_Currently_Linked_User</name>
+        <label>Get Producer with Currently Linked User</label>
+        <locationX>644</locationX>
+        <locationY>503</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_for_Existing_Producer</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>DML_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>InternalUserId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.InternalUserId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>InternalUserId</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Producer</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Update_Identifier_Name_from_Contact</name>
+        <label>Update Identifier Name from Contact</label>
+        <locationX>578</locationX>
+        <locationY>935</locationY>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>Get_Contact_Name.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Identifier_Name_from_User</name>
+        <label>Update Identifier Name from User</label>
+        <locationX>1106</locationX>
+        <locationY>1043</locationY>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>Get_User_Name.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>221</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_if_User_or_Contact_is_added</targetReference>
+        </connector>
+        <object>Producer</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

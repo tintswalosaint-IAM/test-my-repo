@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>51.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>SVC_Set_Case_Status_To_Closed_Value</name>
+        <label>Set Case Status To Closed Value</label>
+        <locationX>701</locationX>
+        <locationY>138</locationY>
+        <assignmentItems>
+            <assignToReference>SVC_Get_Case.Status</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>SVC_Update_Case</targetReference>
+        </connector>
+    </assignments>
+    <description>SFP-3144: Set Case Status Closed After Cool Off</description>
+    <interviewLabel>SVC Set Case Status Closed After Cool Off {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SVC Set Case Status Closed After 48</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>SVC_Get_Case</name>
+        <label>Get Case</label>
+        <locationX>547</locationX>
+        <locationY>138</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>SVC_Set_Case_Status_To_Closed_Value</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Case</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>SVC_Update_Case</name>
+        <label>Update Case</label>
+        <locationX>852</locationX>
+        <locationY>137</locationY>
+        <inputReference>SVC_Get_Case</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>48</locationY>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>1 AND ( 2 OR 3 )</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Resolved</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>SVC_CaseOwnerTeam__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SVC_UG_CCC</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>SVC_CaseOwnerTeam__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SVC_UG_PrivateBankingSuiteUganda</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>SVC_Case_Closure_Path</name>
+            <connector>
+                <targetReference>SVC_Get_Case</targetReference>
+            </connector>
+            <label>Case Closure Path</label>
+            <offsetNumber>48</offsetNumber>
+            <offsetUnit>Hours</offsetUnit>
+            <recordField>SVC_ResolvedDate__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

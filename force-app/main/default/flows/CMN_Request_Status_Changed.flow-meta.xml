@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>SFP-46469 - Which Status?</description>
+        <name>Check_Status_Transition</name>
+        <label>Check Status Transition</label>
+        <locationX>1370</locationX>
+        <locationY>395</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>PENDING_SUBMISSION_PENDING_APPROVAL</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Submission</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Submitted_Fields</targetReference>
+            </connector>
+            <label>PENDING SUBMISSION → PENDING APPROVAL</label>
+        </rules>
+        <rules>
+            <name>PENDING_APPROVAL_PENDING_DOCUMENT_COLLECTION</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Document Collection</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Approved_Fields</targetReference>
+            </connector>
+            <label>PENDING APPROVAL → PENDING DOCUMENT COLLECTION</label>
+        </rules>
+        <rules>
+            <name>PENDING_DOCUMENT_COLLECTION_PENDING_REMEDIATION</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Remediation</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Document Collection</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Submitted_Fields_at_Pending_Remediation</targetReference>
+            </connector>
+            <label>PENDING DOCUMENT COLLECTION → PENDING REMEDIATION</label>
+        </rules>
+        <rules>
+            <name>PENDING_REMEDIATION_REMEDIATED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Remediated</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Remediation</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Remediate_Fields</targetReference>
+            </connector>
+            <label>PENDING REMEDIATION → REMEDIATED</label>
+        </rules>
+        <rules>
+            <name>PENDING_APPROVAL_DECLINED_RESUBMITTED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Declined - Resubmitted</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Declined_Fields</targetReference>
+            </connector>
+            <label>PENDING APPROVAL → DECLINED - RESUBMITTED</label>
+        </rules>
+        <rules>
+            <name>DECLINED_RESUBMITTED_RESUBMITTED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Resubmitted</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Declined - Resubmitted</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Resubmitted_Fields</targetReference>
+            </connector>
+            <label>DECLINED - RESUBMITTED → RESUBMITTED</label>
+        </rules>
+        <rules>
+            <name>RESUBMITTED_PENDING_DOCUMENT_COLLECTION</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Document Collection</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Resubmitted</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RESUBMITTED_PENDING_DOCUMENT_COLLECTION1</targetReference>
+            </connector>
+            <label>RESUBMITTED → PENDING DOCUMENT COLLECTION</label>
+        </rules>
+        <rules>
+            <name>PENDING_REMEDIATION_DECLINED_RETURNED1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Declined - Returned</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Remediation</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>PENDING_REMEDIATION_DECLINED_RETURNED</targetReference>
+            </connector>
+            <label>PENDING REMEDIATION → DECLINED - RETURNED</label>
+        </rules>
+        <rules>
+            <name>DECLINED_RETURNED_RETURNED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Returned</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Declined - Returned</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Declined_Returned</targetReference>
+            </connector>
+            <label>DECLINED - RETURNED → RETURNED</label>
+        </rules>
+        <rules>
+            <name>RETURNED_REMEDIATED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Remediated</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Returned</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Returned_Remediated2</targetReference>
+            </connector>
+            <label>RETURNED → REMEDIATED</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-46469 - Which Record Type</description>
+        <name>Which_Record_Type_Name</name>
+        <label>Which Record Type Name?</label>
+        <locationX>2954</locationX>
+        <locationY>287</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Document_Deferral_Request</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Document_Deferral_Request</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Status_Transition</targetReference>
+            </connector>
+            <label>Document Deferral Request</label>
+        </rules>
+        <rules>
+            <name>Flexipay_Deferral_Request</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Flexipay_Deferral_Request1</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Which_Status</targetReference>
+            </connector>
+            <label>Flexipay Deferral Request</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-46469 - Which Status</description>
+        <name>Which_Status</name>
+        <label>Which Status</label>
+        <locationX>3614</locationX>
+        <locationY>395</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>PENDING_SUBMISSION_PENDING_APPROVAL_FLEXIPAY</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Submission</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Submitted_Fields_Flexipay</targetReference>
+            </connector>
+            <label>PENDING SUBMISSION → PENDING APPROVAL FLEXIPAY</label>
+        </rules>
+        <rules>
+            <name>PENDING_APPROVAL_APPROVED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Approved_Fields_Flexipay</targetReference>
+            </connector>
+            <label>PENDING APPROVAL → APPROVED</label>
+        </rules>
+        <rules>
+            <name>APPROVED_RESOLVED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Resolved</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Resolved_Fields</targetReference>
+            </connector>
+            <label>APPROVED → RESOLVED</label>
+        </rules>
+        <rules>
+            <name>PENDING_APPROVAL_REJECTED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Pending Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Rejected_Fields</targetReference>
+            </connector>
+            <label>PENDING APPROVAL → REJECTED</label>
+        </rules>
+        <rules>
+            <name>APPROVED_REJECTED</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Rejected_Fields_Approved</targetReference>
+            </connector>
+            <label>APPROVED → REJECTED</label>
+        </rules>
+    </decisions>
+    <description>SFP-46469 - This flow runs when the status on a request is changed</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>DateTimeNow</name>
+        <dataType>DateTime</dataType>
+        <expression>NOW()</expression>
+    </formulas>
+    <formulas>
+        <description>This is to calculate the due date for Flexipay Request</description>
+        <name>FlexipayDueDate</name>
+        <dataType>Date</dataType>
+        <expression>TODAY() + {!$CustomMetadata.Request_Configuration__mdt.FLEXIPAY_CMN_Request_Due_Date.Due_Date_Offset_Days__c}</expression>
+    </formulas>
+    <formulas>
+        <description>This is the due date for KYC CMN Requests</description>
+        <name>KYCDueDate</name>
+        <dataType>Date</dataType>
+        <expression>TODAY() + {!$CustomMetadata.Request_Configuration__mdt.KYC_CMN_Request_Due_Date.Due_Date_Offset_Days__c}</expression>
+    </formulas>
+    <interviewLabel>CMN Request Status Changed {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>CMN Request Status Changed</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>SFP-46469 - Approved Fields</description>
+        <name>Approved_Fields</name>
+        <label>Approved Fields</label>
+        <locationX>314</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Approved_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Approved_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Due_Date__c</field>
+            <value>
+                <elementReference>KYCDueDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Approved Fields Flexipay</description>
+        <name>Approved_Fields_Flexipay</name>
+        <label>Approved Fields Flexipay</label>
+        <locationX>3218</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Approved_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Approved_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Due_Date__c</field>
+            <value>
+                <elementReference>FlexipayDueDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Declined Fields</description>
+        <name>Declined_Fields</name>
+        <label>Declined Fields</label>
+        <locationX>1106</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Declined_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Declined_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Declined → Returned</description>
+        <name>Declined_Returned</name>
+        <label>Declined → Returned</label>
+        <locationX>2162</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Returned_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Returned_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - PENDING REMEDIATION → DECLINED RETURNED</description>
+        <name>PENDING_REMEDIATION_DECLINED_RETURNED</name>
+        <label>PENDING REMEDIATION → DECLINED RETURNED</label>
+        <locationX>1898</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Declined_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Declined_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Rejected Fields</description>
+        <name>Rejected_Fields</name>
+        <label>Rejected Fields</label>
+        <locationX>3746</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Declined_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Declined_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Rejected Fields @Approved</description>
+        <name>Rejected_Fields_Approved</name>
+        <label>Rejected Fields @Approved</label>
+        <locationX>4010</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Declined_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Declined_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Remediate Fields</description>
+        <name>Remediate_Fields</name>
+        <label>Remediate Fields</label>
+        <locationX>842</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Remediated_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Remediated_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Resolved Fields</description>
+        <name>Resolved_Fields</name>
+        <label>Resolved Fields</label>
+        <locationX>3482</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Remediated_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Remediated_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Resubmitted Fields</description>
+        <name>Resubmitted_Fields</name>
+        <label>Resubmitted Fields</label>
+        <locationX>1370</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Resubmitted_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Resubmitted_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - RESUBMITTED → PENDING DOCUMENT COLLECTION</description>
+        <name>RESUBMITTED_PENDING_DOCUMENT_COLLECTION1</name>
+        <label>RESUBMITTED → PENDING DOCUMENT COLLECTION</label>
+        <locationX>1634</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Approved_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Approved_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Due_Date__c</field>
+            <value>
+                <elementReference>KYCDueDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Returned → Remediated</description>
+        <name>Returned_Remediated2</name>
+        <label>Returned → Remediated</label>
+        <locationX>2426</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Remediated_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Remediated_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Submitted Fields</description>
+        <name>Submitted_Fields</name>
+        <label>Submitted Fields</label>
+        <locationX>50</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Submitted_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Submitted_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Submitted Fields at Pending Remediation</description>
+        <name>Submitted_Fields_at_Pending_Remediation</name>
+        <label>Submitted Fields at Pending Remediation</label>
+        <locationX>578</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Submitted_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Submitted_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>SFP-46469 - Submitted Fields Flexipay</description>
+        <name>Submitted_Fields_Flexipay</name>
+        <label>Submitted Fields Flexipay</label>
+        <locationX>2954</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>Submitted_By__c</field>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Submitted_Date__c</field>
+            <value>
+                <elementReference>DateTimeNow</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>2828</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Which_Record_Type_Name</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>CMN_Request__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

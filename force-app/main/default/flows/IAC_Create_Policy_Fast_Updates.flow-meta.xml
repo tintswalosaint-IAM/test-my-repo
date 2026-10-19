@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Log_Error</name>
+        <label>Log Error</label>
+        <locationX>440</locationX>
+        <locationY>431</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>IAC Create Policy Fast Update Flow</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SFP-30018[C] Flow to update external identifier code.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>CheckExternalCountryField</name>
+        <dataType>String</dataType>
+        <expression>IF(ISBLANK(Text({!$Record.ExternalCountry__c})),
+Text({!$User.User_Country__c}),
+Text({!$Record.ExternalCountry__c}))</expression>
+    </formulas>
+    <formulas>
+        <description>Concatenate ExternalCountry__c + ExternalSystemId__c + Id</description>
+        <name>External_Identifier_Concatenation</name>
+        <dataType>String</dataType>
+        <expression>{!CheckExternalCountryField}&amp;&apos;00&apos;&amp;{!$Record.Id}</expression>
+    </formulas>
+    <interviewLabel>IAC Create Policy Fast Updates {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>IAC Create Policy Fast Updates</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_External_Identifier_Fields</name>
+        <label>Update External Identifier Fields</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <faultConnector>
+            <targetReference>Log_Error</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>ExternalCountry__c</field>
+            <value>
+                <elementReference>CheckExternalCountryField</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ExternalCustomerId__c</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ExternalIdentifier__c</field>
+            <value>
+                <elementReference>External_Identifier_Concatenation</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ExternalSystemId__c</field>
+            <value>
+                <stringValue>00</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_External_Identifier_Fields</targetReference>
+        </connector>
+        <filterFormula>IF({!$Permission.Insurance_Users},True,False)</filterFormula>
+        <object>InsurancePolicy</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <customErrors>
+        <description>Cannot change case owner when the Case Status is &quot;Resolved&quot; or &quot;Closed&quot;.</description>
+        <name>Cannot_Change_Case_Owner</name>
+        <label>Cannot Change Case Owner</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <customErrorMessages>
+            <errorMessage>Cannot change case owner when the Case Status is &quot;Resolved&quot; or &quot;Closed&quot;.</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <decisions>
+        <description>Case Status is not Resolved or Closed or Owner is not Changed</description>
+        <name>Case_Status_is_not_Resolved_or_Closed_or_Owner_is_not_Changed</name>
+        <label>Case Status is not Resolved or Closed or Owner is not Changed</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Prevent_Owner_Change</name>
+            <conditionLogic>( (1 OR 2) AND 3 ) AND NOT 4</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Resolved</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record__Prior.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Closed</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$User.UserType</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Automated Process</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Reopened</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Cannot_Change_Case_Owner</targetReference>
+            </connector>
+            <label>Prevent Owner Change</label>
+        </rules>
+    </decisions>
+    <description>This flow prevents users from changing the owner of a case when the case status is &quot;Resolved&quot; or &quot;Closed&quot; and the Case Owner Country is &apos;UG&apos;. 
+
+Uses the Automated Process UserType which makes sure system accounts are not impacted</description>
+    <environments>Default</environments>
+    <interviewLabel>SVC Prevent Owner Change When Case Status is Resolved or Closed {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>SVC Prevent Owner Change When Case Status is Resolved or Closed</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Case_Status_is_not_Resolved_or_Closed_or_Owner_is_not_Changed</targetReference>
+        </connector>
+        <filterLogic>1 AND ( 2 OR 3)</filterLogic>
+        <filters>
+            <field>Case_Owner_Country__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>UG</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>OwnerId</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

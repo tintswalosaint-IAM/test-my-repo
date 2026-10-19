@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email</name>
+        <label>Send Email</label>
+        <locationX>314</locationX>
+        <locationY>434</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Populate_Contact_F</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Request_World_Checks_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>template</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Setup.WI_Settings__c.WI_WorldChecksNotificationEmail__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>CurrentUser</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>World check request</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Template</name>
+        <label>Assign Template</label>
+        <locationX>50</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>businessTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Assign_Template2</name>
+        <label>Assign Template</label>
+        <locationX>314</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>individualTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Populate_Contact_F</name>
+        <label>Populate Contact fields</label>
+        <locationX>314</locationX>
+        <locationY>542</locationY>
+        <assignmentItems>
+            <assignToReference>recordId.WI_WorldCheckEmailDate__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Contact</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Check_Individual_or_Business</name>
+        <label>Check Individual or Business</label>
+        <locationX>314</locationX>
+        <locationY>134</locationY>
+        <defaultConnectorLabel>None</defaultConnectorLabel>
+        <rules>
+            <name>Business</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>IndustriesBusiness</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Template</targetReference>
+            </connector>
+            <label>Business</label>
+        </rules>
+        <rules>
+            <name>Individual</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>IndustriesIndividual</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Template2</targetReference>
+            </connector>
+            <label>Individual</label>
+        </rules>
+    </decisions>
+    <description>SFP-20429 - Client Engagement Report | World checks notification email</description>
+    <environments>Default</environments>
+    <interviewLabel>W&amp;I Contact Request World Checks {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>W&amp;I Contact Request World Checks</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordUpdates>
+        <name>Update_Contact</name>
+        <label>Update Contact</label>
+        <locationX>314</locationX>
+        <locationY>650</locationY>
+        <connector>
+            <targetReference>Request_World_Check</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Request_World_Checks_Error</targetReference>
+        </faultConnector>
+        <inputReference>recordId</inputReference>
+    </recordUpdates>
+    <screens>
+        <name>Request_World_Check</name>
+        <label>Request World Check</label>
+        <locationX>314</locationX>
+        <locationY>758</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Message</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255); color: rgb(15, 170, 1);&quot;&gt;Your Request World Checks have been sent. You will be notified via email when it has been completed.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>OK</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Request_World_Checks_Error</name>
+        <label>Request World Checks Error</label>
+        <locationX>842</locationX>
+        <locationY>758</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>ErrMess</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;color: rgb(255, 0, 0);&quot;&gt;Something went wrong. Please contact with your admin.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(255, 0, 0);&quot;&gt;Error: {!$Flow.FaultMessage}&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>OK</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Individual_or_Business</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>businessTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>World Check request for Legal Entity 
+Business Name: {!recordId.Name}
+Registration Number: {!recordId.WI_RegistrationNumber__c}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>individualTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Good day
+Please complete a World check for:
+Firstname:
+{!recordId.FirstName}
+Middlename:
+{!recordId.MiddleName}
+Lastname:
+{!recordId.LastName}
+ID Type:
+ID/Passport Number:
+
+Regards
+Wealth and Investment</text>
+    </textTemplates>
+    <variables>
+        <name>recordId</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Contact</objectType>
+    </variables>
+    <variables>
+        <name>template</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

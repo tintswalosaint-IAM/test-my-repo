@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Log errors for all the fault paths in current flow</description>
+        <name>Write_Error_Log</name>
+        <label>Write Error Log</label>
+        <locationX>968</locationX>
+        <locationY>384</locationY>
+        <actionName>CMN_DAL_Logger</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>messages</name>
+            <value>
+                <elementReference>ErrorLogMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>CMN_DAL_Logger</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <constants>
+        <description>Store flow name</description>
+        <name>FlowInterviewLabel</name>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>AOB_PPB_LeadStatusChange</stringValue>
+        </value>
+    </constants>
+    <decisions>
+        <description>Checks if created lead has Uganda Onboarding recordtype and Lead is still in new status</description>
+        <name>Check_if_Lead_has_Uganda_Onboarding_Recordtype</name>
+        <label>Check if Lead has Uganda Onboarding Recordtype</label>
+        <locationX>440</locationX>
+        <locationY>384</locationY>
+        <defaultConnectorLabel>Other Lead</defaultConnectorLabel>
+        <rules>
+            <name>Uganda_Onboarding_Lead</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>Get_CMDT_Uganda_Recordtype.value__c</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>New</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Status_to_Working</targetReference>
+            </connector>
+            <label>Uganda Onboarding Lead</label>
+        </rules>
+    </decisions>
+    <description>[SFP-49192] After lead spent 30 min in new status from its creation time, The lead status has to be changed to Working automatically and set working start date.</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Ensure error logging has enough context (Lead.Id, Flow.InterviewLabel)</description>
+        <name>ErrorLogMessage</name>
+        <dataType>String</dataType>
+        <expression>{!FlowInterviewLabel} &amp; &apos; | LeadId: &apos; &amp; $Record.Id &amp; &apos; | Fault: &apos; &amp; $Flow.FaultMessage</expression>
+    </formulas>
+    <interviewLabel>AOB_PPB_LeadStatusChange {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>AOB_PPB_LeadStatusChange</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Get Uganda Onboarding record type Developer name from custom metadata</description>
+        <name>Get_CMDT_Uganda_Recordtype</name>
+        <label>Get CMDT Uganda Recordtype</label>
+        <locationX>440</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_if_Lead_has_Uganda_Onboarding_Recordtype</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Write_Error_Log</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>UG_Onboarding_Record_Type</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>PPB_Static_values__mdt</object>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>value__c</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Update the lead status to Working and Working Start time</description>
+        <name>Update_Status_to_Working</name>
+        <label>Update Status to Working</label>
+        <locationX>176</locationX>
+        <locationY>492</locationY>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Write_Error_Log</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Working</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Working_Start_Date__c</field>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <scheduledPaths>
+            <name>Update_Lead_Status_to_Working</name>
+            <connector>
+                <targetReference>Get_CMDT_Uganda_Recordtype</targetReference>
+            </connector>
+            <label>Update Lead Status to Working</label>
+            <offsetNumber>30</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <timeSource>RecordTriggerEvent</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Draft</status>
+</Flow>

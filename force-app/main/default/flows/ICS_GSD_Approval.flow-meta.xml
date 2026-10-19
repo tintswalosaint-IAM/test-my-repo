@@ -1,0 +1,2113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Get semicolon delimited string of PartyProfileIDs stored in Opportunity.Required_Approval_Processes__c field delimited with semicolon between two strings Need GSD Approval;0xU9O0000000....;0xU9O000000....;End Need GSD Approval;</description>
+        <name>Get_PartyProfileIDs</name>
+        <label>Get PartyProfileIDs</label>
+        <locationX>1865</locationX>
+        <locationY>350</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Get_PartyProfileIDs_Collection</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors1</targetReference>
+        </faultConnector>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Get Party Profile IDs for GSD</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>value</name>
+            <value>
+                <elementReference>recordId.Required_Approval_Processes__c</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Get PartyProfileIDs Collection from Delimited String</description>
+        <name>Get_PartyProfileIDs_Collection</name>
+        <label>Get PartyProfileIDs Collection</label>
+        <locationX>1865</locationX>
+        <locationY>458</locationY>
+        <actionName>ICS_CTRL_GetDataUtils</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Get_PartyProfiles</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors2</targetReference>
+        </faultConnector>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>firstValue</name>
+            <value>
+                <elementReference>Get_PartyProfileIDs</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Delimited to Collection</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_GetDataUtils</nameSegment>
+        <offset>0</offset>
+        <outputParameters>
+            <assignToReference>PartyProfileIDs</assignToReference>
+            <name>output</name>
+        </outputParameters>
+    </actionCalls>
+    <actionCalls>
+        <description>JsonGet value for key = &quot;Group Sanctions Desk&quot;</description>
+        <name>JsonGet_Group_Sanctions_Desk</name>
+        <label>JsonGet Group Sanctions Desk</label>
+        <locationX>2805</locationX>
+        <locationY>134</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>GSD_Approval_Required_Check</targetReference>
+        </connector>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>opportunityId</name>
+            <value>
+                <elementReference>recordId.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>Group Sanctions Desk getLog</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors</name>
+        <label>Log Flow Errors</label>
+        <locationX>578</locationX>
+        <locationY>6554</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Set_Opportunity_Stage_to_Closed_Declined</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors1</name>
+        <label>Log Flow Errors</label>
+        <locationX>3482</locationX>
+        <locationY>458</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_PartyProfileIDs</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors2</name>
+        <label>Log Flow Errors</label>
+        <locationX>3218</locationX>
+        <locationY>566</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_PartyProfileIDs_Collection</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors3</name>
+        <label>Log Flow Errors</label>
+        <locationX>2954</locationX>
+        <locationY>674</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_PartyProfiles</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors4</name>
+        <label>Log Flow Errors</label>
+        <locationX>2426</locationX>
+        <locationY>1190</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_Content_Document_Link_Existing</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors5</name>
+        <label>Log Flow Errors</label>
+        <locationX>2162</locationX>
+        <locationY>1982</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_Assessments</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors6</name>
+        <label>Log Flow Errors</label>
+        <locationX>1898</locationX>
+        <locationY>2582</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_Accounts</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors7</name>
+        <label>Log Flow Errors</label>
+        <locationX>1370</locationX>
+        <locationY>2798</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_Assessment_Question_Response</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors8</name>
+        <label>Log Flow Errors</label>
+        <locationX>1106</locationX>
+        <locationY>3098</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get_Assessment_Question_Version</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Logs any errors that occur during the flow execution, storing the error message for debugging purposes.</description>
+        <name>Log_Flow_Errors9</name>
+        <label>Log Flow Errors</label>
+        <locationX>1722</locationX>
+        <locationY>5846</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Save_Response</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>ICS GSD Approval</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>Save Response in the Assessment Records</description>
+        <name>Save_Response</name>
+        <label>Save Response</label>
+        <locationX>1414</locationX>
+        <locationY>5738</locationY>
+        <actionName>ICS_CTRL_ApprovalFlow</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Check_Declined</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors9</targetReference>
+        </faultConnector>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>str</name>
+            <value>
+                <stringValue>saveAssessmentData</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>value</name>
+            <value>
+                <elementReference>jsonString</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_CTRL_ApprovalFlow</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>Update Records After GSD</description>
+        <name>Update_Records_After_GSD</name>
+        <label>Update Records After GSD</label>
+        <locationX>138</locationX>
+        <locationY>6446</locationY>
+        <actionName>ICS_API_GBGIDPOAProcessResultHandler</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>AccountIds2</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>accId</name>
+            <value>
+                <elementReference>AccountIds2</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>gsdString</name>
+            <value>
+                <elementReference>GSDStringConfirmedAppended</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ICS_API_GBGIDPOAProcessResultHandler</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Collected related account IDs</description>
+        <name>Add_AccountIDs</name>
+        <label>Add AccountIDs</label>
+        <locationX>1128</locationX>
+        <locationY>890</locationY>
+        <assignmentItems>
+            <assignToReference>AccountIDs</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>PartyProfiles.AccountId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>PartyProfiles</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assign ApprovalQuestionVersionId</description>
+        <name>Assign_ApprovalQuestionVersionId</name>
+        <label>Assign ApprovalQuestionVersionId</label>
+        <locationX>534</locationX>
+        <locationY>3506</locationY>
+        <assignmentItems>
+            <assignToReference>ApprovalQuestionVersionId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>AssessmentQuestionVersion.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>AssessmentQuestionVersion</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assign Assessment Ids</description>
+        <name>Assign_Assessment_Ids</name>
+        <label>Assign Assessment Ids</label>
+        <locationX>1128</locationX>
+        <locationY>2282</locationY>
+        <assignmentItems>
+            <assignToReference>AssessmentIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Assessment_Loop.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assessment_Loop</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assign CommentQuestionVersionId</description>
+        <name>Assign_CommentQuestionVersionId</name>
+        <label>Assign CommentQuestionVersionId</label>
+        <locationX>798</locationX>
+        <locationY>3506</locationY>
+        <assignmentItems>
+            <assignToReference>CommentQuestionVersionId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>AssessmentQuestionVersion.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>AssessmentQuestionVersion</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assign Latest Assessment</description>
+        <name>Assign_Latest_Assessment</name>
+        <label>Assign Latest Assessment</label>
+        <locationX>1502</locationX>
+        <locationY>4622</locationY>
+        <assignmentItems>
+            <assignToReference>latestAssessment</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Loop_Latest_Assessment</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Latest_Assessment</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assignment for Approved</description>
+        <name>Assignment_for_Approved</name>
+        <label>Assignment for Approved</label>
+        <locationX>1502</locationX>
+        <locationY>5246</locationY>
+        <assignmentItems>
+            <assignToReference>PreviousResponse</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_On_Assessment_Question_Response_Filter</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assignment for Comment</description>
+        <name>Assignment_for_Comment</name>
+        <label>Assignment for Comment</label>
+        <locationX>2030</locationX>
+        <locationY>5246</locationY>
+        <assignmentItems>
+            <assignToReference>PreviousComment</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Loop_On_Assessment_Question_Response_Filter.ResponseText</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_On_Assessment_Question_Response_Filter</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assignment for Declined</description>
+        <name>Assignment_for_Declined</name>
+        <label>Assignment for Declined</label>
+        <locationX>1766</locationX>
+        <locationY>5246</locationY>
+        <assignmentItems>
+            <assignToReference>PreviousResponse</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_On_Assessment_Question_Response_Filter</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assign Current Account Record</description>
+        <name>Current_Account_Record</name>
+        <label>Current Account Record</label>
+        <locationX>1502</locationX>
+        <locationY>4106</locationY>
+        <assignmentItems>
+            <assignToReference>CurrentAccountRecord</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Accounts</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Current_Accounts</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Collect Existing GSD PartyProfile Ids</description>
+        <name>Existing_PartyProfile_Ids</name>
+        <label>Existing PartyProfile Ids</label>
+        <locationX>1128</locationX>
+        <locationY>1598</locationY>
+        <assignmentItems>
+            <assignToReference>ExistingGSDPartyProfileIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Content_Document_Link_Existing.LinkedEntityId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Content_Document_Link_Existing</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>GSD Declined</description>
+        <name>GSD_Declined2</name>
+        <label>GSD Declined</label>
+        <locationX>1282</locationX>
+        <locationY>5954</locationY>
+        <assignmentItems>
+            <assignToReference>GSDRejected</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Current_PartyProfiles</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Clear PreviousResponse</description>
+        <name>Set_PreviousResponse</name>
+        <label>Set PreviousResponse</label>
+        <locationX>1414</locationX>
+        <locationY>4922</locationY>
+        <assignmentItems>
+            <assignToReference>PreviousResponse</assignToReference>
+            <operator>Assign</operator>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>PreviousComment</assignToReference>
+            <operator>Assign</operator>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_On_Assessment_Question_Response_Filter</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Update Opportunity</description>
+        <name>Update_Opportunity2</name>
+        <label>Update Opportunity</label>
+        <locationX>314</locationX>
+        <locationY>6338</locationY>
+        <assignmentItems>
+            <assignToReference>recordId.Required_Approval_Processes__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>GSDStringRejectedAppended</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>recordId.ICS_Decline_Reason__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Business Risk Appetite</stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>recordId.StageName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Closed Declined</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Set_Opportunity_Stage_to_Closed_Declined</targetReference>
+        </connector>
+    </assignments>
+    <choices>
+        <name>choiceapi1</name>
+        <choiceText>Approved</choiceText>
+        <dataType>Boolean</dataType>
+        <value>
+            <booleanValue>true</booleanValue>
+        </value>
+    </choices>
+    <choices>
+        <name>choiceapi2</name>
+        <choiceText>Declined</choiceText>
+        <dataType>Boolean</dataType>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
+    </choices>
+    <collectionProcessors>
+        <description>Assessment Question Response Filter</description>
+        <name>Assessment_Question_Response_Filter</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Assessment Question Response Filter</label>
+        <locationX>1414</locationX>
+        <locationY>4814</locationY>
+        <assignNextValueToReference>currentItem_Assessment_Question_Response_Filter</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>Get_Assessment_Question_Response</collectionReference>
+        <conditionLogic>and</conditionLogic>
+        <conditions>
+            <leftValueReference>currentItem_Assessment_Question_Response_Filter.AssessmentId</leftValueReference>
+            <operator>EqualTo</operator>
+            <rightValue>
+                <elementReference>latestAssessment.Id</elementReference>
+            </rightValue>
+        </conditions>
+        <connector>
+            <targetReference>Set_PreviousResponse</targetReference>
+        </connector>
+    </collectionProcessors>
+    <collectionProcessors>
+        <description>Assessments Filter</description>
+        <name>Assessments_Filter</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Assessments Filter</label>
+        <locationX>1414</locationX>
+        <locationY>4298</locationY>
+        <assignNextValueToReference>currentItem_Assessments_Filter</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>Get_Assessments</collectionReference>
+        <conditionLogic>and</conditionLogic>
+        <conditions>
+            <leftValueReference>currentItem_Assessments_Filter.AccountId</leftValueReference>
+            <operator>EqualTo</operator>
+            <rightValue>
+                <elementReference>CurrentAccountRecord.Id</elementReference>
+            </rightValue>
+        </conditions>
+        <connector>
+            <targetReference>Latest_Assessment</targetReference>
+        </connector>
+    </collectionProcessors>
+    <collectionProcessors>
+        <description>Get account corresponding to current partyprofile</description>
+        <name>Current_PartyProfile_Accounts</name>
+        <elementSubtype>FilterCollectionProcessor</elementSubtype>
+        <label>Current PartyProfile Accounts</label>
+        <locationX>1414</locationX>
+        <locationY>3890</locationY>
+        <assignNextValueToReference>currentItem_Current_PartyProfile_Accounts</assignNextValueToReference>
+        <collectionProcessorType>FilterCollectionProcessor</collectionProcessorType>
+        <collectionReference>Get_Accounts</collectionReference>
+        <conditionLogic>and</conditionLogic>
+        <conditions>
+            <leftValueReference>currentItem_Current_PartyProfile_Accounts.Id</leftValueReference>
+            <operator>EqualTo</operator>
+            <rightValue>
+                <elementReference>Current_PartyProfiles.AccountId</elementReference>
+            </rightValue>
+        </conditions>
+        <connector>
+            <targetReference>Current_Accounts</targetReference>
+        </connector>
+    </collectionProcessors>
+    <collectionProcessors>
+        <description>Latest Assessment</description>
+        <name>Latest_Assessment</name>
+        <elementSubtype>SortCollectionProcessor</elementSubtype>
+        <label>Latest Assessment</label>
+        <locationX>1414</locationX>
+        <locationY>4406</locationY>
+        <collectionProcessorType>SortCollectionProcessor</collectionProcessorType>
+        <collectionReference>Assessments_Filter</collectionReference>
+        <connector>
+            <targetReference>Loop_Latest_Assessment</targetReference>
+        </connector>
+        <limit>1</limit>
+        <sortOptions>
+            <doesPutEmptyStringAndNullFirst>false</doesPutEmptyStringAndNullFirst>
+            <sortField>LastModifiedDate</sortField>
+            <sortOrder>Desc</sortOrder>
+        </sortOptions>
+    </collectionProcessors>
+    <decisions>
+        <description>Check Declined</description>
+        <name>Check_Declined</name>
+        <label>Check Declined</label>
+        <locationX>1414</locationX>
+        <locationY>5846</locationY>
+        <defaultConnector>
+            <targetReference>Current_PartyProfiles</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Declined2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GSD_Approval</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>choiceapi2</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>GSD_Declined2</targetReference>
+            </connector>
+            <label>Declined</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check {!ContentVersion_Existing.ContentDocument.Title} contains -KYC GSD-</description>
+        <name>Check_Is_Document_Type_GSD</name>
+        <label>Check Is Document Type GSD</label>
+        <locationX>1260</locationX>
+        <locationY>1490</locationY>
+        <defaultConnector>
+            <targetReference>Content_Document_Link_Existing</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Content_Document_Link_Existing.ContentDocument.Title</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>-GSD Form-</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Existing_PartyProfile_Ids</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null</name>
+        <label>Check Null</label>
+        <locationX>1865</locationX>
+        <locationY>674</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_PartyProfiles</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>PartyProfiles</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null2</name>
+        <label>Check Null</label>
+        <locationX>1040</locationX>
+        <locationY>1190</locationY>
+        <defaultConnector>
+            <targetReference>Content_Document_Link_Existing</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Content_Document_Link_Existing</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Content_Document_Link_Existing</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null3</name>
+        <label>Check Null</label>
+        <locationX>1040</locationX>
+        <locationY>1982</locationY>
+        <defaultConnector>
+            <targetReference>Assessment_Loop</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Assessments</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assessment_Loop</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null4</name>
+        <label>Check Null</label>
+        <locationX>1040</locationX>
+        <locationY>2582</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null4</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Accounts</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Assessment_Question_Response</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null5</name>
+        <label>Check Null</label>
+        <locationX>446</locationX>
+        <locationY>2798</locationY>
+        <defaultConnector>
+            <targetReference>Get_Assessment_Question_Version</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null5</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Assessment_Question_Response</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Assessment_Question_Version</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Null</description>
+        <name>Check_Null6</name>
+        <label>Check Null</label>
+        <locationX>446</locationX>
+        <locationY>3098</locationY>
+        <defaultConnector>
+            <targetReference>AssessmentQuestionVersion</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Not_Null6</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Assessment_Question_Version</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>AssessmentQuestionVersion</targetReference>
+            </connector>
+            <label>Not Null</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check PreviousResponse</description>
+        <name>Check_PreviousResponse</name>
+        <label>Check PreviousResponse</label>
+        <locationX>1898</locationX>
+        <locationY>5138</locationY>
+        <defaultConnector>
+            <targetReference>Loop_On_Assessment_Question_Response_Filter</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Approved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Loop_On_Assessment_Question_Response_Filter.ResponseText</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Loop_On_Assessment_Question_Response_Filter.AssessmentQuestionId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>ApprovalQuestionVersionId</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assignment_for_Approved</targetReference>
+            </connector>
+            <label>Approved</label>
+        </rules>
+        <rules>
+            <name>Declined</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Loop_On_Assessment_Question_Response_Filter.ResponseText</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Declined</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Loop_On_Assessment_Question_Response_Filter.AssessmentQuestionId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>ApprovalQuestionVersionId</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assignment_for_Declined</targetReference>
+            </connector>
+            <label>Declined</label>
+        </rules>
+        <rules>
+            <name>Comment3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Loop_On_Assessment_Question_Response_Filter.AssessmentQuestionId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>CommentQuestionVersionId</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assignment_for_Comment</targetReference>
+            </connector>
+            <label>Comment</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check Question</description>
+        <name>Check_Question</name>
+        <label>Check Question</label>
+        <locationX>798</locationX>
+        <locationY>3398</locationY>
+        <defaultConnector>
+            <targetReference>AssessmentQuestionVersion</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Approval</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>AssessmentQuestionVersion.QuestionText</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approval</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_ApprovalQuestionVersionId</targetReference>
+            </connector>
+            <label>Approval</label>
+        </rules>
+        <rules>
+            <name>Comment2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>AssessmentQuestionVersion.QuestionText</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Comment</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_CommentQuestionVersionId</targetReference>
+            </connector>
+            <label>Comment</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>GSD Approval Required Check</description>
+        <name>GSD_Approval_Required_Check</name>
+        <label>GSD Approval Required Check</label>
+        <locationX>2805</locationX>
+        <locationY>242</locationY>
+        <defaultConnector>
+            <targetReference>Screen_GSD_Not_Required</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Need GSD Approval;</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_PartyProfileIDs</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Determines whether the GSD approval was accepted or declined based on user input and updates the opportunity stage accordingly.</description>
+        <name>Verify_GSD_Approval_Status</name>
+        <label>Verify GSD Approval Status</label>
+        <locationX>446</locationX>
+        <locationY>6230</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>GSD_Approved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GSDRejected</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>AccountIds2</targetReference>
+            </connector>
+            <label>GSD Approved</label>
+        </rules>
+        <rules>
+            <name>GSD_Declined</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GSDRejected</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Opportunity2</targetReference>
+            </connector>
+            <label>GSD Declined</label>
+        </rules>
+    </decisions>
+    <description>SFP-34712 6. GSD Referral Process - UPF
+The Applicant has confirmed association with  Sanctioned Country
+Need to GSD screen for the RM to upload the GSD document for the journey to proceed.</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Construct formatted document name
+Firstname-Surname-DocumentType-DocumentDate</description>
+        <name>FormattedName</name>
+        <dataType>String</dataType>
+        <expression>{!Current_PartyProfiles.Account.FirstName} + &apos;-&apos; + {!Current_PartyProfiles.Account.LastName} + &apos;-&apos; + &apos;GSD Form&apos; + &apos;-&apos; + TEXT(TODAY())</expression>
+    </formulas>
+    <formulas>
+        <name>GSDResponseValue</name>
+        <dataType>String</dataType>
+        <expression>IF({!GSD_Approval} = true, &apos;Approved&apos;, &apos;Declined&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Append GSD Approval Confirmed; string to Opportunity.Required_Approval_Processes__c field to indicate that GSD was approved</description>
+        <name>GSDStringConfirmedAppended</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(IF(CONTAINS({!recordId.Required_Approval_Processes__c}, &apos;GSD Approval Confirmed;&apos;), {!recordId.Required_Approval_Processes__c}, {!recordId.Required_Approval_Processes__c} + &apos;GSD Approval Confirmed;&apos;), &apos;GSD Approval Rejected;&apos;, &apos;&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Append GSD Approval Rejected; string to Opportunity.Required_Approval_Processes__c field to indicate that GSD was declined</description>
+        <name>GSDStringRejectedAppended</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(IF(CONTAINS({!recordId.Required_Approval_Processes__c}, &apos;GSD Approval Rejected;&apos;), {!recordId.Required_Approval_Processes__c}, {!recordId.Required_Approval_Processes__c} + &apos;GSD Approval Rejected;&apos;), &apos;GSD Approval Confirmed;&apos;, &apos;&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Construct key for Group Sanctions Desk - Prohibited Countries</description>
+        <name>jsonKeyGSDProhibitedCountries</name>
+        <dataType>String</dataType>
+        <expression>&apos;Group Sanctions Desk - Prohibited Countries&apos; + &apos;;&apos; + {!recordId.Required_Approval_Processes__c}</expression>
+    </formulas>
+    <formulas>
+        <description>Construct key + {!recordId.Required_Approval_Processes__c} field value string to pass to jsonGet function</description>
+        <name>jsonKeyNeedGSDApproval</name>
+        <dataType>String</dataType>
+        <expression>&apos;Group Sanctions Desk&apos; + &apos;;&apos; + {!recordId.Required_Approval_Processes__c}</expression>
+    </formulas>
+    <formulas>
+        <description>JSON String construction to be passed to the save apex method</description>
+        <name>jsonString</name>
+        <dataType>String</dataType>
+        <expression>&apos;{&quot;Comment&quot;: &quot;&apos; + {!Comment} + &apos;&quot;, &quot;Approval&quot;: &quot;&apos; + {!GSDResponseValue} + &apos;&quot;, &quot;name&quot;: &quot;GSD Approval&quot;, &quot;pId&quot;: &quot;&apos; + {!CurrentAccountRecord.Id} + &apos;&quot;}&apos;</expression>
+    </formulas>
+    <interviewLabel>ICS GSD Approval {!$Flow.CurrentDateTime}</interviewLabel>
+    <isAdditionalPermissionRequiredToRun>true</isAdditionalPermissionRequiredToRun>
+    <label>ICS GSD Approval</label>
+    <loops>
+        <description>Loop AccountIds</description>
+        <name>AccountIds2</name>
+        <label>AccountIds</label>
+        <locationX>50</locationX>
+        <locationY>6338</locationY>
+        <collectionReference>AccountIDs</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Update_Records_After_GSD</targetReference>
+        </nextValueConnector>
+    </loops>
+    <loops>
+        <name>Assessment_Loop</name>
+        <label>Assessment Loop</label>
+        <locationX>1040</locationX>
+        <locationY>2174</locationY>
+        <collectionReference>Get_Assessments</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Assign_Assessment_Ids</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_Accounts</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>AssessmentQuestionVersion</description>
+        <name>AssessmentQuestionVersion</name>
+        <label>AssessmentQuestionVersion</label>
+        <locationX>446</locationX>
+        <locationY>3290</locationY>
+        <collectionReference>Get_Assessment_Question_Version</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_Question</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Current_PartyProfiles</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop and get the PartyProfile Ids for which GSD document already exists</description>
+        <name>Content_Document_Link_Existing</name>
+        <label>Content Document Link Existing</label>
+        <locationX>1040</locationX>
+        <locationY>1382</locationY>
+        <collectionReference>Get_Content_Document_Link_Existing</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_Is_Document_Type_GSD</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_Assessments</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop Current Accounts</description>
+        <name>Current_Accounts</name>
+        <label>Current Accounts</label>
+        <locationX>1414</locationX>
+        <locationY>3998</locationY>
+        <collectionReference>Current_PartyProfile_Accounts</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Current_Account_Record</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Assessments_Filter</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop through PartyProfiles</description>
+        <name>Current_PartyProfiles</name>
+        <label>Current PartyProfiles</label>
+        <locationX>446</locationX>
+        <locationY>3782</locationY>
+        <collectionReference>Get_PartyProfiles</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Current_PartyProfile_Accounts</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Verify_GSD_Approval_Status</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop Latest Assessment</description>
+        <name>Loop_Latest_Assessment</name>
+        <label>Loop Latest Assessment</label>
+        <locationX>1414</locationX>
+        <locationY>4514</locationY>
+        <collectionReference>Assessments_Filter</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Assign_Latest_Assessment</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Assessment_Question_Response_Filter</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop On Assessment Question Response Filter</description>
+        <name>Loop_On_Assessment_Question_Response_Filter</name>
+        <label>Loop On Assessment Question Response Filter</label>
+        <locationX>1414</locationX>
+        <locationY>5030</locationY>
+        <collectionReference>Assessment_Question_Response_Filter</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_PreviousResponse</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Upload_GSD_Document</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Loop through each PartyProfile to get AccountIDs</description>
+        <name>PartyProfiles</name>
+        <label>PartyProfiles</label>
+        <locationX>1040</locationX>
+        <locationY>782</locationY>
+        <collectionReference>Get_PartyProfiles</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Add_AccountIDs</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_Content_Document_Link_Existing</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordLookups>
+        <description>Get account records</description>
+        <name>Get_Accounts</name>
+        <label>Get Accounts</label>
+        <locationX>1040</locationX>
+        <locationY>2474</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null4</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors6</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>AccountIDs</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get Assessment Question Response</description>
+        <name>Get_Assessment_Question_Response</name>
+        <label>Get Assessment Question Response</label>
+        <locationX>446</locationX>
+        <locationY>2690</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null5</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors7</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>GSD Approval</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>AssessmentId</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>AssessmentIds</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>AssessmentQuestionResponse</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get Assessment Question Version</description>
+        <name>Get_Assessment_Question_Version</name>
+        <label>Get Assessment Question Version</label>
+        <locationX>446</locationX>
+        <locationY>2990</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null6</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors8</targetReference>
+        </faultConnector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Approval</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Comment</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>AssessmentQuestionVersion</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get Assessments for all the Accounts</description>
+        <name>Get_Assessments</name>
+        <label>Get Assessments</label>
+        <locationX>1040</locationX>
+        <locationY>1874</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null3</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors5</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>AccountIDs</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>GSD Approval</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Assessment</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get Content Document Link Records for GSD if they exist</description>
+        <name>Get_Content_Document_Link_Existing</name>
+        <label>Get Content Document Link Existing</label>
+        <locationX>1040</locationX>
+        <locationY>1082</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null2</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors4</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>LinkedEntityId</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>PartyProfileIDs</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>ContentDocumentLink</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Get PartyProfile Records that need GSD</description>
+        <name>Get_PartyProfiles</name>
+        <label>Get PartyProfiles</label>
+        <locationX>1865</locationX>
+        <locationY>566</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_Null</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors3</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>PartyProfileIDs</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>PartyProfile</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Updates the opportunity stage to &quot;Closed Declined&quot; if GSD approval was declined and sets the decline reason.</description>
+        <name>Set_Opportunity_Stage_to_Closed_Declined</name>
+        <label>Set Opportunity Stage to Closed - Declined</label>
+        <locationX>314</locationX>
+        <locationY>6446</locationY>
+        <faultConnector>
+            <targetReference>Log_Flow_Errors</targetReference>
+        </faultConnector>
+        <inputReference>recordId</inputReference>
+    </recordUpdates>
+    <screens>
+        <description>Displays a screen for users to approve or decline the GSD process after verifying the file upload.</description>
+        <name>GSD_Approval_Decision_Screen</name>
+        <label>GSD Approval Decision Screen</label>
+        <locationX>1414</locationX>
+        <locationY>5630</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Save_Response</targetReference>
+        </connector>
+        <fields>
+            <name>GSD_Approval</name>
+            <choiceReferences>choiceapi1</choiceReferences>
+            <choiceReferences>choiceapi2</choiceReferences>
+            <dataType>Boolean</dataType>
+            <defaultValue>
+                <elementReference>PreviousResponse</elementReference>
+            </defaultValue>
+            <fieldText>GSD Approval</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Comment</name>
+            <dataType>String</dataType>
+            <defaultValue>
+                <elementReference>PreviousComment</elementReference>
+            </defaultValue>
+            <fieldText>Comment</fieldText>
+            <fieldType>InputField</fieldType>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>Submit</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <description>Screen GSD Not Required</description>
+        <name>Screen_GSD_Not_Required</name>
+        <label>Screen GSD Not Required</label>
+        <locationX>3746</locationX>
+        <locationY>350</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>DisplayText9</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;GSD Approval Not Required&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>DisplayText10</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;Evaluation:&lt;/strong&gt; {!JsonGet_Group_Sanctions_Desk}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>Group Sanctions Desk - Prohibited Countries;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <showFooter>false</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <description>Presents the user with a file upload interface to submit the GSD document. The flow will not proceed until at least one file is uploaded.</description>
+        <name>Upload_GSD_Document</name>
+        <label>Upload GSD Document</label>
+        <locationX>1414</locationX>
+        <locationY>5522</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>GSD_Approval_Decision_Screen</targetReference>
+        </connector>
+        <fields>
+            <name>DisplayText11</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;Evaluation:&lt;/strong&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt; {!JsonGet_Group_Sanctions_Desk}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>DisplayText6</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;GSD approval for Applicant: {!CurrentAccountRecord.FirstName} {!CurrentAccountRecord.LastName}&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>Need GSD Approval;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>GSD_Approval_Required</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 12px; background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;GSD Approval Required&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>1 AND NOT 2 AND NOT 3</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>Need GSD Approval;</stringValue>
+                    </rightValue>
+                </conditions>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>GSD Approval Confirmed;</stringValue>
+                    </rightValue>
+                </conditions>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>GSD Approval Rejected;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>GSD_Approval_Not_Required</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;GSD Approval Not Required&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>NOT 1</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>Need GSD Approval;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Document_Uploaded_NotConfirmed</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(68, 68, 68); background-color: rgb(255, 255, 255);&quot;&gt;GSD Document Already Uploaded&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>ExistingGSDPartyProfileIds</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <elementReference>Current_PartyProfiles.Id</elementReference>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>AlreadyConfirmed</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;GSD Approval Already Confirmed﻿&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>GSD Approval Confirmed;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>AlreadyRejected</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(68, 68, 68); background-color: rgb(255, 255, 255);&quot;&gt;GSD Approval Already Rejected&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>recordId.Required_Approval_Processes__c</leftValueReference>
+                    <operator>Contains</operator>
+                    <rightValue>
+                        <stringValue>GSD Approval Rejected;</stringValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Upload_Comp</name>
+            <extensionName>c:ics_comp_upload</extensionName>
+            <fieldType>ComponentInstance</fieldType>
+            <inputParameters>
+                <name>documentName</name>
+                <value>
+                    <elementReference>FormattedName</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>documentType</name>
+                <value>
+                    <stringValue>GSD Form</stringValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>locationRecordId</name>
+                <value>
+                    <elementReference>Current_PartyProfiles.Id</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>title</name>
+                <value>
+                    <stringValue>Upload GSD document</stringValue>
+                </value>
+            </inputParameters>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <storeOutputAutomatically>true</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <validationRule>
+                <errorMessage>&lt;p&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255); color: rgb(255, 0, 0);&quot;&gt;Please upload GSD document to proceed&lt;/span&gt;&lt;/p&gt;</errorMessage>
+                <formulaExpression>OR(CONTAINS({!ExistingGSDPartyProfileIds}, {!Current_PartyProfiles.Id}), CONTAINS({!recordId.Required_Approval_Processes__c}, &apos;GSD Approval Confirmed;&apos;), CONTAINS({!recordId.Required_Approval_Processes__c}, &apos;GSD Approval Rejected;&apos;), {!Upload_Comp.uploadedSuccessfully})</formulaExpression>
+            </validationRule>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <start>
+        <locationX>2679</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>JsonGet_Group_Sanctions_Desk</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <description>Collect AccountIDs to fetch concerned account ids</description>
+        <name>AccountIDs</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>ApprovalQuestionVersionId</description>
+        <name>ApprovalQuestionVersionId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>AssessmentIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>CommentQuestionVersionId</description>
+        <name>CommentQuestionVersionId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>ContentVersionRecords to be updated</description>
+        <name>ContentVersionRecords</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>ContentVersion</objectType>
+    </variables>
+    <variables>
+        <description>Current Account Record</description>
+        <name>CurrentAccountRecord</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Account</objectType>
+    </variables>
+    <variables>
+        <name>currentItem_Assessment_Question_Response_Filter</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>AssessmentQuestionResponse</objectType>
+    </variables>
+    <variables>
+        <name>currentItem_Assessments_Filter</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Assessment</objectType>
+    </variables>
+    <variables>
+        <name>currentItem_Current_PartyProfile</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>PartyProfile</objectType>
+    </variables>
+    <variables>
+        <name>currentItem_Current_PartyProfile_Accounts</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Account</objectType>
+    </variables>
+    <variables>
+        <description>Current PartyProfile Record</description>
+        <name>CurrentPartyProfileRecord</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>PartyProfile</objectType>
+    </variables>
+    <variables>
+        <description>PartyProfile Ids against whom FAIS documents were already uploaded</description>
+        <name>ExistingFAISPartyProfileIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>PartyProfile Ids against whom GSD documents were already uploaded</description>
+        <name>ExistingGSDPartyProfileIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>GSDRejected</description>
+        <name>GSDRejected</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
+    </variables>
+    <variables>
+        <description>latestAssessment</description>
+        <name>latestAssessment</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Assessment</objectType>
+    </variables>
+    <variables>
+        <description>PartyProfileIDs against which GSD is to be uploaded, stored in Opportunity.Required_Approval_Processes__c field delimited with semicolon between two strings Need GSD Approval;0xU9O0000000....;0xU9O000000....;End Need GSD Approval;</description>
+        <name>PartyProfileIDs</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <description>PreviousComment</description>
+        <name>PreviousComment</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>PreviousResponse</description>
+        <name>PreviousResponse</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>PreviousValues</description>
+        <name>PreviousValues</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>recordId</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <objectType>Opportunity</objectType>
+    </variables>
+</Flow>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>53.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Is_Conversation_Actioned</name>
+        <label>Is Conversation Actioned?</label>
+        <locationX>710</locationX>
+        <locationY>177</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>No_Conversation_Actioned</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>ParentConversation.Status__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Actioned</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Conversation_Response</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <description>SFP-7011 - NBA Conversation Account Page</description>
+    <interviewLabel>HNW Conversation Response Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>HNW Conversation Response Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>ParentConversation</name>
+        <label>Conversation</label>
+        <locationX>504</locationX>
+        <locationY>36</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_Conversation_Actioned</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Conversation__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CMN_Conversation__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Conversation_Response</name>
+        <label>Conversation Response</label>
+        <locationX>522</locationX>
+        <locationY>486</locationY>
+        <inputAssignments>
+            <field>Can_Create_Conversation_Response__c</field>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>110</locationY>
+        <connector>
+            <targetReference>ParentConversation</targetReference>
+        </connector>
+        <object>CMN_Conversation_Response__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

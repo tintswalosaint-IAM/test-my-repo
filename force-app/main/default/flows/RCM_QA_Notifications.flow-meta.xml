@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Completed_QA_Request_Chatter_Notification</name>
+        <label>Completed QA Request Chatter Notification</label>
+        <locationX>842</locationX>
+        <locationY>647</locationY>
+        <actionName>chatterPost</actionName>
+        <actionType>chatterPost</actionType>
+        <faultConnector>
+            <targetReference>Log_Completed_QA_Notification</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>text</name>
+            <value>
+                <elementReference>Email_Case_Owner</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subjectNameOrId</name>
+            <value>
+                <elementReference>$Record.Case_to_QA__r.OwnerId</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>chatterPost</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <name>Log_Completed_QA_Notification</name>
+        <label>Log: Completed QA Notification</label>
+        <locationX>1106</locationX>
+        <locationY>755</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Completed QA Request Chatter Notification</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Restriction QA</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Log_Get_RIM_Case_Details</name>
+        <label>Log: Get RIM Case Details</label>
+        <locationX>1898</locationX>
+        <locationY>431</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>Get RIM Case Details</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Restriction QA</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Log_New_QA_Action</name>
+        <label>Log: New QA Action</label>
+        <locationX>578</locationX>
+        <locationY>647</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>New QA Action</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Restriction QA</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Log_New_QA_Chatter_Notification</name>
+        <label>Log: New QA Chatter Notification</label>
+        <locationX>314</locationX>
+        <locationY>755</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>New QA Request Chatter Notification</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Restriction QA</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Log_QA_Completed</name>
+        <label>Log: QA Completed</label>
+        <locationX>1370</locationX>
+        <locationY>647</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+            <value>
+                <stringValue>QA Completed</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>Restriction QA</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>New_QA</name>
+        <label>New QA</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>New_QA_Request_Chatter_Notification</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_New_QA_Action</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.QA_Owner__r.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <elementReference>$Record.Case_to_QA__r.Owner:User.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>NewQASubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>New_QA_Request_Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientId</name>
+            <value>
+                <elementReference>$Record.QA_Owner__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logEmailOnSend</name>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>New_QA_Request_Chatter_Notification</name>
+        <label>New QA Request Chatter Notification</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <actionName>chatterPost</actionName>
+        <actionType>chatterPost</actionType>
+        <faultConnector>
+            <targetReference>Log_New_QA_Chatter_Notification</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>text</name>
+            <value>
+                <elementReference>New_QA_Request_Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subjectNameOrId</name>
+            <value>
+                <elementReference>$Record.QA_Owner__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>chatterPost</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <name>QA_Completed</name>
+        <label>QA Completed</label>
+        <locationX>842</locationX>
+        <locationY>539</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Completed_QA_Request_Chatter_Notification</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_QA_Completed</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Case_to_QA__r.Owner:User.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <elementReference>$Record.QA_Owner__r.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>QA_Completed_Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>Email_Case_Owner</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientId</name>
+            <value>
+                <elementReference>$Record.Case_to_QA__r.Owner:User.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logEmailOnSend</name>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>QA_Status</name>
+        <label>QA Status</label>
+        <locationX>842</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>New_QA_Request</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.QA_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>New</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>New_QA</targetReference>
+            </connector>
+            <label>New QA Request</label>
+        </rules>
+        <rules>
+            <name>QA_Closed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.QA_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Completed</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>QA_Completed</targetReference>
+            </connector>
+            <label>QA Closed</label>
+        </rules>
+    </decisions>
+    <description>SFP-32555 Send notifications when a new QA request is created and the QA request is completed</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Link to related case record</description>
+        <name>CaseURL</name>
+        <dataType>String</dataType>
+        <expression>LEFT($Api.Partner_Server_URL_260, FIND( &apos;/services&apos;, $Api.Partner_Server_URL_260))+{!$Record.Case_to_QA__r.Id}</expression>
+    </formulas>
+    <formulas>
+        <name>QAURL</name>
+        <dataType>String</dataType>
+        <expression>LEFT($Api.Partner_Server_URL_260, FIND( &apos;/services&apos;, $Api.Partner_Server_URL_260))+{!$Record.Id}</expression>
+    </formulas>
+    <interviewLabel>RCM - QA Notifications {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>RCM - QA Notifications</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Rim_Case_Details</name>
+        <label>Get Rim Case Details</label>
+        <locationX>842</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>QA_Status</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Get_RIM_Case_Details</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>SVC_CaseOwnerTeam__c</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Restriction</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Case</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>716</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Rim_Case_Details</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>QA_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Completed</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>QA_Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </filters>
+        <object>Quality_Assurance__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <description>Email case owner when QA is completed</description>
+        <name>Email_Case_Owner</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Good Day
+Please note that QA for Case - {!$Record.Case_to_QA__r.CaseNumber} is completed.
+Link to Case: {!CaseURL}
+Regards
+Restrictions QA Team</text>
+    </textTemplates>
+    <textTemplates>
+        <name>New_QA_Request_Email</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Good Day
+
+You have a new quality assurance request:
+Case Number - {!$Record.Case_to_QA__r.CaseNumber}
+Case Link - {!CaseURL}
+QA Number -  {!$Record.Name}
+QA Link - {!QAURL}
+Kind Regards</text>
+    </textTemplates>
+    <textTemplates>
+        <name>NewQASubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>New Quality Assurance Request For Case - {!$Record.Case_to_QA__c}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>QA_Completed_Subject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Quality Assurance For Case - {!$Record.Case_to_QA__c} IS Completed</text>
+    </textTemplates>
+</Flow>

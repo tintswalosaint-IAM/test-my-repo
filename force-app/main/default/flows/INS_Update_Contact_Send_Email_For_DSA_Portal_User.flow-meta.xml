@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>SFP-53279 - Log Errors for Flow</description>
+        <name>Log_Error</name>
+        <label>Log Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>INS Update Direct Sales Agent Contact</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>ERROR</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <description>This email alert send an welcome email to the direct sales agent with a link to the direct sales agent portal.</description>
+        <name>Sends_Email_Alert_With_Direct_Sales_Agent_Portal_Site_Link</name>
+        <label>Sends Email Alert With Direct Sales Agent Portal Site Link</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Contact.DSA_portal_email_alert_for_adding_new_partner_contact</actionName>
+        <actionType>emailAlert</actionType>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Contact.DSA_portal_email_alert_for_adding_new_partner_contact</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SFP-53279 - this flow updates the country from the related account record and also sends an welcome email to the contact with the direct sales agent portal site link.</description>
+    <environments>Default</environments>
+    <interviewLabel>INS_Update_Contact_Send_Email_For_DSA_Portal_User {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>INS_Update_Contact_Send_Email_For_DSA_Portal_User</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>This updates the External_CIF_Country__c as per the contact&apos;s related account.</description>
+        <name>Update_CIF_Country</name>
+        <label>Update CIF Country</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Sends_Email_Alert_With_Direct_Sales_Agent_Portal_Site_Link</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Error</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>External_CIF_Country__c</field>
+            <value>
+                <elementReference>$Record.Account.ExternalCIFId__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_CIF_Country</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>INS_SalesAgentPortalLicenseType__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Contact</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

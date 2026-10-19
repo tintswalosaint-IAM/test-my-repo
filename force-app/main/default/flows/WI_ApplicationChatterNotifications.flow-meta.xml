@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Chatter_Notification</name>
+        <label>Chatter Notification</label>
+        <locationX>314</locationX>
+        <locationY>758</locationY>
+        <actionName>chatterPost</actionName>
+        <actionType>chatterPost</actionType>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>text</name>
+            <value>
+                <elementReference>template</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subjectNameOrId</name>
+            <value>
+                <elementReference>processInstance.SubmittedById</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>chatterPost</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <name>Error</name>
+        <label>Error</label>
+        <locationX>1370</locationX>
+        <locationY>650</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>W&amp;I Application Chatter Notifications</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>Error</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Email</name>
+        <label>Send Email</label>
+        <locationX>314</locationX>
+        <locationY>866</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>processInstance.SubmittedBy.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>template</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Template</name>
+        <label>Assign Template</label>
+        <locationX>50</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>hraTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>HRA_Subject</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Copy_1_of_Assign_Template</name>
+        <label>Assign Template</label>
+        <locationX>314</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>hrrTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>HRA_Rejected</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Copy_2_of_Assign_Template</name>
+        <label>Assign Template</label>
+        <locationX>578</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>raTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>RM_Approved</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Copy_3_of_Assign_Template</name>
+        <label>Assign Template</label>
+        <locationX>842</locationX>
+        <locationY>242</locationY>
+        <assignmentItems>
+            <assignToReference>template</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>rrTemplate</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>RM_Rejected</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>HRA_Rejected</name>
+        <label>HRA Rejected</label>
+        <locationX>314</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>High Risk Application Rejected</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>processInstance</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>HRA_Subject</name>
+        <label>HRA Subject</label>
+        <locationX>50</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>High Risk Application Approved</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>processInstance</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>RM_Approved</name>
+        <label>RM Approved</label>
+        <locationX>578</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Application Remedy Approved</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>processInstance</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>RM_Rejected</name>
+        <label>RM Rejected</label>
+        <locationX>842</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Application Remedy Rejected</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>processInstance</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Check_Status</name>
+        <label>Check Status</label>
+        <locationX>578</locationX>
+        <locationY>134</locationY>
+        <defaultConnectorLabel>None</defaultConnectorLabel>
+        <rules>
+            <name>High_Risk_Approved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved by Regional Head</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.Status__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Approved by Regional Head</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Template</targetReference>
+            </connector>
+            <label>High Risk Approved</label>
+        </rules>
+        <rules>
+            <name>High_Risk_Rejected</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.Status__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Assign_Template</targetReference>
+            </connector>
+            <label>High Risk Rejected</label>
+        </rules>
+        <rules>
+            <name>Remedy_Approved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>record.WI_SystemInfo__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Remedy Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.WI_SystemInfo__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Remedy Approved</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_2_of_Assign_Template</targetReference>
+            </connector>
+            <label>Remedy Approved</label>
+        </rules>
+        <rules>
+            <name>Remedy_Rejected</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>record.WI_SystemInfo__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Remedy Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>recordPrior.WI_SystemInfo__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Remedy Rejected</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_3_of_Assign_Template</targetReference>
+            </connector>
+            <label>Remedy Rejected</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_Exist_Process_Instance</name>
+        <label>Is Exist Process Instance</label>
+        <locationX>578</locationX>
+        <locationY>650</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>processInstance</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Chatter_Notification</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-21105-CER | Remedy Request</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>domainLink</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Enterprise_Server_URL_540},FIND(&quot;/services&quot;, {!$Api.Enterprise_Server_URL_540}))</expression>
+    </formulas>
+    <interviewLabel>W&amp;I Application Chatter Notifications {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>W&amp;I Application Chatter Notifications</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>processInstance</name>
+        <label>Get Process Instance</label>
+        <locationX>578</locationX>
+        <locationY>542</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_Exist_Process_Instance</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>TargetObjectId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>ProcessInstance</object>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Desc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>452</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Status</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>hraTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A new high risk Application has been approved {!record.Name}.
+Please have a look at the record:
+{!domainLink}{!record.Id}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>hrrTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A new high risk Application has been rejected {!record.Name}.
+Please have a look at the record:
+{!domainLink}{!record.Id}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>raTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A Remedy Request has been approved {!record.Name}.
+Please have a look at the record:
+{!domainLink}{!record.Id}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>rrTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A Remedy Request has been rejected {!record.Name}.
+Please have a look at the record:
+{!domainLink}{!record.Id}</text>
+    </textTemplates>
+    <variables>
+        <name>record</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Application__c</objectType>
+    </variables>
+    <variables>
+        <name>recordPrior</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Application__c</objectType>
+    </variables>
+    <variables>
+        <name>subject</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>template</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Email_Notification_Chatter_Post</name>
+        <label>Email Notification Chatter Post</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <actionName>chatterPost</actionName>
+        <actionType>chatterPost</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>text</name>
+            <value>
+                <stringValue>Lead Email Notification to Referrer was Sent</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subjectNameOrId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>chatterPost</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <actionCalls>
+        <description>SFP-42164 - Help A Client: Staff member - Leads</description>
+        <name>Lead_Confirmation_Email_to_Referrer</name>
+        <label>Lead Confirmation Email to Referrer</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <actionName>Lead.Lead_Confirmation_Email_to_Referrer</actionName>
+        <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>Email_Notification_Chatter_Post</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Lead.Lead_Confirmation_Email_to_Referrer</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Email_to_Private_banker_email_address</name>
+        <label>Send Email to Private banker email address</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <actionName>Lead.Lead_confirmation_from_web_to_lead_form</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Lead.Lead_confirmation_from_web_to_lead_form</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>LS_HelpAClient</name>
+        <label>Is Help A Client</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnector>
+            <targetReference>Send_Email_to_Private_banker_email_address</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Source_System_Name__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>WhatsApp: Help A Client</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Lead_Confirmation_Email_to_Referrer</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-42164 - Help A Client: Staff member - Leads</description>
+    <environments>Default</environments>
+    <interviewLabel>Lead-Send email alert to referrer {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Lead_Send email alert to referrer</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>LS_HelpAClient</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>LeadSource</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Commercial IAM Internal Form</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Source_System_Name__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>WhatsApp: Help A Client</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>EmailSubject</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Your Referral Lead has been created&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <description>Confirm lead created from web to lead form</description>
+        <name>LeadConfirmation</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Good Day {!$Record.Private_Banker__c}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Your lead referral has been created and sent to the IAM Commercial team.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Please see the details you submitted below:&lt;/p&gt;&lt;p&gt;Company Name: {!$Record.Company}&lt;/p&gt;&lt;p&gt;Approx. Lives: {!$Record.NumberOfEmployees}&lt;/p&gt;&lt;p&gt;Renewal Date: {!$Record.Renewal_Date__c}&lt;/p&gt;&lt;p&gt;Annual Premium(ZAR): {!$Record.FinServ__PotentialValue__c}&lt;/p&gt;&lt;p&gt;Current Group Product: {!$Record.Product_Type__c}&lt;/p&gt;&lt;p&gt;Country: {!$Record.Country}&lt;/p&gt;&lt;p&gt;Business Area: {!$Record.Segment__c}&lt;/p&gt;&lt;p&gt;Executive Sponsor: {!$Record.Executive_Sponsor__c}&lt;/p&gt;&lt;p&gt;FFA or Regional Opportunity: {!$Record.LS_Recommended_Package__c}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Kind regards&lt;/p&gt;&lt;p&gt;IAM team&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</text>
+    </textTemplates>
+</Flow>

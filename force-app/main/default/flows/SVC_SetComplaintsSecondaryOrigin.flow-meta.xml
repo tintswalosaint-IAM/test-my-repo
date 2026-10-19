@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>SVC_Complaints_Queue</name>
+        <label>Complaints Queue</label>
+        <locationX>314</locationX>
+        <locationY>395</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>SVC_ExecutiveComplaints</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>SVC_QueueDeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SVC_ZA_Executive_Complaints_Team</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SVC_UpdateSecondaryOriginExecutive</targetReference>
+            </connector>
+            <label>Executive Complaints</label>
+        </rules>
+        <rules>
+            <name>SVC_OmbudsmanReferralsSupport</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>SVC_QueueDeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SVC_ZA_Ombudsman_Referrals_Support_Team</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SVC_UpdateSecondaryOriginOmbudsman</targetReference>
+            </connector>
+            <label>Ombudsman Referrals Support</label>
+        </rules>
+    </decisions>
+    <description>Sets the secondary origin of the case creation on Email to Case for Executive and Ombudsman Referrals Complaints</description>
+    <environments>Default</environments>
+    <interviewLabel>Complaints Secondary Origin {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Set Complaints Secondary Origin</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>SVC_GetQueueName</name>
+        <label>Get Queue Name</label>
+        <locationX>314</locationX>
+        <locationY>287</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>SVC_Complaints_Queue</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </filters>
+        <object>Group</object>
+        <outputAssignments>
+            <assignToReference>SVC_QueueDeveloperName</assignToReference>
+            <field>DeveloperName</field>
+        </outputAssignments>
+    </recordLookups>
+    <recordUpdates>
+        <name>SVC_UpdateSecondaryOriginExecutive</name>
+        <label>Update Secondary Origin to Executive</label>
+        <locationX>50</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>SVC_SecondaryOrigin__c</field>
+            <value>
+                <stringValue>Executive</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>SVC_UpdateSecondaryOriginOmbudsman</name>
+        <label>Update Secondary Origin to Ombudsman</label>
+        <locationX>314</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>SVC_SecondaryOrigin__c</field>
+            <value>
+                <stringValue>Ombudsman Informal Referrals</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>SVC_GetQueueName</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Origin</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Email</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>SVC_QueueDeveloperName</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

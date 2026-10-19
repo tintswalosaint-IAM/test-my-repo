@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>SFP-53693: Log Error</description>
+        <name>Log_Error</name>
+        <label>Log Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>sbgplatform__rflib_LoggerFlowAction</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>Automatic</flowTransactionModel>
+        <inputParameters>
+            <name>area</name>
+        </inputParameters>
+        <inputParameters>
+            <name>args</name>
+        </inputParameters>
+        <inputParameters>
+            <name>context</name>
+            <value>
+                <stringValue>INS Lead AfterSave</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>logLevel</name>
+            <value>
+                <stringValue>Error</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>message</name>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>useBatchReporting</name>
+        </inputParameters>
+        <nameSegment>sbgplatform__rflib_LoggerFlowAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>66.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>SFP-53547 - Check Lead Currency</description>
+        <name>Check_Currency_on_Expressed_Interest_for_What_Matters_Leads</name>
+        <label>Check Currency on Expressed Interest for What Matters Leads</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Is_Lead_New</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Currency_Doesn_t_Match</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CurrencyIsoCode</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.Expressed_Interest_Product__r.CurrencyIsoCode</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Expressed_Interest_Product__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.LeadSource</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>WhatMatters App</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Currency</targetReference>
+            </connector>
+            <label>Currency Doesn&apos;t Match</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-55638: Check Product Interest and Campaign Source Id for Existing WhatMatters Leads</description>
+        <name>Check_Product_Interest_and_Campaign_Source_Id_for_Existing_WhatMatters_Leads</name>
+        <label>Check Product Interest and Campaign Source Id for Existing WhatMatters Leads</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>FFA_Attendance_Expressed_Interest</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Expressed_Interest_Product__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.LeadSource</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>WhatMatters App</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Campaign_Source_ID__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Campaign_Member_Status_for_FFA_Attendance</targetReference>
+            </connector>
+            <label>FFA Attendance Expressed Interest</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-53693: Check Product Interest and Campaign Source Id for New WhatMatters Leads</description>
+        <name>Check_Product_Interest_and_Campaign_Source_Id_for_New_WhatMatters_Leads</name>
+        <label>Check Product Interest and Campaign Source Id for New WhatMatters Leads</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Registered_Expressed_Interest</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Expressed_Interest_Product__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.LeadSource</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>WhatMatters App</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Campaign_Source_ID__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Campaign_Member_for_FFA_Registrations</targetReference>
+            </connector>
+            <label>Registered Expressed Interest</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-55638: Check if Event Attendance Search Key was Found</description>
+        <name>Event_Attendance_Search_Key_Found</name>
+        <label>Event Attendance Search Key Found</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Attendance_Key_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Event_Attendance_Search_Key.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Product_Interest_and_Campaign_Source_Id_for_Existing_WhatMatters_Leads</targetReference>
+            </connector>
+            <label>Attendance Key Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>SFP-53693: Check if Event Registration Search Key was Found</description>
+        <name>Event_Registrations_Search_Key_Found</name>
+        <label>Event Registrations Search Key Found</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Reg_Key_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Event_Registrations_Search_Key.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Product_Interest_and_Campaign_Source_Id_for_New_WhatMatters_Leads</targetReference>
+            </connector>
+            <label>Reg Key Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Check if Lead is New</description>
+        <name>Is_Lead_New</name>
+        <label>Is Lead New</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Get_Event_Attendance_Search_Key</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Existing Lead</defaultConnectorLabel>
+        <rules>
+            <name>Lead_is_New</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record__Prior.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Event_Registrations_Search_Key</targetReference>
+            </connector>
+            <label>Lead is New</label>
+        </rules>
+    </decisions>
+    <description>SFP-53693: Assign FFA Leads as Campaign Member
+SFP-57110: Update Criteria to Identify Search Key for FFA</description>
+    <environments>Default</environments>
+    <interviewLabel>INS_Lead_AfterSave {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>INS_Lead_AfterSave</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>SFP-55638: Get Search Key For Event Attendance</description>
+        <name>Get_Event_Attendance_Search_Key</name>
+        <label>Get Event Attendance Search Key</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Event_Attendance_Search_Key_Found</targetReference>
+        </connector>
+        <faultConnector>
+            <isGoTo>true</isGoTo>
+            <targetReference>Log_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Search_Key__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Expressed_Interest_Detail__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Jurisdiction__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.External_CIF_Country__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>INS_FinancialFitness_Search_Key__mdt</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>SFP-53693: Get Search Key For Event Registrations</description>
+        <name>Get_Event_Registrations_Search_Key</name>
+        <label>Get Event Registrations Search Key</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Event_Registrations_Search_Key_Found</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Log_Error</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Search_Key__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Expressed_Interest_Detail__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Jurisdiction__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.External_CIF_Country__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>INS_FinancialFitness_Search_Key__mdt</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Currency_on_Expressed_Interest_for_What_Matters_Leads</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>LeadSource</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>WhatMatters App</stringValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <subflows>
+        <description>SFP-53693 Create Campaign Member for FFA Registrations</description>
+        <name>Create_Campaign_Member_for_FFA_Registrations</name>
+        <label>Create Campaign Member for FFA Registrations</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <flowName>INS_Lead_Autolaunched_Create_Campaign_Member</flowName>
+        <inputAssignments>
+            <name>campaignMemberStatus</name>
+            <value>
+                <stringValue>Registered</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <name>leadId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <name>salesforceCampaignCode</name>
+            <value>
+                <elementReference>$Record.Campaign_Source_ID__c</elementReference>
+            </value>
+        </inputAssignments>
+    </subflows>
+    <subflows>
+        <description>SFP-55638 Updating Campaign Member Status to &quot;Attended&quot;</description>
+        <name>Update_Campaign_Member_Status_for_FFA_Attendance</name>
+        <label>Update Campaign Member Status for FFA Attendance</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <flowName>INS_Lead_Autolaunched_Update_Campaign_Member_Status</flowName>
+        <inputAssignments>
+            <name>campaignMemberStatus</name>
+            <value>
+                <stringValue>Attended</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <name>leadId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <name>salesforceCampaignCode</name>
+            <value>
+                <elementReference>$Record.Campaign_Source_ID__c</elementReference>
+            </value>
+        </inputAssignments>
+    </subflows>
+    <subflows>
+        <description>SFP-53547 - Update Currency</description>
+        <name>Update_Currency</name>
+        <label>Update Currency</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Is_Lead_New</targetReference>
+        </connector>
+        <flowName>INS_Lead_Autolaunched_Update_Lead_Currency</flowName>
+        <inputAssignments>
+            <name>Lead</name>
+            <value>
+                <elementReference>$Record</elementReference>
+            </value>
+        </inputAssignments>
+    </subflows>
+</Flow>

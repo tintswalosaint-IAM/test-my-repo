@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Assign the relevant account</description>
+        <name>Assign_Account</name>
+        <label>Assign Account</label>
+        <locationX>704</locationX>
+        <locationY>935</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.AccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Loop_Accounts.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Docs</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Account was not found</description>
+        <name>Account_was_not_found</name>
+        <label>Account was not found</label>
+        <locationX>748</locationX>
+        <locationY>503</locationY>
+        <defaultConnector>
+            <targetReference>Loop_Accounts</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.AccountId</leftValueReference>
+                <operator>EqualTo</operator>
+            </conditions>
+            <connector>
+                <targetReference>Get_Identity_records</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Checks for existing docs</description>
+        <name>Does_the_Doc_Exist</name>
+        <label>Does the Doc Exist</label>
+        <locationX>836</locationX>
+        <locationY>827</locationY>
+        <defaultConnector>
+            <targetReference>Loop_Docs</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Loop_Docs.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Record.Application__r.WI_IdentificationNumber__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_Account</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>SFP-31502 - New Legal Account Creation</description>
+    <environments>Default</environments>
+    <interviewLabel>WI Party Profile Before Create/Update Account Matching {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>WI Party Profile Before Create/Update Account Matching</label>
+    <loops>
+        <description>Lops through the accounts</description>
+        <name>Loop_Accounts</name>
+        <label>Loop Accounts</label>
+        <locationX>176</locationX>
+        <locationY>395</locationY>
+        <collectionReference>GetAccounts</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Account_was_not_found</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Update_Party_Role_Record</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <description>Lopp through documents</description>
+        <name>Loop_Docs</name>
+        <label>Loop Docs</label>
+        <locationX>616</locationX>
+        <locationY>719</locationY>
+        <collectionReference>Get_Identity_records</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Does_the_Doc_Exist</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Loop_Accounts</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Gets the relevant Identity records</description>
+        <name>Get_Identity_records</name>
+        <label>Get Identity records</label>
+        <locationX>616</locationX>
+        <locationY>611</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_Docs</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>RelatedLegalEntityId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Loop_Accounts.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IdDocumentType</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Application__r.WI_IdentityType__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>IdentityDocument</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Gets Existing Account Records</description>
+        <name>GetAccounts</name>
+        <label>Get Account</label>
+        <locationX>176</locationX>
+        <locationY>287</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_Accounts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ExternalCIFId__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Pending_Client_ID__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Updates the Party Role Record with Related Account</description>
+        <name>Update_Party_Role_Record</name>
+        <label>Update Party Role Record</label>
+        <locationX>176</locationX>
+        <locationY>1379</locationY>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <elementReference>$Record.AccountId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>GetAccounts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Pending_Client_ID__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>PartyProfile</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
