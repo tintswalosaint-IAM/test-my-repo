@@ -363,15 +363,40 @@ public without sharing class INS_UTIL_LeadTrigger {
     }
     
     /**
-* @description Process leads for Connex integration based on eligibility and changes
-* Determines which leads should be sent to Connex system and submits batch job
+* @description Process leads for Connex integration based on eligibility and changes.
+*
+* ── WHERE THIS FITS IN THE FLOW ──────────────────────────────────────────────
+* Called from CMN_TRH_Lead.bulkAfter() on every Lead insert or update.
+* Guard in CMN_TRH_Lead: only runs when skipConnexCallout=false and not in a batch context.
+*
+* This method categorises each lead into one of three buckets:
+*
+*   1. expressedInterestChangedLeads
+*      Expressed_Interest_Product__c changed AND lead already exists in the dialler
+*      (has a non-blank, non-Duplicate Referred_System_Reference_Number__c).
+*      Must expire the old dialler record (PUT) then re-create under the new queue (POST).
+*      → submitConnexBatch(leads, isExpressedInterestChanged=true)
+*      → INS_BATCH_DiallerLead branches to processExpressedInterestChangedLeads()
+*
+*   2. qualifiedLeads
+*      Brand new lead (no ref#) OR lead info changed (name/phone/etc.) on an existing record.
+*      Normal POST for new leads; normal PUT for info updates.
+*      → submitConnexBatch(leads, isExpressedInterestChanged=false)
+*      → INS_BATCH_DiallerLead routes to processLeadscallout()
+*
+*   3. ignored
+*      Unqualified leads, leads with future preferred contact times, duplicates.
+*
+* ─────────────────────────────────────────────────────────────────────────────
 * @param newLeads List of new Lead records
 * @param oldLeadMap Map of old Lead records before update
 */
-    //Tints note: This method is called from the trigger handler 
     public static void processLeadsForConnex(List<Lead> newLeads, Map<Id, Lead> oldLeadMap) {
+        System.debug('>>> processLeadsForConnex | ENTERED | total leads=' + newLeads.size());
         List<Lead> leadsToProcess = filterEligibleLeads(newLeads);
+        System.debug('>>> processLeadsForConnex | after filterEligibleLeads=' + leadsToProcess.size());
         if (leadsToProcess.isEmpty()) {
+            System.debug('>>> processLeadsForConnex | EXITING — no eligible leads after filter');
             return;
         }
         
@@ -404,18 +429,21 @@ public without sharing class INS_UTIL_LeadTrigger {
     }
     
     /**
-* @description Container for Connex processing results
+* @description Container for Connex processing results.
+*
+* qualifiedLeads             → normal POST (new) or PUT (info changed) path
+* expressedInterestChangedLeads → two-step PUT-expire + POST-recreate path
+* leadsToUpdate              → legacy clone path (not used in current flow)
 */
     private class ConnexProcessingResult {
         public List<Lead> qualifiedLeads { get; set; }
         public List<Lead> leadsToUpdate { get; set; }
-        public List<Lead> expressedInterestChangedLeads { get; set; }// newly added to hold leads with changed expressed interest product
+        public List<Lead> expressedInterestChangedLeads { get; set; }
         
         public ConnexProcessingResult() {
             this.qualifiedLeads = new List<Lead>();
             this.leadsToUpdate = new List<Lead>();
-            this.expressedInterestChangedLeads = new List<Lead>();// newly added to hold leads with changed expressed interest product
-
+            this.expressedInterestChangedLeads = new List<Lead>();
         }
     }
     
@@ -426,7 +454,6 @@ public without sharing class INS_UTIL_LeadTrigger {
 * @return ConnexProcessingResult Result containing qualified leads and leads to update
 */
 
-    //Tints note    
     private static ConnexProcessingResult processLeadsForConnexEligibility(List<Lead> leadsToProcess, Map<Id, Lead> oldLeadMap) {
         ConnexProcessingResult result = new ConnexProcessingResult();
         Map<Id, Leads_ProductQueueAllocation__c> productMap = fetchProductAllocations(leadsToProcess);
@@ -446,9 +473,13 @@ public without sharing class INS_UTIL_LeadTrigger {
 * @param result ConnexProcessingResult to update with results
 */
 
-//Tints note
     private static void processSingleLeadForConnex(Lead lead, Map<Id, Leads_ProductQueueAllocation__c> productMap,Map<Id, Lead> oldLeadMap, ConnexProcessingResult result) {
-        if (!isValidProductLead(lead, productMap.get(lead.Expressed_Interest_Product__c),'Dialer_Leads')) {
+        Boolean isValid = isValidProductLead(lead, productMap.get(lead.Expressed_Interest_Product__c),'Dialer_Leads');
+        System.debug('>>> processSingleLeadForConnex | leadId=' + lead.Id
+            + ' | isValidProductLead=' + isValid
+            + ' | Expressed_Interest_Product__c=' + lead.Expressed_Interest_Product__c);
+        if (!isValid) {
+            System.debug('>>> processSingleLeadForConnex | leadId=' + lead.Id + ' DROPPED — did not pass isValidProductLead');
             return;
         }
         
@@ -478,51 +509,80 @@ public without sharing class INS_UTIL_LeadTrigger {
 * @return LeadProcessingDecision Decision on how to process the lead
 */
 
-//TODO: Tints note: THIS IS WHERE PRODUCT CHANGE IS CHECKED. IF PRODUCT CHANGES, LEAD IS CLONED AND SENT TO CONNEX.
-
     private static LeadProcessingDecision evaluateLeadProcessingDecision(Lead lead, Map<Id, Lead> oldLeadMap) {
         LeadProcessingDecision decision = new LeadProcessingDecision();
         
         decision.isEligibleForCallout = eligibleForConnexInsert(lead, oldLeadMap);
-    // hasProductChanged() method checks whether the old and new values of Expressed_Interest_Product__c differ
-        decision.isExpressedInterestChanged = hasProductChanged(lead, oldLeadMap);
+        // Check whether Expressed_Interest_Product__c changed from the old value.
+        // A non-blank, non-Duplicate reference number means the lead already exists in the
+        // dialler — it needs to be expired first, then re-created under the new queue.
+        decision.isExpressedInterestChanged = hasExpressedInterestChanged(lead, oldLeadMap);
         
         if (oldLeadMap != null && oldLeadMap.containsKey(lead.Id)) {
             decision.infoChanged = leadInfoChanged(lead, oldLeadMap.get(lead.Id));
         }
+
+        // DEBUG: See exactly what decision was made for this lead
+        System.debug('>>> evaluateLeadProcessingDecision | leadId=' + lead.Id
+            + ' | isExpressedInterestChanged=' + decision.isExpressedInterestChanged
+            + ' | isEligibleForCallout=' + decision.isEligibleForCallout
+            + ' | infoChanged=' + decision.infoChanged
+            + ' | ref#=' + lead.Referred_System_Reference_Number__c
+            + ' | product=' + lead.Expressed_Interest_Product__c);
         
         return decision;
     }
     
     /**
-* @description Apply the processing decision to the lead
-* @param lead Lead to process
-* @param decision Processing decision for the lead
-* @param result ConnexProcessingResult to update
+* @description Apply the processing decision to the correct result bucket.
+*
+* Priority order matters:
+*   isExpressedInterestChanged is checked FIRST because it requires a non-blank
+*   reference number, making it mutually exclusive with isEligibleForCallout
+*   (which requires a null reference number). Checking expressed-interest first
+*   is defensive — if logic ever changes and both become true simultaneously,
+*   the two-step flow (expire + recreate) is the safer choice over a plain POST.
 */
     private static void applyLeadProcessingDecision(Lead lead, LeadProcessingDecision decision, ConnexProcessingResult result) {
         if (decision.isExpressedInterestChanged) {
+            // Lead exists in dialler under wrong queue — must expire it first, then recreate.
+            System.debug('>>> applyLeadProcessingDecision | leadId=' + lead.Id + ' → expressedInterestChangedLeads bucket');
             result.expressedInterestChangedLeads.add(lead);
         } else if (decision.isEligibleForCallout) {
+            // New lead or retry (no ref#) — goes to normal POST path.
+            System.debug('>>> applyLeadProcessingDecision | leadId=' + lead.Id + ' → qualifiedLeads bucket (new/retry POST)');
             result.qualifiedLeads.add(lead);
         } else if (decision.infoChanged) {
+            // Lead info (name/phone/etc.) changed on an existing dialler record — normal PUT.
+            System.debug('>>> applyLeadProcessingDecision | leadId=' + lead.Id + ' → qualifiedLeads bucket (info changed PUT)');
             result.qualifiedLeads.add(lead);
+        } else {
+            System.debug('>>> applyLeadProcessingDecision | leadId=' + lead.Id + ' → IGNORED (no matching condition)');
         }
     }
     
     /**
-* @description Execute the final Connex processing based on results
-* @param result ConnexProcessingResult containing leads to process
+* @description Execute the final Connex processing based on results.
+* Each bucket fires a separate async batch so the two flows never share
+* a batch scope and cannot interfere with each other's classification logic.
 */
     private static void executeConnexProcessing(ConnexProcessingResult result) {
-       if (!result.qualifiedLeads.isEmpty()) {
+        // DEBUG: See the final counts before firing the batches
+        System.debug('>>> executeConnexProcessing | qualifiedLeads=' + result.qualifiedLeads.size()
+            + ' | expressedInterestChangedLeads=' + result.expressedInterestChangedLeads.size());
+
+        // Normal path: new leads (POST) and info-changed leads (PUT) go here.
+        if (!result.qualifiedLeads.isEmpty()) {
+            System.debug('>>> executeConnexProcessing | firing NORMAL batch for ' + result.qualifiedLeads.size() + ' leads');
             submitConnexBatch(result.qualifiedLeads, false);
-       }
-       // true indicates that the lead has changed its expressed interest product, so we need to process it differently
-       if (!result.expressedInterestChangedLeads.isEmpty()) {
+        }
+        // Expressed-interest-changed path: separate batch with isExpressedInterestChanged=true.
+        // INS_BATCH_DiallerLead.execute() will branch to processExpressedInterestChangedLeads().
+        if (!result.expressedInterestChangedLeads.isEmpty()) {
+            System.debug('>>> executeConnexProcessing | firing EXPRESSED INTEREST batch for ' + result.expressedInterestChangedLeads.size() + ' leads');
             submitConnexBatch(result.expressedInterestChangedLeads, true);
         }
-      }
+    }
     
     
     /**
@@ -1047,8 +1107,9 @@ public without sharing class INS_UTIL_LeadTrigger {
                 leadIds.add(l.Id);
             }
             
-            // TODO Consturctor arguements
-            INS_BATCH_ConnexLead batchJob = new INS_BATCH_ConnexLead(
+            // Batch constructor receives the flag so execute() can branch to the
+            // correct processing path without re-evaluating lead fields.
+            INS_BATCH_DiallerLead batchJob = new INS_BATCH_DiallerLead(
                 false,
                 null,
                 settings.INS_LeadType__c,
@@ -1103,14 +1164,15 @@ public without sharing class INS_UTIL_LeadTrigger {
     }
     
     /**
-* @description Check if lead product has changed and requires Connex processing
-* @param lead Lead to check for product changes
+* @description Check if the lead's expressed interest product changed and requires dialler reprocessing.
+* When it has, the existing dialler record must be expired (PUT) and the lead re-created under
+* the new queue (POST). Only triggers the two-step flow if a reference number already exists —
+* a lead without one has never been sent to the dialler and goes through the normal POST path.
+* @param lead Lead to check
 * @param oldLeadMap Map of old lead values
-* @return Boolean True if product changed and requires processing
+* @return Boolean True if expressed interest changed and the lead has an existing dialler record
 */
-
-//TODO: Tints note: THIS IS WHERE PRODUCT CHANGE IS CHECKED. IF PRODUCT CHANGES, LEAD IS CLONED AND SENT TO CONNEX.
-    private static Boolean hasProductChanged(Lead lead, Map<Id, Lead> oldLeadMap) {
+    private static Boolean hasExpressedInterestChanged(Lead lead, Map<Id, Lead> oldLeadMap) {
         try {
             if (Trigger.isInsert || oldLeadMap == null || lead == null) {
                 return false;
@@ -1129,18 +1191,27 @@ public without sharing class INS_UTIL_LeadTrigger {
                 }
             }*/
             if (lead.Expressed_Interest_Product__c != oldLead.Expressed_Interest_Product__c) {
+    // DEBUG: Product changed — show what it changed from and to
+    System.debug('>>> hasExpressedInterestChanged | product CHANGED'
+        + ' | leadId=' + lead.Id
+        + ' | old=' + oldLead.Expressed_Interest_Product__c
+        + ' | new=' + lead.Expressed_Interest_Product__c
+        + ' | ref#=' + lead.Referred_System_Reference_Number__c);
+
     // Only route to the expressed interest flow if there's an existing
     // dialler record to expire. Without a reference number, treat it as a
     // fresh new lead — it goes through the normal POST path instead.
     if (String.isNotBlank(lead.Referred_System_Reference_Number__c)
         && lead.Referred_System_Reference_Number__c != 'Duplicate') {
+        System.debug('>>> hasExpressedInterestChanged | returning TRUE — lead has ref# and product changed');
         return true;
     }
     // No reference number — fall through, eligibleForConnexInsert() will handle it
+    System.debug('>>> hasExpressedInterestChanged | product changed but no ref# — returning FALSE, normal POST will handle it');
 }
 return false;
         } catch (Exception ex) {
-            LOGGER.error('INS_UTIL_LeadTrigger | hasProductChanged | exception | ' + ex);
+            LOGGER.error('INS_UTIL_LeadTrigger | hasExpressedInterestChanged | exception | ' + ex);
             return false;
         }
     }

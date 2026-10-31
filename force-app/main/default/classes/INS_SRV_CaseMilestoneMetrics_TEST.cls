@@ -18,6 +18,9 @@ Test Class:    INS_SRV_CaseMilestoneMetrics_TEST
                                 this test's control - and was intermittently corrupting
                                 the "no existing metric" / "existing metric has only
                                 field X set" preconditions the tests below rely on.
+16-10-2026     Given Khupai     SFP-61347 Added tests for the complaints Turn Around
+                                Time (allocation to feedback and to Awaiting
+                                Ombudsman or Regulator Feedback)
 
 ------------------------------------------------------------*/
 @IsTest(SeeAllData=false)
@@ -628,6 +631,145 @@ private class INS_SRV_CaseMilestoneMetrics_TEST {
         Assert.isNotNull(
             insertedMetrics[0].CMN_SpecialistTurnaroundTime__c,
             'Specialist TAT should be populated on new metric'
+        );
+    }
+
+    /*------------------------------------------------------------
+    *   Purpose:  Builds an in-memory open Case snapshot carrying the
+    *             complaint dates (Feedback Date and Awaiting
+    *             Ombudsman Feedback Date). Classification is set so
+    *             the milestone chain does not interfere.
+    *--------------------------------------------------------------*/
+    private static Case createComplaintCaseSnapshotForService(
+        Case sourceCase,
+        DateTime allocationDate,
+        DateTime feedbackDate,
+        DateTime ombudsFeedbackDate
+    ) {
+        String caseJson = JSON.serialize(
+            new Map<String, Object>{
+                'attributes' => new Map<String, Object>{
+                    'type' => 'Case'
+                },
+                'Id' => String.valueOf(sourceCase.Id),
+                'Subject' => sourceCase.Subject,
+                'Status' => sourceCase.Status,
+                'CreatedDate' => sourceCase.CreatedDate,
+                'ClosedDate' => null,
+                'BusinessHoursId' => String.valueOf(sourceCase.BusinessHoursId),
+                'SVC_Case_Allocation_Date__c' => allocationDate,
+                'SVC_CaseClassificationDate__c' => null,
+                'SVC_ResolvedDate__c' => null,
+                'CMN_Feedback_Date__c' => feedbackDate,
+                'INS_AwaitingOmbudsFeedbackDate__c' => ombudsFeedbackDate
+            }
+        );
+
+        return (Case) JSON.deserialize(caseJson, Case.class);
+    }
+
+    /*------------------------------------------------------------
+    *   Purpose:  Verifies that a new metric carries the complaint
+    *             TATs when the Case has allocation, feedback and
+    *             Awaiting Ombudsman Feedback dates.
+    *--------------------------------------------------------------*/
+    @IsTest
+    static void updateCaseSlaDetailsCreatesComplaintMetricsPositiveOutcome() {
+        Case testCase = createBaseCase('Complaint Metrics New Test');
+
+        testCase = createComplaintCaseSnapshotForService(
+            testCase,
+            System.now().addDays(-5),
+            System.now().addHours(-1),
+            System.now().addDays(-2)
+        );
+
+        Test.startTest();
+
+        INS_SRV_CaseMilestoneMetrics.updateCaseSlaDetails(testCase);
+
+        Test.stopTest();
+
+        List<CMN_CaseMilestoneMetric__c> insertedMetrics = [
+            SELECT Id,
+                   CMN_AllocToFeedbackTurnaroundTime__c,
+                   CMN_AllocToFeedbackMillisecond__c,
+                   CMN_AllocToOmbudsFeedbackTurnaroundTime__c,
+                   CMN_AllocToOmbudsFeedbackMillisecond__c
+            FROM CMN_CaseMilestoneMetric__c
+            WHERE CMN_Case__c = :testCase.Id
+            LIMIT 1
+        ];
+
+        Assert.isFalse(
+            insertedMetrics.isEmpty(),
+            'Metric should be created for complaint Case'
+        );
+
+        Assert.isNotNull(
+            insertedMetrics[0].CMN_AllocToFeedbackTurnaroundTime__c,
+            'Allocation to feedback TAT should be populated'
+        );
+
+        Assert.isNotNull(
+            insertedMetrics[0].CMN_AllocToFeedbackMillisecond__c,
+            'Allocation to feedback millisecond value should be populated'
+        );
+
+        Assert.isNotNull(
+            insertedMetrics[0].CMN_AllocToOmbudsFeedbackTurnaroundTime__c,
+            'Allocation to Ombud feedback TAT should be populated'
+        );
+
+        Assert.isNotNull(
+            insertedMetrics[0].CMN_AllocToOmbudsFeedbackMillisecond__c,
+            'Allocation to Ombud feedback millisecond value should be populated'
+        );
+    }
+
+    /*------------------------------------------------------------
+    *   Purpose:  Verifies that the complaint TATs are added to an
+    *             existing metric even when no milestone branch
+    *             applies.
+    *--------------------------------------------------------------*/
+    @IsTest
+    static void updateCaseSlaDetailsUpdatesComplaintMetricsOnExistingMetricPositiveOutcome() {
+        Case testCase = createBaseCase('Complaint Metrics Existing Test');
+
+        CMN_CaseMilestoneMetric__c existingMetric =
+            createMetricWithAllocationOnly(testCase.Id);
+
+        testCase = createComplaintCaseSnapshotForService(
+            testCase,
+            System.now().addHours(-6),
+            System.now().addHours(-1),
+            System.now().addHours(-2)
+        );
+
+        Test.startTest();
+
+        INS_SRV_CaseMilestoneMetrics.updateCaseSlaDetails(testCase);
+
+        Test.stopTest();
+
+        CMN_CaseMilestoneMetric__c updatedMetric = [
+            SELECT Id,
+                   CMN_AllocToFeedbackMillisecond__c,
+                   CMN_AllocToOmbudsFeedbackTurnaroundTime__c,
+                   CMN_AllocToOmbudsFeedbackMillisecond__c
+            FROM CMN_CaseMilestoneMetric__c
+            WHERE Id = :existingMetric.Id
+            LIMIT 1
+        ];
+
+        Assert.isNotNull(
+            updatedMetric.CMN_AllocToFeedbackMillisecond__c,
+            'Allocation to feedback millisecond value should be added to existing metric'
+        );
+
+        Assert.isNotNull(
+            updatedMetric.CMN_AllocToOmbudsFeedbackMillisecond__c,
+            'Allocation to Ombud feedback millisecond value should be added to existing metric'
         );
     }
 

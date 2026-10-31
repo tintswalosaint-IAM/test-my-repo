@@ -3,7 +3,7 @@
 * @author            : Given Khupai
 * @last modified on  : 07-16-2026
 * @LastModified by   : Given Khupai
-* @LastModifiedReason: 
+* @LastModifiedReason: SFP-61347 Removed stale mockHasAccessResult reference (method removed from INS_UTIL_BusinessHoursCalcHelper)
 **/
 @isTest
 private class SEL_CMN_CaseMilestoneMetric_TEST {
@@ -12,14 +12,6 @@ private class SEL_CMN_CaseMilestoneMetric_TEST {
 
     @testSetup
     static void setup() {
-        /* Guard the arrange-phase Case insert below with the TaT access mock. In SIT the
-           running test user may already hold a real INS_Case_Business_Hour_TAT
-           PermissionSetAssignment, which would let SVC_TRH_Case's real afterUpdate
-           processing create a competing CMN_CaseMilestoneMetric__c record if the org's
-           own automation issues an update DML on the new Case, inflating the record
-           counts this selector test asserts on. */
-        INS_UTIL_BusinessHoursCalcHelper.mockHasAccessResult = false;
-
         Account testAccount = new Account(Name = 'Test Account');
         insert testAccount;
 

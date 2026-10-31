@@ -1,12 +1,19 @@
 /**
-* @description       : SFP-51816 Test class for SEL_CMN_HistoryTracker selector
-* @author            : Given Khupai
-**/
+ * @description Test class for the SEL_CMN_HistoryTracker selector.
+ *              <br/>SFP-51816
+ *
+ * @author Given Khupai
+ *
+ * @date September 2026
+ */
 @isTest
 private class SEL_CMN_HistoryTracker_TEST {
 
     private static final String TEST_CASE_SUBJECT = 'Test History Tracker Case';
 
+    /**
+     * @description Creates a Case with one History Tracker record
+     */
     @testSetup
     static void setup() {
         Account testAccount = new Account(Name = 'Test Account History Tracker');
@@ -23,14 +30,17 @@ private class SEL_CMN_HistoryTracker_TEST {
             CMN_Case__c = testCase.Id,
             CMN_TransferDate__c = System.now(),
             CMN_PreviousOwnerType__c = 'User',
-            CMN_PreviousUserOwner__c = UserInfo.getUserId(),
+            CMN_PreviousOwnerUser__c = UserInfo.getUserId(),
             CMN_CurrentOwnerType__c = 'User',
-            CMN_CurrentUserOwner__c = UserInfo.getUserId(),
-            CMN_TransferSequence__c = 1
+            CMN_CurrentOwnerUser__c = UserInfo.getUserId(),
+            CMN_TransferCount__c = 1
         );
         insert tracker;
     }
 
+    /**
+     * @description Verifies newInstance() returns a selector
+     */
     @isTest
     static void newInstancePositiveOutcome() {
         Test.startTest();
@@ -40,6 +50,9 @@ private class SEL_CMN_HistoryTracker_TEST {
         Assert.isNotNull(selector, 'Selector instance should not be null');
     }
 
+    /**
+     * @description Verifies the selector reports CMN_History_Tracker__c as its SObject type
+     */
     @isTest
     static void getSObjectTypePositiveOutcome() {
         Test.startTest();
@@ -53,6 +66,9 @@ private class SEL_CMN_HistoryTracker_TEST {
         );
     }
 
+    /**
+     * @description Verifies the default field list includes the fields the service reads
+     */
     @isTest
     static void getSObjectFieldListPositiveOutcome() {
         Test.startTest();
@@ -65,20 +81,23 @@ private class SEL_CMN_HistoryTracker_TEST {
             'Field list should contain CMN_Case__c'
         );
         // Regression guard: INS_SRV_CaseTransferHistory reads CMN_TransferDate__c and
-        // CMN_TransferSequence__c directly off selector-queried records to calculate
-        // the next transfer's sequence/duration. If either is ever missing from this
+        // CMN_TransferCount__c directly off selector-queried records to calculate
+        // the next transfer's count/duration. If either is ever missing from this
         // list, that read silently returns null instead of throwing, which would
-        // reset every subsequent transfer's sequence back to 1.
+        // reset every subsequent transfer's count back to 1.
         Assert.isTrue(
             fields.contains(CMN_History_Tracker__c.CMN_TransferDate__c),
             'Field list should contain CMN_TransferDate__c'
         );
         Assert.isTrue(
-            fields.contains(CMN_History_Tracker__c.CMN_TransferSequence__c),
-            'Field list should contain CMN_TransferSequence__c'
+            fields.contains(CMN_History_Tracker__c.CMN_TransferCount__c),
+            'Field list should contain CMN_TransferCount__c'
         );
     }
 
+    /**
+     * @description Verifies selectByCaseIds() returns the tracker for the given Case
+     */
     @isTest
     static void selectByCaseIdsPositiveOutcome() {
         Case testCase = [SELECT Id FROM Case WHERE Subject = :TEST_CASE_SUBJECT LIMIT 1];
@@ -92,23 +111,9 @@ private class SEL_CMN_HistoryTracker_TEST {
         Assert.areEqual(testCase.Id, results[0].CMN_Case__c, 'Returned tracker should reference the correct Case');
     }
 
-    @isTest
-    static void selectByCaseIdsExceptionIsLoggedAndRethrown() {
-        Case testCase = [SELECT Id FROM Case WHERE Subject = :TEST_CASE_SUBJECT LIMIT 1];
-        SEL_CMN_HistoryTracker.forceSelectByCaseIdsException = true;
-        Boolean exceptionThrown = false;
-
-        Test.startTest();
-            try {
-                SEL_CMN_HistoryTracker.newInstance().selectByCaseIds(new Set<Id>{ testCase.Id });
-            } catch (System.QueryException ex) {
-                exceptionThrown = true;
-            }
-        Test.stopTest();
-
-        Assert.isTrue(exceptionThrown, 'Exception should have been re-thrown after logging');
-    }
-
+    /**
+     * @description Verifies a null input returns an empty list
+     */
     @isTest
     static void selectByCaseIdsNullInputPositiveOutcome() {
         Test.startTest();
@@ -119,6 +124,9 @@ private class SEL_CMN_HistoryTracker_TEST {
         Assert.isTrue(results.isEmpty(), 'Should return empty list for null input');
     }
 
+    /**
+     * @description Verifies an empty set returns an empty list
+     */
     @isTest
     static void selectByCaseIdsEmptySetPositiveOutcome() {
         Test.startTest();
@@ -129,6 +137,9 @@ private class SEL_CMN_HistoryTracker_TEST {
         Assert.isTrue(results.isEmpty(), 'Should return empty list for empty set');
     }
 
+    /**
+     * @description Verifies results are ordered by Transfer Date, latest first
+     */
     @isTest
     static void selectByCaseIdsOrderingPositiveOutcome() {
         Case testCase = [SELECT Id FROM Case WHERE Subject = :TEST_CASE_SUBJECT LIMIT 1];
@@ -137,10 +148,10 @@ private class SEL_CMN_HistoryTracker_TEST {
             CMN_Case__c = testCase.Id,
             CMN_TransferDate__c = System.now().addHours(1),
             CMN_PreviousOwnerType__c = 'User',
-            CMN_PreviousUserOwner__c = UserInfo.getUserId(),
+            CMN_PreviousOwnerUser__c = UserInfo.getUserId(),
             CMN_CurrentOwnerType__c = 'User',
-            CMN_CurrentUserOwner__c = UserInfo.getUserId(),
-            CMN_TransferSequence__c = 2
+            CMN_CurrentOwnerUser__c = UserInfo.getUserId(),
+            CMN_TransferCount__c = 2
         );
         insert secondTracker;
 

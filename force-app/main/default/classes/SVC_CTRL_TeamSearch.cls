@@ -1,100 +1,124 @@
 /**
- * @description:        Controller class for CMN Team search and queue mapping
- * @author:            Hlayisani Hlungwane
- * Test Class:    SVC_CTRL_TeamSearch_TEST
- * 25- 09 -10      Hlayisani Hlungwani      SFP-55563 Insurance: Manual case creation 
- *                                                     should reflect status of new
+ * @description Controller class for CMN Team search and queue mapping.
+ * @see SVC_CTRL_TeamSearch_TEST
+ * @author Hlayisani Hlungwani
+ * @date August 2026
+ * @User Story SFP-55563 Insurance: Manual case creation should reflect status of new
  */
-public with sharing class SVC_CTRL_TeamSearch {
+public inherited sharing class SVC_CTRL_TeamSearch
+{
+	private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('SVC_CTRL_TeamSearch');
 
-    private static final sbgplatform.rflib_Logger LOGGER =
-        sbgplatform.rflib_LoggerUtil.getFactory().createLogger('SVC_CTRL_TeamSearch');
+	// Constants
+	public static final String CLASS_NAME = 'Class: SVC_CTRL_TeamSearch';
+	private static final String METHOD_SEARCH_TEAMS = 'Method: searchTeams';
+	private static final String METHOD_GET_QUEUE_NAME = 'Method: getQueueName';
+	private static final String ERR_SEARCH_TEAMS = 'Unable to retrieve teams. Please try again.';
+	private static final String ERR_QUEUE_MAPPING = 'Unable to retrieve queue mapping. Please try again.';
+	private static final String FORCED_EXCEPTION_MESSAGE = 'Test Exception';
 
-    // Constants
-    private static final String CLASS_NAME = 'SVC_CTRL_TeamSearch';
-    private static final String METHOD_SEARCH_TEAMS = 'searchTeams';
-    private static final String METHOD_GET_QUEUE_NAME = 'getQueueName';
-    private static final Integer MAX_RESULTS = 10;
+	// Test exception flag
+	@TestVisible
+	private static Boolean mockForceException = false;
 
-    @TestVisible
-    private static Boolean forceException = false;
+	/**
+	 * @description Retrieves active teams for the logged-in user's country
+	 * @param searchText Optional text used to search team names
+	 * @return List<CMN_Team__c> Matching active teams, up to 10 records
+	 * @throws AuraHandledException If an error occurs during team retrieval
+	 * @see SVC_SEL_Team.selectByCountry
+	 */
+	@AuraEnabled(Cacheable = true)
+	public static List<CMN_Team__c> searchTeams(String searchText)
+	{
+		try
+		{
+			throwAuraExceptionIfForced();
 
-    /**
-     * @description Retrieves CMN Team records filtered by country and search text.
-     *              When search text is empty, the first 10 teams are returned.
-     * @param searchText The text used to search for matching teams.
-     * @param countryCode The country code used to filter the teams.
-     * @return List<CMN_Team__c> List of matching teams (up to 10 records).
-     */
-    @AuraEnabled(cacheable = true)
-    public static List<CMN_Team__c> searchTeams(String searchText, String countryCode) {
-        List<CMN_Team__c> results = new List<CMN_Team__c>();
+			User currentUser = [
+				SELECT User_Country__c
+				FROM User
+				WHERE Id = :UserInfo.getUserId()
+				WITH USER_MODE
+				LIMIT 1
+			];
 
-        try {
-            if (Test.isRunningTest() && forceException) {
-                throw new CalloutException('Forced Exception for Test Coverage');
-            }
+			String country = currentUser.User_Country__c;
 
-            List<CMN_Team__c> teams = CMN_DAL_Team.findByCountryCode(countryCode);
+			if(String.isBlank(country))
+			{
+				return new List<CMN_Team__c>();
+			}
 
-            if (teams != null && !teams.isEmpty()) {
-                String searchValue = String.isNotBlank(searchText) ? searchText.trim().toLowerCase() : null;
+			return SVC_SEL_Team.newInstance().selectByCountry(country, searchText);
+		}
+		catch(Exception e)
+		{
+			LOGGER.error(e.getMessage(), new String[] {CLASS_NAME, METHOD_SEARCH_TEAMS}, e);
+			throw buildAuraException(ERR_SEARCH_TEAMS);
+		}
+	}
 
-                for (CMN_Team__c team : teams) {
-                    Boolean matches = (searchValue == null) || 
-                        (team.Name != null && team.Name.toLowerCase().contains(searchValue));
+	/**
+	 * @description Retrieves the queue mapped to the selected team
+	 * @param teamId The CMN Team record ID
+	 * @return String Mapped queue name, or null if no mapping exists
+	 * @throws AuraHandledException If an error occurs during queue lookup
+	 * @see SVC_SEL_Team.selectById
+	 * @see SVC_QueueTeamMappingSelector.getQueues
+	 */
+	@AuraEnabled(Cacheable = true)
+	public static String getQueueName(Id teamId)
+	{
+		try
+		{
+			throwAuraExceptionIfForced();
 
-                    if (matches) {
-                        results.add(team);
-                        if (results.size() == MAX_RESULTS) {
-                            break;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), new String[] { CLASS_NAME, METHOD_SEARCH_TEAMS }, e);
-            AuraHandledException auraEx = new AuraHandledException('Unable to retrieve teams at this time.');
-            auraEx.setMessage(e.getMessage());
-            throw auraEx;
-        }
+			if(teamId == null)
+			{
+				return null;
+			}
 
-        return results;
-    }
+			List<CMN_Team__c> teams = SVC_SEL_Team.newInstance().selectById(new Set<Id> {teamId});
 
-    /**
-     * @description Retrieves the queue name mapped to the selected CMN Team.
-     * @param teamId The CMN Team record ID.
-     * @return String The mapped queue name, or null if no mapping exists.
-     */
-    @AuraEnabled(cacheable = true)
-    public static String getQueueName(Id teamId) {
-        String queueName = null;
+			if(teams.isEmpty() || String.isBlank(teams.iterator().next().Name))
+			{
+				return null;
+			}
 
-        try {
-            if (Test.isRunningTest() && forceException) {
-                throw new CalloutException('Forced Exception for Test Coverage');
-            }
+			List<SVC_QueueTeamMapping__mdt> mappings =
+				SVC_QueueTeamMappingSelector.newInstance().getQueues(teams.iterator().next().Name);
 
-            if (teamId != null) {
-                List<CMN_Team__c> teams = CMN_DAL_Team.findById(new Set<String>{ String.valueOf(teamId) });
+			return mappings.isEmpty() ? null : mappings.iterator().next().SVC_Queue__c;
+		}
+		catch(Exception e)
+		{
+			LOGGER.error(e.getMessage(), new String[] {CLASS_NAME, METHOD_GET_QUEUE_NAME}, e);
+			throw buildAuraException(ERR_QUEUE_MAPPING);
+		}
+	}
 
-                if (teams != null && !teams.isEmpty() && String.isNotBlank(teams[0].Name)) {
-                    SVC_QueueTeamMappingSelector selector = new SVC_QueueTeamMappingSelector();
-                    List<SVC_QueueTeamMapping__mdt> mappings = selector.getQueues(teams[0].Name);
+	/**
+	 * @description Helper method for test purposes to throw exception if forced
+	 */
+	private static void throwAuraExceptionIfForced()
+	{
+		if(Test.isRunningTest() && mockForceException)
+		{
+			throw new AuraHandledException(FORCED_EXCEPTION_MESSAGE);
+		}
+	}
 
-                    if (mappings != null && !mappings.isEmpty()) {
-                        queueName = mappings[0].SVC_Queue__c;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), new String[] { CLASS_NAME, METHOD_GET_QUEUE_NAME }, e);
-            AuraHandledException auraEx = new AuraHandledException('Unable to retrieve queue mapping.');
-            auraEx.setMessage(e.getMessage());
-            throw auraEx;
-        }
-
-        return queueName;
-    }
+	/**
+	 * @description Builds an AuraHandledException whose getMessage() returns the given text.
+	 *              Without setMessage(), getMessage() returns "Script-thrown exception".
+	 * @param message The agent-facing message
+	 * @return AuraHandledException
+	 */
+	private static AuraHandledException buildAuraException(String message)
+	{
+		AuraHandledException auraException = new AuraHandledException(message);
+		auraException.setMessage(message);
+		return auraException;
+	}
 }

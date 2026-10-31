@@ -18,7 +18,11 @@
 *                                  updated the test logic accordingly.
 * 2026-07-16.  Raja Arsalan    SFP-59422 - Updated the testSelectLeadsEligibleForCourtesySMS
 *							   to execute under system admin and have lead admin permission.	
-
+*=====================================================
+ * @Last Modified By   : Anuja Alli
+ * @Last Modified On   : Aug 8, 2026
+ * @Modified Description : Added new method test coverage selectMostRecentlyCreatedLead
+ * @ User Story : SFP-53980 
     
 **/
 @isTest
@@ -435,6 +439,31 @@ private class SEL_Lead_Test {
         Test.stopTest();
         
         Assert.areEqual(testLead.Id, results[0].Id, 'Expected created lead to be returned');
+    }
+     /**
+    * @description Test method for selectMostRecentlyCreatedLead
+    */
+    @isTest
+    static void testSelectMostRecentlyCreatedLead() {
+        Lead latestLead = new Lead(
+            FirstName = 'Latest',
+            LastName = 'Test Lead',
+            Company = 'Latest Test Company'
+        );
+        insert latestLead;
+
+        SEL_Lead selector = new SEL_Lead();
+
+        Test.startTest();
+        List<Lead> results = selector.selectMostRecentlyCreatedLead();
+        Test.stopTest();
+
+        Assert.areEqual(1, results.size(), 'Expected only one Lead to be returned');
+        Assert.areEqual(
+            latestLead.Id,
+            results[0].Id,
+            'Expected the most recently created Lead to be returned'
+        );
     }
     
     

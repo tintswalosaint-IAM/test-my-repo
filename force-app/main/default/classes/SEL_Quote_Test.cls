@@ -54,36 +54,21 @@ public with sharing class SEL_Quote_Test {
                 Country__c = 'ZA',
                 CurrencyIsoCode = 'ZAR',
                 StageName = 'Prospecting',
-                CloseDate = Date.today().addDays(10),
-                // Opportunity_Flow skips records with a Quote_Id__c, so it won't look up the
-                // running user's country pricebook ("No Active Pricebook was found" error)
-                Quote_Id__c = 'QUOTE-' + Crypto.getRandomInteger()
+                CloseDate = Date.today().addDays(10)
         );
         uow.registerNew(opp, Opportunity.AccountId, acc);
         return opp;
     }
 
     private static Quote createQuote(CMN_DAL_SObjectUnitOfWork uow, Opportunity opp) {
-        return createQuote(uow, opp, null);
-    }
-
-    private static Quote createQuote(CMN_DAL_SObjectUnitOfWork uow, Opportunity opp, String status) {
         Quote q = new Quote(
                 Name = 'Test Quote',
                 OpportunityId = opp.Id,
-                Pricebook2Id = Test.getStandardPricebookId()
+                Pricebook2Id = Test.getStandardPricebookId(),
+                Status = 'Quote In-Progress'
         );
-        if (status != null) {
-            q.Status = status;
-        }
         uow.registerNew(q, Quote.OpportunityId, opp);
         return q;
-    }
-
-    private static CMN_DAL_SObjectUnitOfWork newUow() {
-        return new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
-                Account.SObjectType, Opportunity.SObjectType, Quote.SObjectType
-        });
     }
 
     @IsTest
@@ -179,9 +164,10 @@ public with sharing class SEL_Quote_Test {
 
         List<Quote> results = new SEL_Quote().selectByAccIds(new List<Id>{ acc.Id });
         Assert.isTrue(results.size() >= 2, 'Should return at least two Quotes for provided Account Id');
-        Set<Id> resultIds = new Map<Id, Quote>(results).keySet();
-        Assert.isTrue(resultIds.contains(q1.Id) && resultIds.contains(q2.Id), 'Both Quotes should be returned');
-        Assert.isNotNull(results[0].Name, 'Returned Quote should have Name populated');
+        Map<Id, Quote> quotesById = new Map<Id, Quote>(results);
+        Assert.isTrue(quotesById.containsKey(q1.Id), 'First Quote should be returned.');
+        Assert.isTrue(quotesById.containsKey(q2.Id), 'Second Quote should be returned.');
+        Assert.isNotNull(quotesById.get(q1.Id).Name, 'Returned Quote should have Name populated');
     }
 
     @IsTest
@@ -206,58 +192,25 @@ public with sharing class SEL_Quote_Test {
     }
 
     @IsTest
-    static void testSelectByIdsWoSharing_returnsQuote() {
-        CMN_DAL_SObjectUnitOfWork uow = newUow();
+    static void testSelectInProgressAndIdsWoSharing_returnQuotes() {
+        CMN_DAL_SObjectUnitOfWork uow = new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
+                Account.SObjectType, Opportunity.SObjectType, Quote.SObjectType
+        });
         Account acc = createAccount(uow);
         Opportunity opp = createOpportunity(uow, acc);
-        Quote q = createQuote(uow, opp);
+        Quote quote = createQuote(uow, opp);
         uow.commitWork();
 
-        Test.startTest();
-        List<Quote> results = new SEL_Quote().selectByIdsWoSharing(new List<Id>{ q.Id });
-        Test.stopTest();
+        SEL_Quote selector = new SEL_Quote();
+        List<Quote> inProgressQuotes = selector.selectInProgressByAccIds(new List<Id>{acc.Id});
+        List<Quote> inProgressQuotesWoSharing = selector.selectInProgressByAccIdsWoSharing(new List<Id>{acc.Id});
+        List<Quote> quotesWoSharing = selector.selectByIdsWoSharing(new List<Id>{quote.Id});
 
-        Assert.areEqual(1, results.size(), 'Should return one Quote without sharing');
-        Assert.areEqual(q.Id, results[0].Id, 'Returned Quote Id should match');
-    }
-
-    @IsTest
-    static void testSelectInProgressByAccIds_returnsOnlyInProgress() {
-        CMN_DAL_SObjectUnitOfWork uow = newUow();
-        Account acc = createAccount(uow);
-        Opportunity opp = createOpportunity(uow, acc);
-        Quote inProgress = createQuote(uow, opp, 'Quote In-Progress');
-        createQuote(uow, opp);
-        uow.commitWork();
-
-        Test.startTest();
-        List<Quote> results = new SEL_Quote().selectInProgressByAccIds(new List<Id>{ acc.Id });
-        Test.stopTest();
-
-        Assert.areEqual(1, results.size(), 'Only the in-progress Quote should be returned');
-        Assert.areEqual(inProgress.Id, results[0].Id, 'Returned Quote should be the in-progress one');
-    }
-
-    @IsTest
-    static void testSelectInProgressByAccIdsWoSharing_returnsOnlyInProgress() {
-        CMN_DAL_SObjectUnitOfWork uow = newUow();
-        Account acc = createAccount(uow);
-        Opportunity opp = createOpportunity(uow, acc);
-        Quote inProgress = createQuote(uow, opp, 'Quote In-Progress');
-        createQuote(uow, opp);
-        uow.commitWork();
-
-        Test.startTest();
-        List<Quote> results = new SEL_Quote().selectInProgressByAccIdsWoSharing(new List<Id>{ acc.Id });
-        Test.stopTest();
-
-        Assert.areEqual(1, results.size(), 'Only the in-progress Quote should be returned without sharing');
-        Assert.areEqual(inProgress.Id, results[0].Id, 'Returned Quote should be the in-progress one');
-    }
-
-    @IsTest
-    static void testSelectInProgressByAccIds_emptyInput_returnsEmpty() {
-        List<Quote> results = new SEL_Quote().selectInProgressByAccIds(new List<Id>());
-        Assert.areEqual(0, results.size(), 'Empty input should return no records');
+        Assert.areEqual(1, inProgressQuotes.size(), 'Should return the in-progress Quote.');
+        Assert.areEqual(quote.Id, inProgressQuotes[0].Id, 'Should return the expected in-progress Quote.');
+        Assert.areEqual(1, inProgressQuotesWoSharing.size(), 'Should return the in-progress Quote without sharing.');
+        Assert.areEqual(quote.Id, inProgressQuotesWoSharing[0].Id, 'Should return the expected Quote without sharing.');
+        Assert.areEqual(1, quotesWoSharing.size(), 'Should return the Quote by ID without sharing.');
+        Assert.areEqual(quote.Id, quotesWoSharing[0].Id, 'Should return the expected Quote by ID without sharing.');
     }
 }

@@ -7,7 +7,8 @@
  * LastModification   : SFP-46847: Irshad - Added query condition to check for prospectPersonAccount Record Type
  * Modification       : Jaco de Lange - SFP-59700 - Add 'IAM Liberty' as customer type differentiator.
  * @last modified on  : 03-08-2026
- * 
+ * @last modified on  : 15-10-2026
+ * Modification       : Irshad - SFP-56540- Added getAccountById method for Guest user
  **/
 public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSelector {
 
@@ -23,7 +24,8 @@ public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSe
         'Name',
         'RecordTypeId',
         'CMN_IdentityNumber__pc',
-        'FinServ__CustomerType__c'
+        'FinServ__CustomerType__c',
+        'PersonIndividualId'
     };
 
     /**
@@ -53,7 +55,8 @@ public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSe
             Account.Name,
             Account.RecordTypeId,
             Account.CMN_IdentityNumber__pc,
-            Account.FinServ__CustomerType__c
+            Account.FinServ__CustomerType__c,
+            Account.PersonIndividualId
         };
     }
 
@@ -80,7 +83,7 @@ public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSe
         fieldQueryFactory.setCondition(queryCondition);
         fieldQueryFactory.selectFields(fields);
         accountsToReturn = Database.query(fieldQueryFactory.toSOQL());
-        system.debug('accountsToReturn=='+accountsToReturn);
+        
         if (accountsToReturn.size() > 0) {
             return accountsToReturn;
         } else {
@@ -95,7 +98,7 @@ public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSe
             fieldQueryFactory.setCondition(queryCondition);
             fieldQueryFactory.selectFields(fields);
             accountsToReturn = Database.query(fieldQueryFactory.toSOQL());
-            system.debug('accountsToReturnelse=='+accountsToReturn);
+            
         }
         
         return accountsToReturn;
@@ -120,6 +123,18 @@ public without sharing class INS_Get_Account extends sbgplatform.fflib_SObjectSe
         return new List<AccountResponse>{
             searchedAccount
         };
+    }
+
+	/* @description  : Method to fetch list of Accounts based on AccountId
+    * @param : Id accountId
+    * @return : List<Account>
+    **/
+
+    public List<Account> getAccountById(Id accountId) {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+        fieldQueryFactory.setCondition('Id = :accountId');
+        fieldQueryFactory.selectFields(fields);        
+        return Database.query(fieldQueryFactory.toSOQL());
     }
 
     /**

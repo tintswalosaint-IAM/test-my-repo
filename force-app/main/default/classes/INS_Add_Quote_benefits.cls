@@ -225,6 +225,7 @@ public with sharing class INS_Add_Quote_benefits extends sbgplatform.ApiService 
         try {
             String path = PATH_BASE + quoteNumber + PATH_SUFFIX;
             String serializedPayload = JSON.serialize(payload);
+
             String responseBody = (benefitId != null)
                 ? (String) new INS_Add_Quote_benefits().put(path, serializedPayload)
                 : (String) new INS_Add_Quote_benefits().post(path, serializedPayload);

@@ -89,10 +89,11 @@ public without sharing class INS_PLI_UpdateProspectRecord{
                 perAcc.PersonBirthdate = Date.valueOf(personalInfoWrapper.DateOfBirth);
                 perAcc.PersonMobilePhone = '+254' + personalInfoWrapper.PhoneNumber;
                 perAcc.Phone = '+254' + personalInfoWrapper.PhoneNumber;
+                perAcc.FinServ__CustomerType__c = 'IAM Liberty';
                 perAcc.Receive_Marketing__c = true;
                 perAcc.FinServ__KYCStatus__c = 'In Queue';
                 perAcc.External_CIF_Country__pc = 'KE'; //personAccount Field
-                perAcc.INS_SalesAgentPortalLicenseType__pc = 'AOB_Community Authenticated Customer'; //personAccount Field
+                perAcc.INS_SalesAgentPortalLicenseType__pc = 'AOB_Authenticated Customer Community'; //personAccount Field
                 unitOfWork.registerNew(perAcc, Account.PersonIndividualId, ind);
 
                 IdentityDocument identDoc = new IdentityDocument();
@@ -183,8 +184,12 @@ public without sharing class INS_PLI_UpdateProspectRecord{
             // Commit all changes
             unitOfWork.commitWork();
 
+            Quote createdQuote = new SEL_Quote()
+                .selectByIds(new List<Id>{ qt.Id })[0];
+
             outMap.put('OpportunityId', opp.Id);
             outMap.put('QuoteId', qt.Id);
+            outMap.put('QuoteNumber', createdQuote.QuoteNumber);
            
         }catch(Exception e){
             LOGGER.error(e.getMessage(),new String[]{'INS_PLI_UpdateProspectRecord.initiateQuotingProcess',e.getMessage()},e);
@@ -229,6 +234,10 @@ public without sharing class INS_PLI_UpdateProspectRecord{
 
             // Commit all changes
             unitOfWork.commitWork();
+
+            Quote updatedQuote = new SEL_Quote()
+                .selectByIds(new List<Id>{ quoteId })[0];
+            outMap.put('QuoteNumber', updatedQuote.QuoteNumber);
 
         } catch(Exception e) {
             LOGGER.error(e.getMessage(),new String[]{'INS_PLI_UpdateProspectRecord.initiateQuotingProcess',e.getMessage()},e);
@@ -444,14 +453,14 @@ public without sharing class INS_PLI_UpdateProspectRecord{
                 personalInformationJSON,
                 personalInformation.class
             );
+
             String idNumber = personalInfoWrapper.IdNumber;
-            List<Account> accs = new List<Account>();
-            if(personalInfoWrapper.AccountId != null){
-                accs = new SEL_Account().selectOpportunityByAccountId(Id.valueOf(personalInfoWrapper.AccountId));
-            } else{
-                accs = new SEL_Account().selectByIdentityNumberWithOpportunities(idNumber);
-            }
-            
+
+            List<Account> accs = new SEL_Account().selectByIdentityNumberWithOpportunities(
+                idNumber,
+                'IAM Liberty'
+            );
+
             if (hasElements(accs)) {
                 List<Quote> quotes = new SEL_Quote().selectByAccIds(new List<Id>{ accs[0].Id });                
                 Account acc = accs[0];
@@ -481,6 +490,7 @@ public without sharing class INS_PLI_UpdateProspectRecord{
                     outMap.put('MonthlyPremium', opp.Total_Monthly_Premium__c);
                     outMap.put('OnboardingStep', opp.INS_OnboardingStep__c);
                     outMap.put('QuoteId', quotes[0].Id);
+                    outMap.put('QuoteNumber', quotes[0].QuoteNumber);
                     outMap.put('SalesEvent', quotes[0].UnderwriterQuoteReferenceNumber__c);
                     outMap.put('Resume', true);
                 } else {
@@ -895,102 +905,5 @@ public without sharing class INS_PLI_UpdateProspectRecord{
         }
 
         return acc;
-    }
-
-    /**
-     * @description Updates only Email and Phone fields on an existing Prospect Person Account.
-     * @author
-     * @param accountId Account Id to update
-     * @param email Email address
-     * @param phoneNumber Phone number without country code
-     **/
-    @AuraEnabled
-    public static void updateProspectContactDetails(
-        String accountId,
-        String email,
-        String phoneNumber
-    ) {
-        try {
-            if (String.isBlank(accountId)) {
-                throw new AuraHandledException('Account Id is required.');
-            }
-
-            CMN_DAL_SObjectUnitOfWork unitOfWork =
-                new CMN_DAL_SObjectUnitOfWork(
-                    new List<Schema.SObjectType>{
-                        Account.SObjectType
-                    }
-                );
-
-            Account acc = new Account();
-            acc.Id = accountId;
-
-            if (String.isNotBlank(email)) {
-                acc.PersonEmail = email;
-            }
-
-            if (String.isNotBlank(phoneNumber)) {
-                acc.Phone = phoneNumber;
-            }
-
-            unitOfWork.registerDirty(acc);
-            unitOfWork.commitWork();
-
-        } catch (Exception e) {
-            LOGGER.error(
-                e.getMessage(),
-                new String[]{
-                    'INS_PLI_UpdateProspectRecord.updateProspectContactDetails',
-                    e.getMessage()
-                },
-                e
-            );
-
-            throw new AuraHandledException(
-                'Failed to update prospect contact details: ' + e.getMessage()
-            );
-        }
-    }
-    /**
-     * @description Updates the Opportunity Close Date to today's date.
-     * @author
-     * @param opportunityId Id of the Opportunity to update
-     **/
-    @AuraEnabled
-    public static void updateOpportunityCloseDate(String opportunityId) {
-
-        try {
-            if (String.isBlank(opportunityId)) {
-                throw new AuraHandledException('Opportunity Id is required.');
-            }
-
-            CMN_DAL_SObjectUnitOfWork unitOfWork =
-                new CMN_DAL_SObjectUnitOfWork(
-                    new List<Schema.SObjectType>{
-                        Opportunity.SObjectType
-                    }
-                );
-
-            Opportunity opp = new Opportunity();
-            opp.Id = opportunityId;
-            opp.CloseDate = Date.today();
-
-            unitOfWork.registerDirty(opp);
-            unitOfWork.commitWork();
-
-        } catch (Exception e) {
-            LOGGER.error(
-                e.getMessage(),
-                new String[]{
-                    'INS_PLI_UpdateProspectRecord.updateOpportunityCloseDate',
-                    e.getMessage()
-                },
-                e
-            );
-
-            throw new AuraHandledException(
-                'Failed to update Opportunity Close Date: ' + e.getMessage()
-            );
-        }
     }
 }

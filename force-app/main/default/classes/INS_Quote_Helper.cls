@@ -4,9 +4,9 @@
  * @date             : Jan 2024
  */
 public with sharing class INS_Quote_Helper {
-
+ 
     private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_Quote_Helper');
-
+ 
     //Constant for HTTP Headers
     public static final String CONTENT_TYPE_APPLICATION_JSON = 'application/json';
     public static final String HEADER_ACCEPT = 'accept';
@@ -23,31 +23,31 @@ public with sharing class INS_Quote_Helper {
     public static final String HTTP_METHOD_PATCH = 'PATCH';
     public static final String X_FAPI_INTERACTION_ID = 'x-fapi-interaction-id';
     public static final String X_CLIENT_CERTIFICATE = 'X-Client-Certificate';
-
+ 
     public static final String ORG_CLIENT_ID = 'org_client_id';
     public static final String COUNTRY_CODE = 'country_code';
     public static final String TRANSACTION_ID = 'transaction_id';
     public static final String CLIENT_ID = 'client_id';
     public static final String CLIENTSECRET = 'client_secret';
-    
-    
-
-    //Public Strings 
+   
+   
+ 
+    //Public Strings
     public static string quoteNumber = 'quoteNumber';
     public static string accessTokenTypeQuote = 'Quote';
     public static string accessTokenTypeCustomer = 'Customer Verification';
     public static string failed = 'failed';
     public static String salesforce = 'salesforce';
     public static String confirmation = 'Confirmation';
-
-
-    
+ 
+ 
+   
     //Helper Methods
-
+ 
     /**
      * @description       : Helper method to create a QuoteBenefit object for a specific benefit type
      * @author            : Shams Ul Arifeen
-
+ 
      * lastModifiedby     : Vic Wafula
      * lastModifiedDate   : 09/10/2026
      * description        : SFP-51404 Add Premium Frequency
@@ -65,11 +65,11 @@ public with sharing class INS_Quote_Helper {
         benefit.benefitKey = benefitType;
         benefit.personId = '';
         benefit.benefitFee = 0.0;
-        benefit.benefitFrequencyValue = 'MONTHLY';
+        benefit.benefitFrequencyValue = premiumFrequency;
         benefit.memberId = memberId;
         return benefit;
     }
-
+ 
     /**
      * @description       : Helper method to create a QuoteBenefit object for a specific benefit type for Quote Member
      * @author            : Shams Ul Arifeen
@@ -87,10 +87,10 @@ public with sharing class INS_Quote_Helper {
         benefit.prefix = 'R';
         benefit.premiumType = 'NORMALPREMIUM';
         benefit.benefitFee = 0.0;
-        benefit.benefitFrequencyValue = 'MONTHLY';
+        benefit.benefitFrequencyValue = premiumFrequency;
         return benefit;
     }
-
+ 
     /**
      * @description       : Obtains the OAuth access token for making API requests.
      * @author            : Shams Ul Arifeen
@@ -117,12 +117,12 @@ public with sharing class INS_Quote_Helper {
             request.setHeader('Content-Type', 'application/x-www-form-urlencoded');
             request.setBody('grant_type=client_credentials');
         }
-    
+   
         try{
             // Send HTTP request
             Http http = new Http();
             HttpResponse response = http.send(request);
-            
+           
             // Handle response
             if (response.getStatusCode() == 200) {
                 // Handle successful response
@@ -136,7 +136,7 @@ public with sharing class INS_Quote_Helper {
             throw new INS_CustomException(ex.getMessage());
         }
     }
-
+ 
     /**
     * @description       : Class to set returned Access Token
     * @author            : Shams Ul Arifeen

@@ -53,6 +53,17 @@ private class INS_CTRL_ProspectOnboarding_TEST {
         };
     }
 
+    private static Map<String, Object> buildAccountInput(
+    Map<String, Object> personalInfo
+    ) {
+        return new Map<String, Object>{
+            KEY_PERSONAL_INFORMATION => personalInfo,
+            'INS_Products__mdt' => new Map<String, Object>{
+            'Customer_type__c' => 'IAM Liberty'
+            }
+        };
+    }
+
     /**
      * Creates Product2/PricebookEntry/prospect Account and builds the
      * matching createOpportunity input map in one call. Returns a context
@@ -129,7 +140,7 @@ private class INS_CTRL_ProspectOnboarding_TEST {
             'john.doe@test.com', '+254700000001', 'ID12345678',
             'Male', 'Single'
         );
-        Map<String, Object> input  = new Map<String, Object>{ KEY_PERSONAL_INFORMATION => pi };
+        Map<String, Object> input = buildAccountInput(pi);
         Map<String, Object> output = new Map<String, Object>();
 
         // Additional marital statuses. Only the action call happens inside the
@@ -158,7 +169,10 @@ private class INS_CTRL_ProspectOnboarding_TEST {
             );
             Map<String, Object> otherResult = (Map<String, Object>) sut.call(
                 ACTION_CREATE_ACCOUNT,
-                buildArgs(new Map<String, Object>{ KEY_PERSONAL_INFORMATION => otherPi }, new Map<String, Object>())
+                    buildArgs(
+                        buildAccountInput(otherPi),
+                        new Map<String, Object>()
+                    )
             );
             otherAccountIds.add((Id) otherResult.get(KEY_PROSPECT_ACCOUNT_ID));
             otherExpectedCodes.add(otherStatusesExpected.get(status));
@@ -426,14 +440,23 @@ private class INS_CTRL_ProspectOnboarding_TEST {
         );
 
         Test.startTest();
+
         Map<String, Object> r1 = (Map<String, Object>) sut.call(
             ACTION_CREATE_ACCOUNT,
-            buildArgs(new Map<String, Object>{ KEY_PERSONAL_INFORMATION => pi1 }, new Map<String, Object>())
+            buildArgs(
+                buildAccountInput(pi1),
+                new Map<String, Object>()
+            )
         );
+
         Map<String, Object> r2 = (Map<String, Object>) sut.call(
             ACTION_CREATE_ACCOUNT,
-            buildArgs(new Map<String, Object>{ KEY_PERSONAL_INFORMATION => pi2 }, new Map<String, Object>())
+            buildArgs(
+                buildAccountInput(pi2),
+                new Map<String, Object>()
+            )
         );
+
         Test.stopTest();
 
         Assert.isNotNull(r1.get(KEY_PROSPECT_ACCOUNT_ID), 'First account should be created');

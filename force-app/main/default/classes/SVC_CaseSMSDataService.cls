@@ -34,7 +34,7 @@ public inherited sharing class SVC_CaseSMSDataService {
             LOGGER.error('Error retrieving Case.', new String[] {'Class: SVC_CaseSMSDataService', 'Method: prepareSMSRequest'});
             return null;
         }
-        
+
         Account acc = CMN_DAL_Account.findById(cs.AccountId);
         if(acc == null){
             LOGGER.error('Error retrieving Account.', new String[] {'Class: SVC_CaseSMSDataService', 'Method: prepareSMSRequest'});
@@ -45,7 +45,7 @@ public inherited sharing class SVC_CaseSMSDataService {
         if(status == 'In Progress' && cs.IsEscalated == true){
             status = 'Breached';
         }
-        
+
         String caseNumber = cs.CaseNumber;
         String sla = cs.Entitlement.Name;
         String createdDate = (cs.CreatedDate).format('yyyy-MM-dd');
@@ -59,44 +59,44 @@ public inherited sharing class SVC_CaseSMSDataService {
             return null;
         }
         String validPhoneNumber = '27' + phoneNum.substring(1);
-        
+
         //Get Quick text based on case status
         String quickTextName = STATUS_TO_QUICKTEXT.get(status);
         if (quickTextName == null) {
             quickTextName = DEFAULT_QUICKTEXT;
         }
 
-        String messageBody = getMessageBodyFromQuickText(quickTextName, 
+        String messageBody = getMessageBodyFromQuickText(quickTextName,
             new Map<String, String>{
                 'caseNumber' => caseNumber,
                 'sla' => sla,
                 'status' => status,
                 'dateLogged' => createdDate
             });
-        
+
         SVC_DTO_SMSRestRequest request = new SVC_DTO_SMSRestRequest();
         request.externalReference = customerBPID;
         request.consumerId = webServiceSetting.SVC_ChannelId__c;
-        
+
         SVC_DTO_SMSRestRequest.Message message = new SVC_DTO_SMSRestRequest.Message();
         message.messageBody = messageBody;
         message.externalReferenceId = customerBPID;
-        
+
         SVC_DTO_SMSRestRequest.Recipient recipient = new SVC_DTO_SMSRestRequest.Recipient();
         recipient.phoneNumbers = new List<String>{validPhoneNumber};
         recipient.recipientName = accName;
-        
+
         message.recipients = new List<SVC_DTO_SMSRestRequest.Recipient>{recipient};
-        
+
         SVC_DTO_SMSRestRequest.MessagingProvider provider = new SVC_DTO_SMSRestRequest.MessagingProvider();
         provider.providerId = PROVIDER_ID;
-        
+
         message.messagingProvider = provider;
         request.messages = new List<SVC_DTO_SMSRestRequest.Message>{message};
-        
+
         return request;
     }
-    
+
     /**
      * @description Retrieves and formats a QuickText message
      * @param quickTextName Name of the QuickText record

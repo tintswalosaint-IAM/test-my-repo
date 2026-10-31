@@ -177,6 +177,43 @@ private class INS_PLI_CustomerQuotes_Test {
             UnderwriterQuoteReferenceNumber__c = 'UQRNum1'
         );        
         insert qt;
+
+        List<Opportunity> closedOpportunities = new List<Opportunity>{
+            new Opportunity(
+                Name = 'Closed Won Opportunity',
+                AccountId = acc.Id,
+                OwnerId = testUser.Id,
+                StageName = 'Closed Won',
+                CloseDate = Date.today(),
+                Pricebook2Id = customPricebook.Id
+            ),
+            new Opportunity(
+                Name = 'Closed Lost Opportunity',
+                AccountId = acc.Id,
+                OwnerId = testUser.Id,
+                StageName = 'Closed Lost',
+                CloseDate = Date.today(),
+                Pricebook2Id = customPricebook.Id
+            )
+        };
+        insert closedOpportunities;
+
+        insert new List<Quote>{
+            new Quote(
+                Name = 'Closed Won Quote',
+                OwnerId = testUser.Id,
+                OpportunityId = closedOpportunities[0].Id,
+                ExpirationDate = Date.today().addDays(30),
+                INS_MonthlyPremium__c = 100.00
+            ),
+            new Quote(
+                Name = 'Closed Lost Quote',
+                OwnerId = testUser.Id,
+                OpportunityId = closedOpportunities[1].Id,
+                ExpirationDate = Date.today().addDays(30),
+                INS_MonthlyPremium__c = 200.00
+            )
+        };
 		PermissionSet ps = createQuotePermissionSet();
 		assignPermissionSetTo(testUser, ps);
         System.runAs(testUser) {             
@@ -185,7 +222,7 @@ private class INS_PLI_CustomerQuotes_Test {
             results = INS_PLI_CustomerQuotes.getCustomerQuotes();                
             Test.stopTest();            
             Assert.areNotEqual(null, results, 'Results should not be null');           
-            Assert.isTrue(results.size() > 0, 'Should return at least one quote');            
+            Assert.areEqual(1, results.size(), 'Only quotes for open opportunities should be returned');
             Assert.areEqual('Quote A', results[0].name, 'Quote name should match');           
             Assert.areEqual('1200.50', results[0].estimatedPayment, 'Estimated payment should match');
             

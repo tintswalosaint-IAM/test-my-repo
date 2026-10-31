@@ -7,7 +7,7 @@
 **/
 @SuppressWarnings('PMD.AvoidGlobalModifier')
 global without sharing abstract class INS_CTRL_AuthRegistrationHandler implements Auth.RegistrationHandler {
-    private static sbgplatform.fflib_SObjectUnitOfWork uow = (sbgplatform.fflib_SObjectUnitOfWork) ORG_Application.unitOfWork.newInstance(); 
+     private static sbgplatform.fflib_SObjectUnitOfWork uow = (sbgplatform.fflib_SObjectUnitOfWork) ORG_Application.unitOfWork.newInstance(); 
     private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_CTRL_AuthRegistrationHandler');
 
     global static final String CONTACT_NOT_FOUND = 'Contact_not_found';
@@ -26,7 +26,7 @@ global without sharing abstract class INS_CTRL_AuthRegistrationHandler implement
      * @return User record for creation
      */
     public User createUser(Id portalId, Auth.UserData data) {
-        
+           
                 UserDataWrapper userResponseWrapper = extractUserData(data);
                 User user = prepareUser(userResponseWrapper);
                 Contact foundContact = findContactForUser(user.Id, userResponseWrapper);
@@ -37,6 +37,7 @@ global without sharing abstract class INS_CTRL_AuthRegistrationHandler implement
 
                 if(foundContact.IsPersonAccount == true) {
                     user.Username = buildUsername(userResponseWrapper.email, CUSTOMER_PORTAL_NETWORK_ID);
+                    user.CompanyName = 'Liberty';
                 }
 
                 verifyUserAccess(foundContact, userResponseWrapper);
@@ -64,13 +65,11 @@ global without sharing abstract class INS_CTRL_AuthRegistrationHandler implement
     private User prepareUser(UserDataWrapper userResponseWrapper) {
         User user = new User();
         prepareUserData(user, userResponseWrapper);
-
         User existingUser = findUserByUsername(user.Username);
-
         if (existingUser != null) {
-                user.Id = existingUser.Id;
-            }
-            return user;
+            user.Id = existingUser.Id;
+        }
+        return user;
     }
     /**
      * @description this method used to handling exception and throw an error.
@@ -215,10 +214,9 @@ global without sharing abstract class INS_CTRL_AuthRegistrationHandler implement
      * @param data User data received from auth provider
      */
     public void updateUser(Id userId, Id portalId, Auth.UserData data) {
-
         UserDataWrapper userDataWrapper = extractUserData(data);
         Contact contact = findContactForUser(userId, userDataWrapper);
-    
+            
             if (contact.Ping_Id__c == null) {
                 updateContact(contact.Id, data.attributeMap);
             }

@@ -1,4 +1,9 @@
 public class INS_DTO_ConnexLeads {
+    
+    // ============================================================
+    // WRAPPER & NESTED DTO CLASSES
+    // ============================================================
+    
     public class LeadWrapper {
         public LeadGeneration LeadGeneration;
     }
@@ -134,11 +139,22 @@ public class INS_DTO_ConnexLeads {
         }
     }
 
+    // ============================================================
+    // WRAPPER BUILDER
+    // ============================================================
+
+    /**
+     * @description Builds a LeadWrapper from a Lead record.
+     * @param l                          Lead record
+     * @param employeeEmail              Owner's email
+     * @param statusIdToUpdateOnConnex   Optional status id (PUT only)
+     * @return LeadWrapper
+     */
     public static LeadWrapper createWrapperFromLead(Lead l, String employeeEmail, String statusIdToUpdateOnConnex) {
         LeadWrapper wrapper = new LeadWrapper();
         wrapper.LeadGeneration = new LeadGeneration();
 
-        // Reference
+        // -------- Reference --------
         wrapper.LeadGeneration.Reference = new Reference();
         wrapper.LeadGeneration.Reference.PartyName = new List<PartyName>{
             new PartyName('FirstName', l.FirstName),
@@ -163,7 +179,7 @@ public class INS_DTO_ConnexLeads {
         wrapper.LeadGeneration.Reference.PartyContactPoint.ElectronicAddress = new ElectronicAddress();
         wrapper.LeadGeneration.Reference.PartyContactPoint.ElectronicAddress.EmailAddress = l.Email;
 
-        // LeadandOpportunityProcedure
+        // -------- LeadandOpportunityProcedure --------
         LeadandOpportunityProcedure lop = new LeadandOpportunityProcedure();
 
         if (!String.isBlank(statusIdToUpdateOnConnex)) {
@@ -201,7 +217,7 @@ public class INS_DTO_ConnexLeads {
 
         wrapper.LeadGeneration.LeadandOpportunityProcedure = lop;
 
-        // AdditionalData
+        // -------- AdditionalData --------
         wrapper.LeadGeneration.AdditionalData = new AdditionalData();
         wrapper.LeadGeneration.AdditionalData.CategoryInformation = new CategoryInformation();
         wrapper.LeadGeneration.AdditionalData.CategoryInformation.Category = new List<Category>{
@@ -213,49 +229,118 @@ public class INS_DTO_ConnexLeads {
         return wrapper;
     }
 
+    // ============================================================
+    // REQUEST BODY GENERATORS
+    // ============================================================
 
-        public static String generateRequestBody(List<LeadWrapper> wrappers) {
-    List<Object> sanitizedList = new List<Object>();
+    /**
+     * @description Generates POST request body for multiple leads.
+     *              - Removes blank LeadStatus
+     *              - Replaces null String values with blank ('')
+     */
+    public static String generateRequestBody(List<LeadWrapper> wrappers) {
+        List<Object> sanitizedList = new List<Object>();
 
-    for (LeadWrapper wrapper : wrappers) {
-        Map<String, Object> wrapperMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(wrapper));
+        for (LeadWrapper wrapper : wrappers) {
+            Map<String, Object> wrapperMap = 
+                (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(wrapper));
 
-        Map<String, Object> leadGeneration = (Map<String, Object>) wrapperMap.get('LeadGeneration');
+            // 1. LeadStatus remove — agar blank hai
+            Map<String, Object> leadGeneration = 
+                (Map<String, Object>) wrapperMap.get('LeadGeneration');
+            if (leadGeneration != null && leadGeneration.containsKey('LeadandOpportunityProcedure')) {
+                Map<String, Object> lop = 
+                    (Map<String, Object>) leadGeneration.get('LeadandOpportunityProcedure');
+                if (lop != null && !String.isNotBlank((String) lop.get('LeadStatus'))) {
+                    lop.remove('LeadStatus');
+                }
+            }
+
+            // 2. Nulls ko blank karo (remove ke BAAD)
+            wrapperMap = (Map<String, Object>) replaceNullStringsWithBlank(wrapperMap);
+
+            sanitizedList.add(wrapperMap);
+        }
+
+        return JSON.serializePretty(sanitizedList);
+    }
+
+    /**
+     * @description Generates PUT request body for a single lead.
+     *              - Removes blank LeadStatus
+     *              - Replaces null String values with blank ('')
+     */
+    public static String generatePutRequestBody(Lead l, String employeeEmail, String statusIdToUpdateOnConnex) {
+        LeadWrapper originalWrapper = createWrapperFromLead(l, employeeEmail, statusIdToUpdateOnConnex);
+
+        Map<String, Object> wrapperMap = 
+            (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(originalWrapper));
+
+        // 1. LeadStatus remove — agar blank hai
+        Map<String, Object> leadGeneration = 
+            (Map<String, Object>) wrapperMap.get('LeadGeneration');
         if (leadGeneration != null && leadGeneration.containsKey('LeadandOpportunityProcedure')) {
-            Map<String, Object> lop = (Map<String, Object>) leadGeneration.get('LeadandOpportunityProcedure');
-            if (lop != null && (!String.isNotBlank((String)lop.get('LeadStatus')))) {
+            Map<String, Object> lop = 
+                (Map<String, Object>) leadGeneration.get('LeadandOpportunityProcedure');
+            if (lop != null && !String.isNotBlank(statusIdToUpdateOnConnex)) {
                 lop.remove('LeadStatus');
             }
         }
 
-        sanitizedList.add(wrapperMap);
+        // 2. Nulls ko blank karo (remove ke BAAD)
+        wrapperMap = (Map<String, Object>) replaceNullStringsWithBlank(wrapperMap);
+
+        List<Object> finalList = new List<Object>{ wrapperMap };
+
+        return JSON.serializePretty(finalList);
     }
 
-    return JSON.serializePretty(sanitizedList);
-}
+    // ============================================================
+    // HELPERS
+    // ============================================================
 
-    
+    /**
+     * @description Recursively replaces null values with blank ('') in a Map/List structure.
+     *              This ensures the JSON payload doesn't contain "null" for String fields.
+     *
+     * @param obj  Map<String, Object>, List<Object>, or primitive
+     * @return Sanitized object with nulls replaced by ''
+     */
 
-    public static String generatePutRequestBody(Lead l, String employeeEmail, String statusIdToUpdateOnConnex) {
-    // Get the original wrapper
-    LeadWrapper originalWrapper = createWrapperFromLead(l, employeeEmail, statusIdToUpdateOnConnex);
-    
-    // Convert to Map so we can manually remove null LeadStatus if needed
-    Map<String, Object> wrapperMap = (Map<String, Object>) JSON.deserializeUntyped(JSON.serialize(originalWrapper));
-    
-    // Navigate to LeadStatus
-    Map<String, Object> leadGeneration = (Map<String, Object>) wrapperMap.get('LeadGeneration');
-    if (leadGeneration != null && leadGeneration.containsKey('LeadandOpportunityProcedure')) {
-        Map<String, Object> lop = (Map<String, Object>) leadGeneration.get('LeadandOpportunityProcedure');
-        if (lop != null && (!String.isNotBlank(statusIdToUpdateOnConnex))) {
-            lop.remove('LeadStatus');
+@TestVisible
+private static Object replaceNullStringsWithBlank(Object obj) {
+    if (obj == null) {
+        return '';
+    }
+
+    if (obj instanceof Map<String, Object>) {
+        Map<String, Object> dataMap = (Map<String, Object>) obj;
+        for (String key : dataMap.keySet()) {
+            Object val = dataMap.get(key);
+
+            if (val == null) {
+                dataMap.put(key, '');
+            } else if (val instanceof Map<String, Object> || val instanceof List<Object>) {
+                dataMap.put(key, replaceNullStringsWithBlank(val));
+            }
         }
+        return dataMap;
     }
 
-    // Wrap back in a list
-    List<Object> finalList = new List<Object>{ wrapperMap };
+    if (obj instanceof List<Object>) {
+        List<Object> dataList = (List<Object>) obj;
+        for (Integer i = 0; i < dataList.size(); i++) {
+            Object val = dataList[i];
 
-    return JSON.serializePretty(finalList);
+            if (val == null) {
+                dataList[i] = '';
+            } else if (val instanceof Map<String, Object> || val instanceof List<Object>) {
+                dataList[i] = replaceNullStringsWithBlank(val);
+            }
+        }
+        return dataList;
+    }
+
+    return obj;
 }
-
 }

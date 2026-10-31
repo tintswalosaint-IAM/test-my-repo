@@ -9,14 +9,14 @@ public inherited sharing class SVC_SMSService {
 
     @testVisible
     private SVC_SMSService(){}
-    
+
     public class MessageInputs {
         @InvocableVariable public String recordId;
     }
-    
+
     /**
     * @description Invocable method to be used in the flow to send the SMS to a ustomer
-    * @param requests 
+    * @param requests
     **/
     @InvocableMethod(Label='Send SMS Message' Description='Send SMS message to a customer')
     public static void sendMessage(List<MessageInputs> requests) {
@@ -29,7 +29,7 @@ public inherited sharing class SVC_SMSService {
 
     /**
     * @description Preparing data for SMS
-    * @return String 
+    * @return String
     **/
     private static String prepareSMSData(String recordId){
         String body;

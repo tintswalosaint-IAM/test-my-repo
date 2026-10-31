@@ -3,24 +3,28 @@
 * @LastModified        : Raja Arsalan
 * @Author              : Ruchi Agrawal
 * @LastModifiedReason  : SFP-56183 Updated the 'SelectLeadsByTypeAndDateFilters'
-*               method to not fetch the lead having no mobilenumber,
-*               if method is called via batch class. Added a new 
-*               method to fetch the leads (selectDialerLeadsByRecIds).
+*               method to not fetch the lead having no mobilenumber,
+*               if method is called via batch class. Added a new
+*               method to fetch the leads (selectDialerLeadsByRecIds).
 *               		 Added a selector method by the name selectLeadsForManualExpiry.
 
 *changelog:
 
 *2026-05-13    Preetham        PPBSF-341 -  added method 'selectByIdNumberWithoutSystemReference'
 @2026-07-17    Raja Arsalan    SFP-59337 - Modified the selectLeadsForManualExpiry method
-							   to enforce security and fetch required fields only and added 
-							   validation checks 
+							   to enforce security and fetch required fields only and added
+							   validation checks
 *@LastModifiedReason : SFP-55759 - Added The following Lead fields in method(selectLeadByLeadId) to support the Moonstone
-* Disclosure implementation:Status,Stage__c,OwnerId,Owner.Name 
+* Disclosure implementation:Status,Stage__c,OwnerId,Owner.Name
 *@LastModified by : Gigyasu Jain
 *Group : SBFC
 *@LastModified Date : 08-07-2026
-*
-								
+**=====================================================
+ * @Last Modified By   : Anuja Alli
+ * @Last Modified On   : Aug 8, 2026
+ * @Modified Description : Added new method selectMostRecentlyCreatedLead
+ * @ User Story : SFP-53980
+
 **/
 
 
@@ -123,8 +127,7 @@ public inherited sharing class SEL_Lead extends sbgplatform.fflib_SObjectSelecto
             'Mobile_Phone_With_Country_Code__c',
             'Source_System_Reference__c',
             'Was_FHQ_Completed__c',
-            'stage__c',
-            'Lead_Closing_Comment__c'
+            'stage__c'
             };
 
                 public SEL_Lead(Boolean includeFieldSetFields, Boolean enforceCRUD, Boolean enforceFLS) {
@@ -245,8 +248,7 @@ public inherited sharing class SEL_Lead extends sbgplatform.fflib_SObjectSelecto
                 Lead.SA_ID_or_Passport__c,
                 Lead.Referred_System_Reference_Number__c,
                 Lead.Mobile_Phone_With_Country_Code__c,
-                Lead.stage__c,
-                Lead.Lead_Closing_Comment__c 
+                Lead.stage__c
                 };
                     }
 
@@ -437,20 +439,20 @@ public inherited sharing class SEL_Lead extends sbgplatform.fflib_SObjectSelecto
     /**
 * @description Method to fetch list of Leads based on Lead Type/Product Family/Name/Email etc.
 This method runs **without enforce crud and fls** to allow full access to records,
-ignoring the user's access. 
+ignoring the user's access.
 * @param searchCriteria
 * @return List<Lead>
-**/ 
+**/
 
     public List<Lead> selectLeadsByDtoSearchCriteria(INS_DTO_LeadSearchCriteria searchCriteria) {
 
-        if (searchCriteria == null) { 
+        if (searchCriteria == null) {
             return new List<Lead>();
         }
         Datetime connexDate = searchCriteria.connexDate;
         Datetime startDate = searchCriteria.startDate;
         Datetime endDate = searchCriteria.endDate;
-        
+
         sbgplatform.fflib_QueryFactory qf = newQueryFactory(false, false, false);
 
         List<String> conditions = new List<String>();
@@ -471,9 +473,9 @@ ignoring the user's access.
 
         if (searchCriteria.isReport == false) {
 
-            String dialerCondition = 
+            String dialerCondition =
                 '(' + '(MobilePhone != null AND Dialler_Queue_ID__c != null)' +
-                ' OR ' + 
+                ' OR ' +
                 '(' + '(MobilePhone = null OR Dialler_Queue_ID__c = null)' +
                 ' AND Dialer_Failure_Reason__c = null' + ')' + ')';
 
@@ -528,17 +530,17 @@ ignoring the user's access.
 
 
     /**
-* @description Method to fetch list of Leads based on LeadId, LeadSource, CreatedDateBy, RecordType, Expressed Interest 
+* @description Method to fetch list of Leads based on LeadId, LeadSource, CreatedDateBy, RecordType, Expressed Interest
 * @param leadIds
 * @return Map<Id, Lead>
-**/ 
+**/
 
     public Map<Id, Lead> selectLeadsEligibleForCourtesySMS(Set<Id> leadIds) {
         if (leadIds == null || leadIds.isEmpty()) {
             return new Map<Id, Lead>();
         }
 
-        sbgplatform.fflib_QueryFactory leadQueryFactory = newQueryFactory(true, true, false);
+        sbgplatform.fflib_QueryFactory leadQueryFactory = newQueryFactory();
 
         List<String> conditions = new List<String>();
         conditions.add('Id IN :leadIds');
@@ -560,7 +562,7 @@ ignoring the user's access.
                     }
         );
 
-        String generatedSOQL = leadQueryFactory.toSOQL();        
+        String generatedSOQL = leadQueryFactory.toSOQL();
         return new Map<Id, Lead>((List<Lead>) Database.query(generatedSOQL));
     }
 
@@ -572,14 +574,14 @@ ignoring the user's access.
 
     public List<Lead> selectLeadsToExpire(List<String> statusesToExpire, String leadSource, String leadType, String productFamily) {
 
-        if (statusesToExpire == null || statusesToExpire.isEmpty() || 
+        if (statusesToExpire == null || statusesToExpire.isEmpty() ||
             String.isBlank(leadSource) || String.isBlank(leadType) || String.isBlank(productFamily)) {
                 return new List<Lead>();
             }
 
-        sbgplatform.fflib_QueryFactory leadQueryFactory = newQueryFactory(true, true, false);
+        sbgplatform.fflib_QueryFactory leadQueryFactory = newQueryFactory();
 
-        String combinedConditions = 
+        String combinedConditions =
             'Status IN :statusesToExpire' +
             ' AND LeadSource = :leadSource' +
             ' AND Expressed_Interest_Product__r.Lead_Type__c = :leadType' +
@@ -609,7 +611,7 @@ ignoring the user's access.
                 'OwnerId'
                 });
 
-        String generatedSOQL = leadQueryFactory.toSOQL();        
+        String generatedSOQL = leadQueryFactory.toSOQL();
         return (List<Lead>) Database.query(generatedSOQL);
     }
 
@@ -618,7 +620,7 @@ ignoring the user's access.
     /**
 * @description   Method to fetch list of Leads based on list of Lead Ids.
 This method runs **without enforce crud and fls** to allow full access to records,
-ignoring the user's access. 
+ignoring the user's access.
 * @param leadIds List of Lead Record IDs
 * @return        List<Lead>
 */
@@ -626,7 +628,7 @@ ignoring the user's access.
     public List<Lead> selectLeadsByRecIds(List<Id> leadIds) {
         if (leadIds == null || leadIds.isEmpty()) {
             return new List<Lead>();
-        }       
+        }
         sbgplatform.fflib_QueryFactory fieldQueryFactory =
             newQueryFactory(false, false, false);
 
@@ -682,7 +684,7 @@ ignoring the user's access.
         );
         leadQueryFactory.setOrdering('CreatedDate', sbgplatform.fflib_QueryFactory.SortOrder.ASCENDING);
 
-        String generatedSOQL = leadQueryFactory.toSOQL();   
+        String generatedSOQL = leadQueryFactory.toSOQL();
         return (List<Lead>) Database.query(generatedSOQL);
     }
 
@@ -693,15 +695,15 @@ ignoring the user's access.
 *              Only returns leads that either have no dialer failure reason
 *              or have a failure reason but contain the required MobilePhone
 *              and Dialler Queue Id values.
-*              This method runs **without enforce crud and fls** to allow full access to records, ignoring the user's access. 
+*              This method runs **without enforce crud and fls** to allow full access to records, ignoring the user's access.
 * @param leadIds List of Lead Record IDs
 * @return List<Lead>
-*/    
+*/
 
     public List<Lead> selectDialerLeadsByRecIds(List<Id> leadIds) {
         if (leadIds == null || leadIds.isEmpty()) {
             return new List<Lead>();
-        }       
+        }
 
         sbgplatform.fflib_QueryFactory fieldQueryFactory =
             newQueryFactory(false, false, false);
@@ -718,26 +720,26 @@ ignoring the user's access.
         );
 
         fieldQueryFactory.selectFields(fields);
-        String generatedSOQL = fieldQueryFactory.toSOQL(); 
+        String generatedSOQL = fieldQueryFactory.toSOQL();
         return (List<Lead>) Database.query(generatedSOQL);
     }
 
     /**
 * @Description Method to fetch list of Leads based on Lead Type/Product Family/Name/Email
-* 			   and other filters pass through an LWC component 
+* 			   and other filters pass through an LWC component
 * @Param 	   searchCriteria
 * @Return      List<Lead>
-**/ 
-    
+**/
+
     public List<Lead> selectLeadsForManualExpiry(INS_DTO_LeadSearchCriteria criteria) {
-        
+
         Datetime eligibilityDateTime = criteria.connexDate;
         Datetime filterStartDateTime = criteria.startDate;
         Datetime filterEndDateTime = criteria.endDate;
-        
-        sbgplatform.fflib_QueryFactory qf = newQueryFactory(true, true, false);
+
+        sbgplatform.fflib_QueryFactory qf = newQueryFactory();
         List<String> conditions = new List<String>();
-        
+
         conditions.add('IsConverted = false');
         conditions.add('Status NOT IN (\'Unqualified\', \'Qualified\', \'Onboarding\')');
         conditions.add('CreatedDate >= :eligibilityDateTime');
@@ -749,17 +751,17 @@ ignoring the user's access.
         conditions.add('Expressed_Interest_Product__r.Leads_Product_Family__c = \'' +
                        String.escapeSingleQuotes(criteria.productFamily) +'\'');
         }
-        
+
         if(String.isNotBlank(criteria.status)){
             conditions.add('Status = \'' +
                            String.escapeSingleQuotes(criteria.status) +'\'');
         }
-        
+
         if(String.isNotBlank(criteria.stage)){
             conditions.add('Stage__c = \'' +
                            String.escapeSingleQuotes(criteria.stage) +'\'');
         }
-        
+
         if (String.isNotBlank(criteria.campaignName)) {
             String safeCampaign = String.escapeSingleQuotes(criteria.campaignName);
             conditions.add(
@@ -769,24 +771,24 @@ ignoring the user's access.
                 ')'
             );
         }
-        
+
         if (criteria.startDate != null) {
             conditions.add('CreatedDate >= :filterStartDateTime');
         }
-        
+
         if (criteria.endDate != null) {
             conditions.add('CreatedDate <= :filterEndDateTime');
         }
-        
+
         if (String.isNotBlank(criteria.searchKey)) {
             String safeSearch = String.escapeSingleQuotes(criteria.searchKey);
-            
+
             List<String> searchConditions = new List<String>{
                 'Name LIKE \'%' + safeSearch + '%\'',
                     'Email LIKE \'%' + safeSearch + '%\'',
                     'Phone LIKE \'%' + safeSearch + '%\''
                     };
-                        
+
                         try {
                             Id searchId = Id.valueOf(criteria.searchKey);
                             if (searchId != null) {
@@ -795,10 +797,10 @@ ignoring the user's access.
                         } catch (Exception ex) {
                             LOGGER.error('SEL_Lead | ManualExpiry | Exception', ex);
                         }
-            
+
             conditions.add('(' + String.join(searchConditions, ' OR ') + ')');
         }
-        
+
         qf.setCondition(String.join(conditions, AND_CONDITION));
         qf.selectFields(
             new Set<String>{
@@ -816,10 +818,10 @@ ignoring the user's access.
                     'CreatedDate'
                     }
         );
-        
+
         return Database.query(qf.toSOQL());
     }
-    
+
 
     /* @description Specialist method to select Lead with an Id Number If Corresponding Source System Reference Field is Null
 
@@ -833,30 +835,26 @@ ignoring the user's access.
             FROM Lead
             WHERE ID_Number__c = :idNumber AND Source_System_Reference__c = NULL
         ];
-        
-        return leads;
-    } 
-    
-    
-    /**
- * @description Selects leads eligible for retry based on failure reason 
- *              and system reference number
- * @param leadIds List of Lead IDs to filter
- * @return List of Leads matching retry criteria
- **/
-public List<Lead> selectByIdsForRetry() {
-    
-    sbgplatform.fflib_QueryFactory fieldQueryFactory =
-        newQueryFactory(false, false, false);
-    
-    fieldQueryFactory.setCondition(
-        'Dialer_Failure_Reason__c LIKE \'500%\' ' +
-        'AND Referred_System_Reference_Number__c LIKE \'%Failed%\''
-    );
-    
-    fieldQueryFactory.selectFields(fields);
-    String generatedSOQL = fieldQueryFactory.toSOQL();
-    return (List<Lead>) Database.query(generatedSOQL);
-}
 
+        return leads;
+    }
+
+  /**
+    * @description Method to fetch the single most recently created Lead record (by CreatedDate
+    *              descending), used when linking a newly-created Individual back to the Lead
+    *              that was just inserted in the current transaction. Only selects the fields
+    *              needed by that caller (Id, IndividualId) rather than the full field set.
+    * @author Anuja Alli | 07-08-2026
+    * @return List<Lead> a single-element list containing the most recently created Lead, or an
+    *                     empty list if no Lead records exist
+    **/
+    public List<Lead> selectMostRecentlyCreatedLead() {
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory();
+        fieldQueryFactory.selectFields(getSObjectFieldList());
+        fieldQueryFactory.setOrdering('CreatedDate', sbgplatform.fflib_QueryFactory.SortOrder.DESCENDING);
+        fieldQueryFactory.setLimit(1);
+
+        String generatedSOQL = fieldQueryFactory.toSOQL();
+        return (List<Lead>) Database.query(generatedSOQL);
+    }
 }

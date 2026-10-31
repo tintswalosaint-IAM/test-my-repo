@@ -84,7 +84,7 @@ global with sharing class INS_BATCH_ConnexLead extends sbgbase.BatchJobBase impl
         this.productFamily = productFamily;
         this.leadDate = leadDate;
         this.explicitLeadIds = explicitLeadIds;
-        this.isExpressedInterestChanged = isExpressedInterestChanged; //new
+        this.isExpressedInterestChanged = isExpressedInterestChanged;
 
     }
 
@@ -139,22 +139,28 @@ global with sharing class INS_BATCH_ConnexLead extends sbgbase.BatchJobBase impl
         totalRecords += scope.size();
         totalBatches++;
 
-   // TODO: Note to self: Remove comments
-   // This ensures the special flow runs once per batch scope and 
-   // prevents product-change leads from falling into the normal POST/PUT classification logic.
-   // The flag belongs to the entire batch job, not an individual Lead. You should branch before the loop.  
-   if (isExpressedInterestChanged) {
-        INS_UTIL_ConnexLeads.processExpressedInterestChangedLeads(scope);
-        return;
-    }
+        // ── ROUTING DECISION ──────────────────────────────────────────────────
+        // isExpressedInterestChanged is set by INS_UTIL_LeadTrigger when a lead's
+        // Expressed_Interest_Product__c changed and it already has a dialler reference
+        // number. Those leads need a two-step flow: expire the old dialler record (PUT)
+        // then re-create under the new queue (POST). This branch runs that flow and
+        // returns early so these leads never enter the newLeads/updateLeads split below.
+        // ─────────────────────────────────────────────────────────────────────
+        if (isExpressedInterestChanged) {
+            INS_UTIL_ConnexLeads.processExpressedInterestChangedLeads(scope);
+            return;
+        }
+
+        // Normal flow: classify leads by whether they already have a dialler reference.
+        // No ref# → new to the dialler → POST to create.
+        // Has ref# → already in dialler → PUT to update or expire.
         List<Lead> newLeads = new List<Lead>();
         List<Lead> updateLeads = new List<Lead>();
         
-        // add list of updated express interest leads? Do I need to add a separate list for those?
         for (Lead l : scope) {
-             if (String.isBlank(l.Referred_System_Reference_Number__c) && l.Status != 'Unqualified') {
+            if (String.isBlank(l.Referred_System_Reference_Number__c) && l.Status != 'Unqualified') {
                 newLeads.add(l);
-            } else if(!String.isBlank(l.Referred_System_Reference_Number__c)) {
+            } else if (!String.isBlank(l.Referred_System_Reference_Number__c)) {
                 updateLeads.add(l);
             }
         }

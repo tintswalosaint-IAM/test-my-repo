@@ -40,24 +40,17 @@ public without sharing class INS_CTRL_Products_DTO implements Callable{
 
         PricebookEntry pbe;
         try {
-            pbe = [
-                SELECT Id, UnitPrice,
-                       Product2Id, Product2.Name,
-                       Pricebook2Id, Pricebook2.Name
-                FROM PricebookEntry
-                WHERE Product2.Name = :productName
-                AND Pricebook2.Name = :pricebookName
-                AND Pricebook2.IsActive = true
-                //WITH USER_MODE
-                LIMIT 1
-            ];
+
+            SEL_PriceBookEntry selPbe = new SEL_PriceBookEntry();
+            pbe = new PricebookEntry();
+            pbe = selPbe.selectByProdNameAndPBNameWOSharing(productName, pricebookName);           
         } catch (QueryException e) {
             throw new AuraHandledException(
                 'Product/Pricebook configuration not found for: ' + productName + ' / ' + pricebookName
             );
         }
 
-        output.put('ProductId',               pbe.Product2Id);
+        output.put('ProductId',                pbe.Product2Id);
         output.put('PricebookId',              pbe.Pricebook2Id);
         output.put('PricebookEntryId',         pbe.Id);
         output.put('PricebookEntryUnitPrice',  pbe.UnitPrice);

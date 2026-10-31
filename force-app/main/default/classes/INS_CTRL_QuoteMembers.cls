@@ -1,5 +1,4 @@
-/**
- * ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――
+/** 
  * Class Name      : INS_CTRL_QuoteMembers
  * Author          : Irshad
  * Created Date    : 2026-03-29
@@ -145,8 +144,8 @@ public with sharing class INS_CTRL_QuoteMembers {
      * @return        Serialised JSON string of the member payload.
      */
     private static String buildMemberPayload(String quoteId, Map<String, Object> input) {
-        INS_Quick_Quote_Wrapper.MemberPayload request = new INS_Quick_Quote_Wrapper.MemberPayload();        
-        String accountId = (String)input.get('prospectAccountId');        
+        INS_Quick_Quote_Wrapper.MemberPayload request = new INS_Quick_Quote_Wrapper.MemberPayload(); 
+        String accountId = (String)input.get('prospectAccountId');  
         if (String.isBlank(accountId)) {
             throw unauthorised();
         }else{
@@ -330,7 +329,7 @@ public with sharing class INS_CTRL_QuoteMembers {
             });
         }
 
-        return errorResponse('Service error: ' + statusCode + ' - ' + responseBody);
+        return errorResponse(responseBody);
     }
 
     /**
@@ -366,7 +365,7 @@ public with sharing class INS_CTRL_QuoteMembers {
     // HELPERS
     // =========================================================================
 
-    private static String errorResponse(String message) {
+    private static String errorResponse(String message) {        
         return JSON.serialize(new Map<String, Object>{
             KEY_HAS_ERROR => true,
             KEY_ERROR     => message

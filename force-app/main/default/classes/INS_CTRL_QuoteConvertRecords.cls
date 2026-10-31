@@ -19,7 +19,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
     private static final String ACTION_CREATE_RECORDS = 'createConversionRecords';
 
     private static final String RT_PERSON_PROSPECT = 'Person Account - Prospect';
-    private static final String RT_PERSON_3RD_PARTY = 'Third Party';
+    private static final String RT_PERSON_3RD_PARTY = 'Third Party Person Account';
 
     private static final String CUSTOMER_TYPE_IAM_LIBERTY = 'IAM Liberty';
     private static final String POLICY_STATUS_AWAITING_KYC = 'Awaiting KYC';
@@ -27,6 +27,8 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
 
     private static final String ROLE_PRIMARY_LIFE_ASSURED = 'Primary Life Assured';
     private static final String ROLE_BENEFICIARY = 'Beneficiary';
+    private static final String PRODUCT_NAME = 'Flexi Protect';
+    private static final String PRICEBOOK_NAME = 'C&HNW(Kenya)';
 
     private static Map<String, Id> rtCache;
 
@@ -60,7 +62,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         Map<String, Object> input, Map<String, Object> output
     ) {
         
-
+		Savepoint sp = Database.setSavepoint();
         try {
             ConversionContext ctx = new ConversionContext(input);
             ctx.validate();
@@ -70,7 +72,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             Map<String, Id> accountIdsByPersonKey = createPersonAccounts(ctx);
             
             // 2. Party Profiles — needs Account Ids
-            createPartyProfiles(ctx, accountIdsByPersonKey);
+            Map<Id, Id> partyProfileIdsByAccountId = createPartyProfiles(ctx, accountIdsByPersonKey);
 
             // 3. Insurance Policy, linked to the policyholder's account
             Id policyId = createInsurancePolicy(ctx);
@@ -82,6 +84,18 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             // 5. Opportunity and Quote updates
             updateOpportunityAndQuote(ctx, policyId);
 
+            // Return the exact Account mapping to the journey for KYC callouts.
+            // Copy summaries and rows so enrichment does not mutate the input.
+            Map<String, Object> memberSummary = buildEnrichedSummary(
+                input, 'MemberSummary', ctx.members, 'accountId', ctx, accountIdsByPersonKey,
+                partyProfileIdsByAccountId);
+            Map<String, Object> beneficiarySummary = buildEnrichedSummary(
+                input, 'BeneficiarySummary', ctx.beneficiaries, 'beneficiaryAccountId', ctx,
+                accountIdsByPersonKey, partyProfileIdsByAccountId);
+
+            output.put('MemberSummary', memberSummary);
+            output.put('BeneficiarySummary', beneficiarySummary);
+            output.put('PolicyholderPartyProfileId', partyProfileIdsByAccountId.get(ctx.policyholderAccountId));
             output.put('conversionRecordsResponse', new Map<String, Object>{
                 'hasError'          => false,
                 'insurancePolicyId' => policyId,
@@ -89,6 +103,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             });
 
         } catch (Exception e) {
+            Database.rollback(sp);
             output.put('conversionRecordsResponse', new Map<String, Object>{
                 'hasError'     => true,
                 'errorMessage' => 'Failed to create conversion records: ' + e.getMessage()
@@ -96,6 +111,40 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         }
 
         return output;
+    }
+
+    /**
+     * @description Preserves summary metadata and person fields while adding
+     *              the Account and Party Profile IDs resolved during this conversion. Rows retain
+     *              their original order, including when sourced from IPResult.
+     */
+    private static Map<String, Object> buildEnrichedSummary(
+        Map<String, Object> input, String summaryKey, List<Map<String, Object>> people,
+        String accountIdField, ConversionContext ctx, Map<String, Id> accountIdsByPersonKey,
+        Map<Id, Id> partyProfileIdsByAccountId
+    ) {
+        Map<String, Object> summary = new Map<String, Object>();
+        if (input.get(summaryKey) instanceof Map<String, Object>) {
+            summary.putAll((Map<String, Object>) input.get(summaryKey));
+        }
+
+        List<Map<String, Object>> enrichedPeople = new List<Map<String, Object>>();
+        for (Map<String, Object> person : people) {
+            Map<String, Object> enrichedPerson = new Map<String, Object>();
+            enrichedPerson.putAll(person);
+            Id accountId = accountIdsByPersonKey.get(buildPersonKey(person));
+            if (summaryKey == 'MemberSummary' && ctx.isPolicyholder(person)) {
+                accountId = ctx.policyholderAccountId;
+            }
+            // Overwrite any previous value, including with null for unresolved rows.
+            enrichedPerson.put(accountIdField, accountId);
+            if (summaryKey == 'BeneficiarySummary') {
+                enrichedPerson.put('beneficiaryPartyProfileId', partyProfileIdsByAccountId.get(accountId));
+            }
+            enrichedPeople.add(enrichedPerson);
+        }
+        summary.put('members', enrichedPeople);
+        return summary;
     }
 
     // =========================================================================
@@ -156,7 +205,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         acc.RecordTypeId             = getRecordTypeId('Account', recordTypeName);
         acc.FirstName                = getString(person, 'FirstName__c');
         acc.LastName                 = getString(person, 'LastName__c');
-        acc.PersonGender             = getString(person, 'Gender__c');
+        acc.PersonGender             = normaliseGender(getString(person, 'Gender__c'));
         acc.CMN_IdentityNumber__pc   = getString(person, 'IdentityNumber__c');
         acc.PersonEmail              = getString(person, 'EmailAddress__c');
         acc.PersonMobilePhone        = getString(person, 'PhoneNumber__c');
@@ -174,7 +223,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
     // 2. PARTY PROFILES
     // =========================================================================
 
-    private static void createPartyProfiles(
+    private static Map<Id, Id> createPartyProfiles(
         ConversionContext ctx, Map<String, Id> accountIdsByPersonKey
     ) {
         try{
@@ -191,7 +240,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             }
 
             if (profiles.isEmpty()) {
-                return;
+                return new Map<Id, Id>();
             }
 
             sbgplatform.fflib_SObjectUnitOfWork uow =
@@ -200,8 +249,17 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
                 uow.registerNew(profile);
             }
             uow.commitWork();
+            Map<Id, Id> partyProfileIdsByAccountId = new Map<Id, Id>();
+            for (PartyProfile profile : profiles) {
+                if (profile.Id == null || profile.AccountId == null) {
+                    throw new AuraHandledException('Party Profile creation did not return the required IDs.');
+                }
+                partyProfileIdsByAccountId.put(profile.AccountId, profile.Id);
+            }
+            return partyProfileIdsByAccountId;
         }Catch(exception ex){
-            Logger.error('createPartyProfiles exception'+ex.getMessage());   
+            Logger.error('createPartyProfiles exception'+ex.getMessage());
+            throw ex;
         }
         
     }
@@ -214,7 +272,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             Name                               = getString(person, 'FirstName__c')+getString(person, 'LastName__c'),
             FirstName                          = getString(person, 'FirstName__c'),
             LastName                           = getString(person, 'LastName__c'),
-            Gender                             = getString(person, 'Gender__c'),
+            Gender                             = normaliseGender(getString(person, 'Gender__c')),
             PrimaryEmail                       = getString(person, 'EmailAddress__c'),
             PrimaryPhone                       = getString(person, 'PhoneNumber__c'),
             WI_PrimaryIdentificationName__c    = getString(person, 'IdentityNumber__c'),
@@ -227,12 +285,31 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
     // =========================================================================
 
     private static Id createInsurancePolicy(ConversionContext ctx) {
-        
+        Map<String, Object> payload = ctx.policyPayload;
         InsurancePolicy policy = new InsurancePolicy(
             NameInsuredId = ctx.policyholderAccountId,
+            Premium_Payer__c = ctx.policyholderAccountId,
             PolicyName    = ctx.policyNumber,
             Name          = ctx.policyNumber,
-            Status        = POLICY_STATUS_AWAITING_KYC
+            Status        = POLICY_STATUS_AWAITING_KYC,
+            CurrencyIsoCode = 'KES',
+            SourceOpportunityId = ctx.opportunityId,            
+            ProductId = ctx.sfProductId,
+            PolicyDescription   = getString(payload, 'policyNote'),
+            SalesChannel__c     = 'Website',
+            Inception_Date__c   = parseDate(getString(payload, 'inception_date')),
+            ActualRenewalDate = parseDate(getString(payload, 'anniversaryDate')),
+            ExpirationDate   = parseDate(getString(payload, 'policyEndDate')),
+            PremiumAmount             = toDecimal(payload.get('policyNettPremium')),
+            PremiumFrequency = getString(payload, 'premiumFrequency'),
+            TotalSumInsured  = toDecimal(payload.get('sumAssured')),
+            ReferencePolicyNumber = getString(payload, 'externalPolicyNumber'),
+            PaymentMethod__c        = getString(payload, 'bankName'),
+            PremiumPaymentAccountNumber__c = getString(payload, 'bankAccountNo'),
+            CollectionDay__c   = getString(payload, 'debitDay'),
+           	RecordTypeId = Schema.SObjectType.InsurancePolicy
+                            .getRecordTypeInfosByDeveloperName()
+                            .get('Commercial_Long_Term_Insurance').getRecordTypeId()
         );
 
         sbgplatform.fflib_SObjectUnitOfWork uow =
@@ -317,17 +394,32 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         public Id opportunityId;
         public Id quoteId;
         public String policyNumber;
+        public String sfProductId;
         public Map<String, Object> policyholder;
         public List<Map<String, Object>> members      = new List<Map<String, Object>>();
         public List<Map<String, Object>> beneficiaries = new List<Map<String, Object>>();
-
+        public Map<String, Object> policyPayload = new Map<String, Object>();
+        
+        public String pricebookName ='';
         public ConversionContext(Map<String, Object> input) {
-            policyholderAccountId = toId(input.get('ProspectAccountId'));
-            opportunityId         = toId(input.get('OppId'));
-            quoteId               = toId(input.get('QuoteId'));
+            policyholderAccountId = resolveAccountId(input);
+            opportunityId         = resolveOpportunityId(input);
+            quoteId               = resolveQuoteId(input);
             policyNumber          = resolvePolicyNumber(input);
             members               = resolveMembers(input);
-            beneficiaries         = resolveBeneficiaries(input);
+            beneficiaries         = resolveBeneficiaries(input);            
+            SEL_PriceBookEntry selPbe = new SEL_PriceBookEntry();
+            PricebookEntry pbe = new PricebookEntry();
+            pbe = selPbe.selectByProdNameAndPBNameWOSharing(PRODUCT_NAME, PRICEBOOK_NAME);
+            sfProductId = pbe.Product2Id;
+            
+            Map<String, Object> conversionResponse = extractMap(input, 'quoteConversionResponse');
+            if (conversionResponse != null) {
+                Map<String, Object> fromResponse = extractMap(conversionResponse, 'policyPayload');
+                if (fromResponse != null) {
+                    policyPayload = fromResponse;
+                }
+            }
 
             for (Map<String, Object> member : members) {
                 if (isPolicyholder(member)) {
@@ -336,27 +428,64 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
                 }
             }
         }
+        /**
+        * @description The opportunity is supplied at root on a new quote; on a
+        *              resumed quote it comes from the retrieved quote details.
+        */
+        private Id resolveOpportunityId(Map<String, Object> input) {
+            Id fromRoot = toId(input.get('OppId'));
+            if (fromRoot != null) {
+                return fromRoot;
+            }
+            Map<String, Object> existingQuote = extractMap(input, 'existingQuoteDetails');
+            return existingQuote == null ? null : toId(existingQuote.get('opportunityId'));
+        }
 
-	/**
-	* @description Policy number arrives nested under quoteConversionResponse
-	*              from the conversion IP; root is tolerated as a fallback.
-	*/
-	private String resolvePolicyNumber(Map<String, Object> input) {
-		String value = getString(input, 'policyNumber');
-		if (String.isNotBlank(value)) {
-			return value;
-		}
-		Map<String, Object> conversionResponse =
-			extractMap(input, 'quoteConversionResponse');
-		return conversionResponse == null
-			? null
-			: getString(conversionResponse, 'policyNumber');
-	}
-    /**
-         * @description Members come from MemberSummary — the journey-current list
-         *              the customer confirmed on screen, rather than the retrieve
-         *              snapshot in IPResult which predates any edits.
-         */
+        /**
+        * @description The Salesforce quote is supplied at root on a new quote; on
+        *              a resumed quote it comes from the retrieved quote details.
+        */
+        private Id resolveQuoteId(Map<String, Object> input) {
+            Id fromRoot = toId(input.get('QuoteId'));
+            if (fromRoot != null) {
+                return fromRoot;
+            }
+            Map<String, Object> existingQuote = extractMap(input, 'existingQuoteDetails');
+            return existingQuote == null ? null : toId(existingQuote.get('quoteId'));
+        }
+
+        /**
+        * @description The prospect account is supplied at root on a new quote; on
+        *              a resumed quote it comes from the retrieved quote details.
+        */
+        private Id resolveAccountId(Map<String, Object> input) {
+            Id fromRoot = toId(input.get('ProspectAccountId'));
+            if (fromRoot != null) {
+                return fromRoot;
+            }
+            Map<String, Object> existingQuote = extractMap(input, 'existingQuoteDetails');
+            return existingQuote == null ? null : toId(existingQuote.get('accountId'));
+        }
+        /**
+        * @description Policy number arrives nested under quoteConversionResponse
+        *              from the conversion IP; root is tolerated as a fallback.
+        */
+        private String resolvePolicyNumber(Map<String, Object> input) {
+            String value = getString(input, 'policyNumber');
+            if (String.isNotBlank(value)) {
+                return value;
+            }
+            Map<String, Object> conversionResponse =
+                extractMap(input, 'quoteConversionResponse');
+            return conversionResponse == null
+                ? null
+                : getString(conversionResponse, 'policyNumber');
+        }
+        /**
+        * @description Members come from MemberSummary — the journey-current list
+        *              the customer confirmed on screen, rather than the retrieve
+        *              snapshot in IPResult which predates any edits.
+        */
         private List<Map<String, Object>> resolveMembers(Map<String, Object> input) {
             Map<String, Object> memberSummary = extractMap(input, 'MemberSummary');
             if (memberSummary != null) {
@@ -373,10 +502,10 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         }
 
         /**
-         * @description Beneficiaries come from BeneficiarySummary — the
-         *              journey-current list. IPResult.beneficiaries is a fallback
-         *              for a resumed quote where nothing was edited.
-         */
+        * @description Beneficiaries come from BeneficiarySummary — the
+        *              journey-current list. IPResult.beneficiaries is a fallback
+        *              for a resumed quote where nothing was edited.
+        */
         private List<Map<String, Object>> resolveBeneficiaries(Map<String, Object> input) {
             Map<String, Object> beneficiarySummary =
                 extractMap(input, 'BeneficiarySummary');
@@ -393,7 +522,6 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
                 ? new List<Map<String, Object>>()
                 : extractList(ipResult, 'beneficiaries');
         }
-
 
         public void validate() {
             if (policyholderAccountId == null) {
@@ -447,7 +575,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
             }
             return results;
         }
-		private Map<String, Object> extractMap(Map<String, Object> source, String key) {
+        private Map<String, Object> extractMap(Map<String, Object> source, String key) {
             Object value = source.get(key);
             return value instanceof Map<String, Object>
                 ? (Map<String, Object>) value
@@ -457,10 +585,7 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
 
     // =========================================================================
     // HELPERS
-    // =========================================================================
-
-	
-
+    // =========================================================================    
 	
     /**
      * @description Builds a stable key for a person — FirstName-LastName-YYYYMMDD —
@@ -476,6 +601,26 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         }
         return (firstName == null ? '' : firstName) + '-' + lastName
             + '-' + birthDate.replace('-', '');
+    }
+
+    /**
+     * @description Normalises the gender value to the form the Account picklist
+     *              expects. Retrieved members carry M/F from Mobi while locally
+     *              captured ones carry the full word; anything unrecognised is
+     *              left unset rather than guessed.
+     * @param gender The gender as supplied
+     * @return       'Male', 'Female', or null
+     */
+    private static String normaliseGender(String gender) {
+        String value = String.isBlank(gender) ? '' : gender.trim().toUpperCase();
+
+        if (value == 'M' || value == 'MALE') {
+            return 'Male';
+        }
+        if (value == 'F' || value == 'FEMALE') {
+            return 'Female';
+        }
+        return null;
     }
 
     private static Id getRecordTypeId(String sObjectName, String rtName) {
@@ -501,6 +646,21 @@ public without sharing class INS_CTRL_QuoteConvertRecords implements Callable {
         String cleanValue = value.contains('T') ? value.substringBefore('T') : value;
         try {
             return Date.valueOf(cleanValue);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Decimal toDecimal(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String stringValue = String.valueOf(value);
+        if (String.isBlank(stringValue)) {
+            return null;
+        }
+        try {
+            return Decimal.valueOf(stringValue);
         } catch (Exception e) {
             return null;
         }

@@ -124,8 +124,6 @@ public without sharing class INS_UTIL_LeadConnexService {
         decision.isEligibleForCallout =
             INS_UTIL_LeadConnexDecisionService.eligibleForConnexInsert(lead, oldLeadMap);
 
-        // called from the LeadConnexDecisionService class to determine if the product has changed
-        // Evaluate if the product has changed for this lead
         decision.isProductChanged =
             INS_UTIL_LeadConnexDecisionService.hasProductChanged(lead, oldLeadMap);
 
@@ -164,7 +162,7 @@ public without sharing class INS_UTIL_LeadConnexService {
     }
 }
      */
- // the existing cloneLeadForConnex() clears Referred_System_Reference_Number__c. 
+ // Your existing cloneLeadForConnex() clears Referred_System_Reference_Number__c. 
  //The new flow needs that reference to expire the existing Dialler Lead.
        private static void applyLeadProcessingDecision(
        Lead lead,
@@ -202,11 +200,6 @@ public without sharing class INS_UTIL_LeadConnexService {
     private static void executeConnexProcessing(
     ConnexProcessingResult result
 ) {
-
-// decision.isProductChanged leads are handled separately in the new flow, we submit them to Connex in a separate batch.
-// false means normal processing.
-//true means product change processing.
-
     if (!result.qualifiedLeads.isEmpty()) {
         submitConnexBatch(result.qualifiedLeads, false);
     }
@@ -271,7 +264,7 @@ public without sharing class INS_UTIL_LeadConnexService {
             settings.INS_ProductFamily__c,
             leadDate,
             leadIds,
-            isProductChanged// new param, gets passed to INS_BATCH_ConnexLead class to determine if this is a product change lead or not 
+            isProductChanged
         );
 
         Database.executeBatch(batchJob, 15);

@@ -5,6 +5,7 @@
 * @LastModified by   : Given Khupai
 * @LastModifiedReason: SFP-55625 Initial test class with full coverage
 *                      including catch block paths via mockForceException
+*                      SFP-61347 Removed stale mockHasAccessResult reference
 **/
 @isTest
 private class INS_CTRL_CaseElapsedTimeBusinessHr_TEST {
@@ -13,11 +14,6 @@ private class INS_CTRL_CaseElapsedTimeBusinessHr_TEST {
 
     @testSetup
     static void setup() {
-        /* Guard arrange-phase Case DML with the TaT access mock so the real SVC_TRH_Case
-           afterUpdate processing can't create a competing CMN_CaseMilestoneMetric__c
-           record if the SIT org's own automation issues an update DML on the new Case. */
-        INS_UTIL_BusinessHoursCalcHelper.mockHasAccessResult = false;
-
         Account testAccount = new Account(Name = 'Test Account');
         insert testAccount;
 
@@ -79,8 +75,6 @@ private class INS_CTRL_CaseElapsedTimeBusinessHr_TEST {
 
     @isTest
     static void retrieveCaseMetricsDetailsNoMetricPositiveOutcome() {
-        INS_UTIL_BusinessHoursCalcHelper.mockHasAccessResult = false;
-
         Account acc = new Account(Name = 'No Metric Account');
         insert acc;
         Case noMetricCase = new Case(Subject = 'No Metric', Status = 'New', AccountId = acc.Id);

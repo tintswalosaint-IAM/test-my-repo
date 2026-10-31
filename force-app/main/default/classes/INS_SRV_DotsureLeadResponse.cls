@@ -40,137 +40,159 @@ public with sharing class INS_SRV_DotsureLeadResponse {
         }
     }
 
-    /**
-     * @description
-     * Parses and normalizes a Dotsure API response.
-     *
-     * HTTP 200/201 responses can still contain a business error
-     * such as status_code 400 or 401 in the response body.
-     *
-     * Actual HTTP 5xx responses are treated as server errors.
-     *
-     * @param httpStatusCode HTTP status code returned by the API.
-     * @param responseBody Raw response body returned by the API.
-     * @return Normalized ResponseResult.
+/**
+ * @description
+ * Parses and normalizes a Dotsure API response.
+ *
+ * HTTP 200/201 responses can still contain a business error
+ * such as status_code 400 or 401 in the response body.
+ *
+ * HTTP 4xx responses (400, 401, 403) are treated as client errors.
+ * HTTP 5xx responses are treated as server errors.
+ *
+ * @param httpStatusCode HTTP status code returned by the API.
+ * @param responseBody Raw response body returned by the API.
+ * @return Normalized ResponseResult.
+ */
+public static ResponseResult parse(
+    Integer httpStatusCode,
+    String responseBody
+) {
+    ResponseResult result = new ResponseResult();
+    result.httpStatusCode = httpStatusCode;
+
+    /*
+     * Validate response body.
      */
-    public static ResponseResult parse(
-        Integer httpStatusCode,
-        String responseBody
-    ) {
-        ResponseResult result = new ResponseResult();
-        result.httpStatusCode = httpStatusCode;
+    if (String.isBlank(responseBody)) {
+        result.status = ResponseStatus.UNKNOWN;
+        result.failureMessage =
+            'Empty response received from Dotsure.';
+        return result;
+    }
+
+    try {
+        Map<String, Object> responseMap =
+            (Map<String, Object>) JSON.deserializeUntyped(
+                responseBody
+            );
+
+        System.debug(
+            LoggingLevel.DEBUG,
+            'Dotsure response: ' + responseMap
+        );
 
         /*
-         * Validate response body.
+         * ✅ Actual HTTP client errors (401, 403, 400).
+         *
+         * Example:
+         * HTTP 401
+         * {
+         *     "httpCode": "401",
+         *     "httpMessage": "Unauthorized",
+         *     "moreInformation": "Client certificates..."
+         * }
          */
-        if (String.isBlank(responseBody)) {
-            result.status = ResponseStatus.UNKNOWN;
+        if (
+            httpStatusCode == 400 ||
+            httpStatusCode == 401 ||
+            httpStatusCode == 403
+        ) {
+            result.status = ResponseStatus.CLIENT_ERROR;
             result.failureMessage =
-                'Empty response received from Dotsure.';
-
+                extractDotsureError(responseMap);
             return result;
         }
 
-        try {
-            Map<String, Object> responseMap =
-                (Map<String, Object>) JSON.deserializeUntyped(
-                    responseBody
-                );
-
-            System.debug(
-                LoggingLevel.DEBUG,
-                'Dotsure response: ' + responseMap
+        /*
+         * Actual HTTP server error (5xx).
+         *
+         * Example:
+         * HTTP 502
+         * {
+         *     "status_code": 502,
+         *     "message": "Bad Gateway"
+         * }
+         */
+        if (httpStatusCode >= 500) {
+            return handleServerError(
+                responseMap,
+                httpStatusCode,
+                result
             );
-
-            /*
-             * Actual HTTP server error.
-             *
-             * Example:
-             * HTTP 502
-             * {
-             *     "status_code": 502,
-             *     "message": "Bad Gateway"
-             * }
-             */
-            if (httpStatusCode >= 500) {
-                return handleServerError(
-                    responseMap,
-                    httpStatusCode,
-                    result
-                );
-            }
-
-            /*
-             * Dotsure business/client error.
-             *
-             * Example:
-             * HTTP 201
-             * {
-             *     "status_code": 400,
-             *     "status": "Duplicate lead...",
-             *     "message": "{...}"
-             * }
-             *
-             * The business status is stored in the response body,
-             * not necessarily in the HTTP status.
-             */
-            Integer businessStatusCode =
-                extractBusinessStatusCode(responseMap);
-
-            result.businessStatusCode = businessStatusCode;
-
-            if (
-                businessStatusCode == 400 ||
-                businessStatusCode == 401
-            ) {
-                return handleClientError(
-                    responseMap,
-                    result
-                );
-            }
-
-            /*
-             * Successful lead creation response.
-             *
-             * Example:
-             * {
-             *     "LeadGenerationResponse": {
-             *         "message": "{...statusCode:201...}"
-             *     }
-             * }
-             */
-            if (responseMap.containsKey('LeadGenerationResponse')) {
-                return handleLeadGenerationResponse(
-                    responseMap,
-                    result
-                );
-            }
-
-            /*
-             * Unexpected response structure.
-             */
-            result.status = ResponseStatus.UNKNOWN;
-            result.failureMessage =
-                extractMessage(responseMap);
-
-            return result;
-
-        } catch (Exception ex) {
-
-            System.debug(
-                LoggingLevel.ERROR,
-                'Error processing Dotsure response: ' +
-                ex.getMessage()
-            );
-
-            result.status = ResponseStatus.UNKNOWN;
-            result.failureMessage =
-                'Unable to process Dotsure response: ' +
-                ex.getMessage();
-
-            return result;
         }
+
+        /*
+         * Dotsure business/client error.
+         *
+         * Example:
+         * HTTP 201
+         * {
+         *     "status_code": 400,
+         *     "status": "Duplicate lead...",
+         *     "message": "{...}"
+         * }
+         *
+         * The business status is stored in the response body,
+         * not necessarily in the HTTP status.
+         */
+        Integer businessStatusCode =
+            extractBusinessStatusCode(responseMap);
+
+        result.businessStatusCode = businessStatusCode;
+
+        if (
+            businessStatusCode == 400 ||
+            businessStatusCode == 401
+        ) {
+            return handleClientError(
+                responseMap,
+                result
+            );
+        }
+
+        /*
+         * Successful lead creation response.
+         *
+         * Example:
+         * {
+         *     "LeadGenerationResponse": {
+         *         "message": "{...statusCode:201...}"
+         *     }
+         * }
+         */
+        if (responseMap.containsKey('LeadGenerationResponse')) {
+            return handleLeadGenerationResponse(
+                responseMap,
+                result
+            );
+        }
+
+        /*
+         * Unexpected response structure.
+         */
+        result.status = ResponseStatus.UNKNOWN;
+        result.failureMessage =
+            extractDotsureError(responseMap);
+
+        return result;
+
+    } catch (Exception ex) {
+
+        System.debug(
+            LoggingLevel.ERROR,
+            'Error processing Dotsure response: ' +
+            ex.getMessage()
+        );
+
+        result.status = ResponseStatus.UNKNOWN;
+        result.failureMessage =
+            'Unable to process Dotsure response: ' +
+            ex.getMessage();
+
+        return result;
     }
+}
 
     /**
      * @description
@@ -393,6 +415,52 @@ public with sharing class INS_SRV_DotsureLeadResponse {
 
         return message;
     }
+    
+    
+    /**
+ * @description Extracts error message from Dotsure error response.
+ *              Handles 'moreInformation', 'message', 'httpMessage' keys
+ *              in priority order.
+ *
+ * @param responseMap Parsed response body.
+ * @return Error message or default fallback.
+ **/
+private static String extractDotsureError(
+    Map<String, Object> responseMap
+) {
+    // Priority 1: moreInformation (Dotsure 401/403 errors)
+    if (responseMap.containsKey('moreInformation')) {
+        String info = String.valueOf(
+            responseMap.get('moreInformation')
+        );
+        if (String.isNotBlank(info)) {
+            return info;
+        }
+    }
+    
+    // Priority 2: message (generic errors)
+    if (responseMap.containsKey('message')) {
+        String msg = String.valueOf(
+            responseMap.get('message')
+        );
+        if (String.isNotBlank(msg)) {
+            return msg;
+        }
+    }
+    
+    // Priority 3: httpMessage (HTTP-level errors)
+    if (responseMap.containsKey('httpMessage')) {
+        String httpMsg = String.valueOf(
+            responseMap.get('httpMessage')
+        );
+        if (String.isNotBlank(httpMsg)) {
+            return httpMsg;
+        }
+    }
+    
+    // Fallback
+    return 'Unknown error from Dotsure';
+}
 
     /**
      * @description

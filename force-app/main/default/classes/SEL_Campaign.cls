@@ -76,8 +76,8 @@ public inherited sharing class SEL_Campaign extends sbgplatform.fflib_SObjectSel
                 'Campaign_Source_ID__c',
                 'Name',
                 'Dialler_System_Code__c',
-                'INS_Campaign_Start_Time__c',
-                'INS_Campaign_End_Time__c'
+                'INS_Lead_Campaign_End_Time__c',
+                'INS_Lead_Campaign_Start_Time__c'
                 });
         String generatedSOQL = campaignQueryFactory.toSOQL();
         return (List<Campaign>) Database.query(generatedSOQL);

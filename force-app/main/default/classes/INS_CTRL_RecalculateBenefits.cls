@@ -10,24 +10,14 @@ public with sharing class INS_CTRL_RecalculateBenefits {
 
     private static final Integer HTTP_STATUS_OK = 200;
     private static final Integer HTTP_STATUS_CREATED = 201;
-
     private static final String STATUS_SUCCESS = 'Success';
-
-    private static final String KEY_VALIDATION_RESULT =
-        'ValidationResult';
-    private static final String KEY_RESULT_STATUS =
-        'ResultStatus';
-    private static final String KEY_MESSAGE =
-        'Message';
-    private static final String KEY_BENEFITS =
-        'benefits';
-
-    private static final String RESPONSE_HAS_ERROR =
-        'hasError';
-    private static final String RESPONSE_BENEFITS =
-        'ReCalculateBenefits';
-    private static final String RESPONSE_ERROR =
-        'ReCalculateBenefitsError';
+    private static final String KEY_VALIDATION_RESULT ='ValidationResult';
+    private static final String KEY_RESULT_STATUS = 'ResultStatus';
+    private static final String KEY_MESSAGE =  'Message';
+    private static final String KEY_BENEFITS = 'benefits';
+    private static final String RESPONSE_HAS_ERROR = 'hasError';
+    private static final String RESPONSE_BENEFITS ='ReCalculateBenefits';
+    private static final String RESPONSE_ERROR ='ReCalculateBenefitsError';
 
     private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_CTRL_RecalculateBenefits');
     
@@ -118,21 +108,23 @@ public with sharing class INS_CTRL_RecalculateBenefits {
             throw new IllegalArgumentException(
                 'Quote Id is required.'
             );
-        }
+        }        
+        String accountId = (String)input.get('ProspectAccountId');
         
         if (input == null) {
             throw new IllegalArgumentException(
                 'Input is required.'
             );
-        }/*else{
-            
-            String accountId = (String)input.get('ProspectAccountId');            
+        }else{          
+           
+                       
             if (String.isBlank(accountId)) {
-                //throw unauthorised();
+                throw unauthorised();
             }
             
             List<Quote> quoteList;
-            quoteList = new SEL_Quote().selectInProgressByAccIdsWoSharing(new List<Id>{ accountId });
+            quoteList = new SEL_Quote().guestUserQuoteInProgressByAccIds(new List<Id>{ accountId });
+           
             if (quoteList.isEmpty()) {                
                 throw unauthorised();
             }
@@ -145,10 +137,10 @@ public with sharing class INS_CTRL_RecalculateBenefits {
                 }
             }
             if (!matched) {
-                //throw unauthorised();
+                throw unauthorised();
             }
             
-        }*/
+        }
     }
 
 

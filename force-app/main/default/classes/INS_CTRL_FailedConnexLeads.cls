@@ -87,7 +87,7 @@ public without sharing class INS_CTRL_FailedConnexLeads {
     
     /**
 * @description
-*    Submits a list of selected Lead records to the batch class INS_BATCH_ConnexLead for further processing.
+*    Submits a list of selected Lead records to the batch class INS_BATCH_DiallerLead for further processing.
 *    Typically used to push lead data to an external system.
 *
 * @param leadRecords List of Lead records selected by the user for processing.
@@ -104,7 +104,7 @@ public without sharing class INS_CTRL_FailedConnexLeads {
                     leadIds.add(l.Id);
                 }
                 
-                INS_BATCH_ConnexLead batch = new INS_BATCH_ConnexLead(
+                INS_BATCH_DiallerLead batch = new INS_BATCH_DiallerLead(
                     false, 
                     null, 
                     leadSetting.INS_LeadType__c, 

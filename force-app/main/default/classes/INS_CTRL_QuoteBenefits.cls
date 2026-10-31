@@ -5,17 +5,15 @@
  * @created date            : 2026-01-10
  * @last modified date      : 
  * @last modified by        : 
- * @modification details    : 
+ * @modification details    : Added Logger
  *                          
  */
 global with sharing class INS_CTRL_QuoteBenefits implements Callable{
 	private static final String ACTION_WITH_CASHBACK = 'AdditionalBenefitsWithCashback';
     private static final String BENEFIT_ID_BASE = '1';
     private static final String BENEFIT_ID_CASHBACK = '100';
-    @TestVisible
-    private static String testResponseBody;
-    @TestVisible
-    private static Integer testStatusCode;
+	private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_CTRL_QuoteBenefits');
+    
 
 	global Object call(String actionType, Map<String, Object> args) {
         if (actionType == ACTION_WITH_CASHBACK) {
@@ -71,6 +69,7 @@ global with sharing class INS_CTRL_QuoteBenefits implements Callable{
 				output.put('hasError', true);
 				output.put('populatePremiumsError', 'API call failed: ' + e.getMessage());
 			}
+			LOGGER.error(e.getMessage(),new String[]{'AdditionalBenefitsWithCashback',e.getMessage()},e);
 			return output;
 		}
 
@@ -113,7 +112,8 @@ global with sharing class INS_CTRL_QuoteBenefits implements Callable{
                 }
             }
         } catch (System.JSONException e) {
-            // Handle JSON parsing errors
+            
+			LOGGER.error(e.getMessage(),new String[]{'additionalBenefitsWithCashback',e.getMessage()},e);
             if (output != null) {
                 output.put('hasError', true);
                 output.put('populatePremiumsError', 'Error parsing response: ' + e.getMessage());
@@ -146,7 +146,7 @@ global with sharing class INS_CTRL_QuoteBenefits implements Callable{
     		output.put('annualCashbackPremium', responseMap.get('annualCashbackPremium') != null ? (Decimal) responseMap.get('annualCashbackPremium') : null);
     		output.put('annualCashbackBenefitPremium', responseMap.get('annualCashbackBenefitPremium') != null ? (Decimal) responseMap.get('annualCashbackBenefitPremium') : null);
     	} catch (Exception e) {
-    		// Handle parsing error
+    		LOGGER.error(e.getMessage(),new String[]{'populatePremiums',e.getMessage()},e);
     		if (output != null) {
     			output.put('hasError', true);
     			output.put('populatePremiumsError', 'Error parsing premiums: ' + e.getMessage());
@@ -171,6 +171,7 @@ global with sharing class INS_CTRL_QuoteBenefits implements Callable{
     			output.put('result', responseMap.get('result'));	
     		}
     	} catch (Exception e) {
+			LOGGER.error(e.getMessage(),new String[]{'responseFromPutCall',e.getMessage()},e);
     		if (output != null) {
     			output.put('hasError', true);
     			output.put('populatePremiumsError', 'Error parsing PUT response: ' + e.getMessage());

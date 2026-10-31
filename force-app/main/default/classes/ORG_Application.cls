@@ -67,6 +67,13 @@ User Story: SFP-53279
  These types were previously unsupported by the flow engine's internal Unit of Work,
  causing runtime errors in SVC_CaseManualCaseCreation flow.
  User Story: SIT Fix - SObject type PublicComplaint/VoiceCall not supported by unit of work
+ User Story: PPBSF-770 : Added User.SObjectType to ensure that mapping exists.
+/***************************************************************************************
+* @Last Modified By : Anuja alli
+* @Last Modified Date : 13 Aug 2026
+* @Last Modified Description : Added Appplication, Application_Participant__c,Individual.SObjectType to
+*   unitOfWorkRegisteredTypes.
+* @User Story : SFP-53980
 /***************************************************************************************
 * @Last Modified By : Amlendu Bajpai
 * @Last Modified Date : 08/07/2026
@@ -81,10 +88,17 @@ User Story: SFP-53279
 *   breaking INS_SRV_CaseMilestoneMetrics metric inserts/updates
 * @User Story : SFP-55625
 /***************************************************************************************/
-/* @Last Modified By : Shams
+/* @Last Modified By : Shams Arifeen
 * @Last Modified Date : 21/08/2026
 * @Last Modified Description : Added Producer.SObjectType to unitOfWorkRegisteredTypes.
 * @User Story : SFP-60046
+/***************************************************************************************/
+/* @Last Modified By : Given Khupai
+* @Last Modified Date : 27/10/2026
+* @Last Modified Description : Added CMN_History_Tracker__c.SObjectType to
+*   unitOfWorkRegisteredTypes so INS_SRV_CaseTransferHistory can insert Case
+*   transfer history records through the Unit of Work
+* @User Story : SFP-51816
 /***************************************************************************************/
 public without sharing class ORG_Application {
     

@@ -1,5 +1,4 @@
-/**
- * @description Utility class to process leads for Dialler Integration.
+/*
  * @author      Raja Arsalan
  * @date        June 2025
  * @last modified on  : 06-02-2026
@@ -8,6 +7,9 @@
  * Change log
  * 2026-01-28   Raja Arsalan    SFP-52529 - Updated the logic for error handling.
  * 2026-02-06   Raja Arsalan    Refactored - parsing moved to INS_SRV_DiallerLeadResponse
+ * 2026-10-19   Tintswalo       Added processExpressedInterestChangedLeads() for the
+ *                              expressed-interest-changed two-step PUT+POST flow.
+ *                              Fixed inverted condition in processSuccessfulPutResponse().
  */
 public without sharing class INS_UTIL_ConnexLeads {
 
@@ -23,7 +25,9 @@ public without sharing class INS_UTIL_ConnexLeads {
     public Map<String, String> prepareLeadPayloadsByCampaign(List<Lead> leads) {
         Map<String, String> campaignJsonMap = new Map<String, String>();
         try {
-            if (leads == null || leads.isEmpty()) return campaignJsonMap;
+            if (leads == null || leads.isEmpty()) {
+                return campaignJsonMap;
+            }
             
             Map<Id, String> userIdToEmployeeEmailMap = getuserIdToEmployeeEmailMap(leads);
             Map<String, List<Lead>> campaignLeadMap = new Map<String, List<Lead>>();
@@ -146,6 +150,14 @@ public without sharing class INS_UTIL_ConnexLeads {
     // MAIN ORCHESTRATION
     // ============================================================
 
+    /**
+     * @description Entry point for the normal lead processing path (PATH A).
+     * Called by INS_BATCH_ConnexLead.execute() when isExpressedInterestChanged=false.
+     *
+     * Splits leads into:
+     *   newLeads    → no Referred_System_Reference_Number__c → POST to create in dialler
+     *   updateLeads → has Referred_System_Reference_Number__c → PUT to update/expire
+     */
     public static void processLeadscallout(List<Lead> newLeads, List<Lead> updateLeads, Boolean expireLeads) {
         try {
             uow = new sbgplatform.fflib_SObjectUnitOfWork(new List<SObjectType>{Lead.SObjectType});
@@ -162,113 +174,141 @@ public without sharing class INS_UTIL_ConnexLeads {
         }
     }
     
-    // TODO: Note to self check this please
-    // Placeholder, I was just trying something new   
-   public static void processExpressedInterestChangedLeads(List<Lead> leads) {
-    if (leads == null || leads.isEmpty()) return;
-
-    try {
-        uow = new sbgplatform.fflib_SObjectUnitOfWork(
-            new List<SObjectType>{ Lead.SObjectType }
-        );
-
-        // ── 1. Validation ────────────────────────────────────────────
-        // We validate BEFORE the callout so we don't waste API calls
-        // on leads that will fail anyway.
-        List<Lead> qualifiedLeads  = new List<Lead>();
-        List<Lead> unqualifiedLeads = new List<Lead>();
-
-        for (Lead lead : leads) {
-            // validateProductChangedLead checks: reference number present,
-            // not 'Duplicate', queue ID present, phone valid.
-            Lead validationError = validateProductChangedLead(lead);
-            if (validationError != null) {
-                uow.registerDirty(validationError); // persist the failure reason
-            } else {
-                qualifiedLeads.add(lead);
-            }
-        }
-
-        if (qualifiedLeads.isEmpty()) {
-            uow.commitWork();
+    /**
+     * @description Handles the two-step dialler flow when a lead's expressed interest product changes.
+     *
+     * Why two steps?
+     *   The lead already exists in the dialler under a specific campaign/queue tied to the OLD product.
+     *   Simply updating it (PUT) would leave it under the wrong queue.
+     *   We must:
+     *     1. PUT with the expiry status code → removes the lead from the old dialler queue.
+     *     2. POST → re-creates the lead under the queue that matches the NEW expressed interest product.
+     *
+     * If the PUT fails, the POST is intentionally blocked — we must not create a duplicate
+     * in the dialler before the old record has been successfully removed.
+     *
+     * @param leads  List of Lead records whose Expressed_Interest_Product__c changed
+     */
+    public static void processExpressedInterestChangedLeads(List<Lead> leads) {
+        if (leads == null || leads.isEmpty()) {
             return;
         }
 
-        // ── 2. Shared setup ──────────────────────────────────────────
-        String accessToken = CMN_Generate_Token_Helper.getAccessToken();
-        INS_Insurance_Lead_Settings__mdt leadSettings =
-            INS_Insurance_Lead_Settings__mdt.getInstance('Dialer_Leads');
-        Map<Id, String> userEmailMap = getuserIdToEmployeeEmailMap(leads);
+        try {
+            uow = new sbgplatform.fflib_SObjectUnitOfWork(
+                new List<SObjectType>{ Lead.SObjectType }
+            );
 
-        List<Lead> leadsToPost = new List<Lead>();
+            // ── 1. Validate each lead before making any callouts ─────────────────
+            // We validate upfront so we never waste API calls on leads that will
+            // fail validation (missing reference number, missing queue ID, etc.).
+            List<Lead> qualifiedLeads   = new List<Lead>();
 
-        // ── 3. PUT: expire the existing dialler record ────────────────
-        // We loop individually (not in bulk) because each PUT targets a
-        // different reference number endpoint: /<refNum>/LeadEnhancement
-        for (Lead lead : qualifiedLeads) {
-            try {
-                // true = send the expire status code in the payload
-                String payload = buildPutPayload(
-                    lead, userEmailMap, leadSettings, true
-                );
-
-                INS_Leads_API api = new INS_Leads_API(
-                    payload,
-                    accessToken,
-                    'PUT',
-                    lead.Referred_System_Reference_Number__c
-                );
-
-                String putResponse = performLeadOutboundCall(api);
-
-                // handlePutResponse parses the response and returns
-                // a Lead with either success fields or Dialer_Failure_Reason__c set.
-                Lead putResult = handlePutResponse(lead, putResponse, true);
-
-                if (putResult == null || putResult.Dialer_Failure_Reason__c != null) {
-                    // PUT failed or uncertain — do NOT POST, record the error
-                    Lead errorLead = putResult != null
-                        ? putResult
-                        : buildErrorLead(lead.Id, 'Unable to confirm successful Dialler expiry.');
-                    uow.registerDirty(errorLead);
+            for (Lead lead : leads) {
+                Lead validationError = validateProductChangedLead(lead);
+                if (validationError != null) {
+                    // Persist the validation failure reason back to the lead record.
+                    uow.registerDirty(validationError);
                 } else {
-                    // PUT succeeded — this lead is cleared to be re-created via POST
-                    uow.registerDirty(putResult);
-                    leadsToPost.add(lead);
+                    qualifiedLeads.add(lead);
                 }
-
-            } catch (Exception ex) {
-                CMN_UTIL_Logger.error(
-                    ex, 'INS_UTIL_ConnexLeads - processExpressedInterestChangedLeads - PUT'
-                );
-                uow.registerDirty(handlePutFailure(lead));
             }
-        }
 
-        // ── 4. POST: re-create leads under the correct queue ─────────
-        // Only leads that passed the PUT get here.
-        // processQualifiedLeadsPost groups by Campaign_Name__c and sends
-        // one POST per campaign — same as the normal new-lead flow.
-        if (!leadsToPost.isEmpty()) {
-            List<Lead> postResults = processQualifiedLeadsPost(leadsToPost, accessToken);
-            for (Lead r : postResults) {
-                if (r != null) uow.registerDirty(r);
+            if (qualifiedLeads.isEmpty()) {
+                uow.commitWork();
+                return;
             }
+
+            // ── 2. Shared setup (token + settings + user map) ────────────────────
+            // Retrieve auth token and metadata once; reuse across all leads.
+            String accessToken = CMN_Generate_Token_Helper.getAccessToken();
+            INS_Insurance_Lead_Settings__mdt leadSettings =
+                INS_Insurance_Lead_Settings__mdt.getInstance('Dialer_Leads');
+            Map<Id, String> userEmailMap = getuserIdToEmployeeEmailMap(leads);
+
+            List<Lead> leadsToPost = new List<Lead>();
+
+            // ── 3. PUT each lead with the expiry status code ─────────────────────
+            // Each PUT targets a different endpoint (/<refNum>/LeadEnhancement),
+            // so we loop individually rather than batching them into one request.
+            for (Lead lead : qualifiedLeads) {
+                try {
+                    // passing expireLeads=true so buildPutPayload uses the
+                    // INS_LeadExpireCode__c value from metadata (e.g. "EXP").
+                    String payload = buildPutPayload(lead, userEmailMap, leadSettings, true);
+
+                    INS_Leads_API api = new INS_Leads_API(
+                        payload,
+                        accessToken,
+                        'PUT',
+                        lead.Referred_System_Reference_Number__c
+                    );
+
+                    String putResponse = performLeadOutboundCall(api);
+
+                    // handlePutResponse parses the JSON and returns a Lead with
+                    // either a cleared Dialer_Failure_Reason__c (success) or a
+                    // populated one (failure). null = parse error.
+                    Lead putResult = handlePutResponse(lead, putResponse, true);
+
+                    if (putResult == null || String.isNotBlank(putResult.Dialer_Failure_Reason__c)) {
+                        // PUT failed or response was unparseable — do NOT POST.
+                        System.debug('>>> processExpressedInterestChangedLeads | PUT FAILED for leadId=' + lead.Id
+                            + ' | putResult=' + (putResult != null ? 'not null' : 'NULL')
+                            + ' | Dialer_Failure_Reason__c=' + (putResult != null ? putResult.Dialer_Failure_Reason__c : 'N/A')
+                            + ' | POST BLOCKED');
+                        Lead errorLead = (putResult != null)
+                            ? putResult
+                            : buildErrorLead(lead.Id, 'Unable to confirm successful Dialler expiry.');
+                        uow.registerDirty(errorLead);
+                    } else {
+                        // PUT confirmed success — add to POST list
+                        System.debug('>>> processExpressedInterestChangedLeads | PUT SUCCEEDED for leadId=' + lead.Id
+                            + ' | clearing old ref# and adding to POST list');
+                        putResult.Referred_System_Reference_Number__c = null;
+                        uow.registerDirty(putResult);
+                        leadsToPost.add(lead);
+                    }
+
+                } catch (Exception ex) {
+                    CMN_UTIL_Logger.error(
+                        ex, 'INS_UTIL_ConnexLeads - processExpressedInterestChangedLeads - PUT'
+                    );
+                    uow.registerDirty(handlePutFailure(lead));
+                }
+            }
+
+            // ── 4. POST each lead that passed the PUT ────────────────────────────
+            System.debug('>>> processExpressedInterestChangedLeads | leadsToPost count=' + leadsToPost.size());
+            if (!leadsToPost.isEmpty()) {
+                System.debug('>>> processExpressedInterestChangedLeads | FIRING POST for ' + leadsToPost.size() + ' leads');
+                List<Lead> postResults = processQualifiedLeadsPost(leadsToPost, accessToken);
+                System.debug('>>> processExpressedInterestChangedLeads | POST complete | postResults count=' + postResults.size());
+                for (Lead r : postResults) {
+                    if (r != null) {
+                        System.debug('>>> processExpressedInterestChangedLeads | POST result | leadId=' + r.Id
+                            + ' | Referred_System_Reference_Number__c=' + r.Referred_System_Reference_Number__c
+                            + ' | Dialer_Failure_Reason__c=' + r.Dialer_Failure_Reason__c);
+                        uow.registerDirty(r);
+                    }
+                }
+            } else {
+                System.debug('>>> processExpressedInterestChangedLeads | leadsToPost is EMPTY — POST did not fire');
+            }
+
+            uow.commitWork();
+
+        } catch (Exception ex) {
+            CMN_UTIL_Logger.error(
+                ex, 'INS_UTIL_ConnexLeads - processExpressedInterestChangedLeads'
+            );
         }
-
-        uow.commitWork();
-
-    } catch (Exception ex) {
-        CMN_UTIL_Logger.error(
-            ex, 'INS_UTIL_ConnexLeads - processExpressedInterestChangedLeads'
-        );
     }
-}
 
-    // PUT existing Dialler lead with expiry
-    // Verify PUT success
-    // POST the same Lead again using current Dialler_Queue_ID__c
-
+    /**
+     * @description Normal callout dispatcher. Routes to PUT or POST based on methodType.
+     * Not used by the expressed-interest-changed flow — that has its own method above.
+     */
     public static void processLeadsForConnex(List<Lead> leads, String methodType, Boolean expireLeads) {
         try {
             List<Lead> qualifiedLeads = new List<Lead>();
@@ -288,12 +328,16 @@ public without sharing class INS_UTIL_ConnexLeads {
                         qualifiedLeads, userIdToEmployeeEmailMap, accessToken, expireLeads
                     );
                     for (Lead updatedLead : updatedLeads) {
-                        if (updatedLead != null) uow.registerDirty(updatedLead);
+                        if (updatedLead != null) {
+                            uow.registerDirty(updatedLead);
+                        }
                     }
                 } else {
                     List<Lead> updatedLeads = processQualifiedLeadsPost(qualifiedLeads, accessToken);
                     for (Lead updatedLead : updatedLeads) {
-                        if (updatedLead != null) uow.registerDirty(updatedLead);
+                        if (updatedLead != null) {
+                            uow.registerDirty(updatedLead);
+                        }
                     }
                 }
             }
@@ -328,7 +372,9 @@ public without sharing class INS_UTIL_ConnexLeads {
                 String response = performLeadOutboundCall(api);
                 Lead updatedLead = handlePutResponse(lead, response, expireLeads);
                 
-                if (updatedLead != null) leadsToUpdate.add(updatedLead);
+                if (updatedLead != null) {
+                    leadsToUpdate.add(updatedLead);
+                }
             } catch (Exception ex) {
                 CMN_UTIL_Logger.error(ex, 'INS_UTIL_ConnexLeads - processQualifiedLeadsPut');
                 leadsToUpdate.add(handlePutFailure(lead));
@@ -350,10 +396,14 @@ public without sharing class INS_UTIL_ConnexLeads {
     }
 
     /**
-     * @description Handles PUT response — parsing ab INS_SRV_DiallerLeadResponse mein hai.
+     * @description Handles PUT response for a lead.
+     * Parses the dialler API response and returns a Lead with fields set for success or failure.
+     * @param lead          Original lead being updated
+     * @param responseBody  Raw JSON from the dialler PUT endpoint
+     * @param expireLeads   Whether this PUT was an expiry call
+     * @return Lead         Updated lead record, or an error lead if the response was a failure
      */
-    // TODO: Note to self check this please
-    private static Lead handlePutResponse(Lead lead, String responseBody, Boolean expireLeads, Boolean isExpressedInterestChanged ) {
+    private static Lead handlePutResponse(Lead lead, String responseBody, Boolean expireLeads) {
         INS_DTO_UpdateConnexLeadResponse dto;
         try {
             dto = INS_DTO_UpdateConnexLeadResponse.parse(responseBody);
@@ -361,7 +411,6 @@ public without sharing class INS_UTIL_ConnexLeads {
             dto = null;
         }
         
-        //  Service class se error check
         if (INS_SRV_DiallerLeadResponse.isPutResponseError(dto)) {
             String errorMsg = INS_SRV_DiallerLeadResponse.extractErrorMessage(
                 dto, 'Unknown error from Dialler PUT API'
@@ -378,14 +427,40 @@ public without sharing class INS_UTIL_ConnexLeads {
     }
 
 
-    // caller has been treating null as a successful PUT?
-    // If the PUT result is uncertain, the POST must not happen.
+    // ── CHANGED (Bug fix) ────────────────────────────────────────────────────
+    // BEFORE: condition was (updatedLead == null || updatedLead.Dialer_Failure_Reason__c == null)
+    //         parsePutResponse never returns a Lead with Dialer_Failure_Reason__c == null —
+    //         it always sets it to '' (success) or a message (failure). So the null check
+    //         was dead code: both success and failure fell through, causing failed PUTs to
+    //         incorrectly set Status='Unqualified' and Stage__c='Closed Lost' on the lead.
+    //
+    // AFTER:  We check for null updatedLead (parse/network error — nothing to persist) and
+    //         for a non-blank failure reason (PUT reported an error — persist the reason but
+    //         do NOT change Status or Stage). Only a blank failure reason ('' = confirmed
+    //         success from parsePutResponse) proceeds to set the expiry fields.
+    //         This also aligns with how processExpressedInterestChangedLeads gates the POST:
+    //         it checks String.isNotBlank(putResult.Dialer_Failure_Reason__c) to decide
+    //         whether to allow the POST, and now both callers use the same convention.
+    // ─────────────────────────────────────────────────────────────────────────
     private static Lead processSuccessfulPutResponse(Lead updatedLead, Lead originalLead, Boolean expireLeads) {
-        if (updatedLead == null || updatedLead.Dialer_Failure_Reason__c == null) {
+        if (updatedLead == null) {
+            // Parse or network error — nothing useful to persist, signal failure to caller.
             return null;
         }
+
+        // Always stamp the original lead's Id — parsePutResponse returns a detached Lead
+        // constructed from the response body and has no Id set.
         updatedLead.Id = originalLead.Id;
-        
+
+        if (String.isNotBlank(updatedLead.Dialer_Failure_Reason__c)) {
+            // PUT reported a failure (non-blank errorCode in response item).
+            // Return the lead so the caller can persist the failure reason,
+            // but do NOT change Status or Stage — the lead is still active.
+            return updatedLead;
+        }
+
+        // PUT succeeded — Dialer_Failure_Reason__c is '' (blank = cleared by parsePutResponse).
+        // Apply expiry status/stage if this was an expiry call or the lead is already Unqualified.
         if (shouldExpireLead(originalLead, expireLeads)) {
             updatedLead.Status = STATUS_UNQUALIFIED;
             updatedLead.Stage__c = 'Closed Lost';
@@ -396,10 +471,8 @@ public without sharing class INS_UTIL_ConnexLeads {
     private static Boolean shouldExpireLead(Lead lead, Boolean expireLeads) {
         return (lead.Status != STATUS_UNQUALIFIED && expireLeads) || lead.Status == STATUS_UNQUALIFIED;
     }
-    // this still returns a lead with the failure reason set, 
-    // but does not update the status or stage. 
-    //The caller should handle that if needed.
-    // Ask Raja
+    // PUT threw an exception (network, timeout, etc.) — persist a generic failure reason.
+    // Status and Stage are intentionally left unchanged; the lead remains active for retry.
     private static Lead handlePutFailure(Lead lead) {
         return new Lead(
             Id = lead.Id,
@@ -429,13 +502,17 @@ public without sharing class INS_UTIL_ConnexLeads {
         List<Lead> result = new List<Lead>();
         for (Lead l : leads) {
             String key = String.isBlank(l.Campaign_Name__c) ? 'NO_CAMPAIGN' : l.Campaign_Name__c.trim();
-            if (key == campaignName) result.add(l);
+            if (key == campaignName) {
+                result.add(l);
+            }
         }
         return result;
     }
 
     /**
-     * @description Handles POST response — parsing ab INS_SRV_DiallerLeadResponse mein hai.
+     * @description Handles the POST response from the dialler API.
+     * Parsing and error detection are delegated to INS_SRV_DiallerLeadResponse
+     * so this class stays focused on orchestration, not response interpretation.
      */
     private static List<Lead> handlePostResponse(List<Lead> campaignLeads, String responseBody) {
         List<Lead> leadsToUpdate = new List<Lead>();
@@ -447,7 +524,8 @@ public without sharing class INS_UTIL_ConnexLeads {
             dto = null;
         }
         
-        // ✅ Service class se error check
+        // Ask INS_SRV_DiallerLeadResponse whether the response represents a global error
+        // (e.g. 400/401/500 status, or a top-level error node in the JSON).
         if (INS_SRV_DiallerLeadResponse.isPostResponseError(dto)) {
             String errorMsg = INS_SRV_DiallerLeadResponse.extractErrorMessage(
                 dto, 'Unknown error from Dialler POST API'
@@ -458,7 +536,10 @@ public without sharing class INS_UTIL_ConnexLeads {
             return leadsToUpdate;
         }
         
-        // ✅ Service class se parsing
+        // Response was not a global error — parse individual lead outcomes.
+        // Each item in the response maps back to a lead via source_reference (= Salesforce Lead Id).
+        // Success items get a new contact_data_id written to Referred_System_Reference_Number__c.
+        // Failure items get their error message written to Dialer_Failure_Reason__c.
         List<Lead> updated = INS_SRV_DiallerLeadResponse.parsePostResponse(responseBody);
         if (updated != null && !updated.isEmpty()) {
             leadsToUpdate.addAll(updated);

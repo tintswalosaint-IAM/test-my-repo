@@ -97,6 +97,28 @@ private class INS_Get_Account_Test {
         List<Schema.SObjectField> fields = selector.getSObjectFieldList();
 
         Assert.areNotEqual(null, fields);
-        Assert.areEqual(12, fields.size());
+        Assert.areEqual(13, fields.size());
+    }
+    
+    @isTest
+    static void testSelectAccountById() {
+        User u = createTestUser('testuser321zyx@example.com');
+        Account acc = createTestAccount(u, 'TEST00101M53G');
+        acc.ExternalCIFCountry__c = 'UG';
+        update acc;
+
+        INS_Get_Account selector = new INS_Get_Account();
+
+        // First query (by identity number)
+        List<Account> results = selector.getAccountById(acc.Id);
+       Assert.areEqual(1, results.size());
+       Assert.areEqual(acc.Id, results[0].Id);
+
+        // Second query (after changing identity number → forces name/DOB path)
+        acc.CMN_IdentityNumber__pc = 'UPDATEDT00101M53G';
+        results = selector.selectAccountByName(
+            acc.FirstName, acc.LastName, acc.PersonBirthdate, acc.CMN_IdentityNumber__pc, 'Liberty', 'UG'
+        );
+       Assert.areEqual(1, results.size());
     }
 }

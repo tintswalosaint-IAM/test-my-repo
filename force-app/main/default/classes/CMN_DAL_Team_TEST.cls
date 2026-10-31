@@ -8,127 +8,127 @@
 @IsTest(SeeAllData=false IsParallel=true)
 private class CMN_DAL_Team_TEST
 {
-	private static final Integer NUMBER_OF_ITEMS_TO_GENERATE = 1;
-	private static final Boolean ACTIVE = true;
-	private static final Boolean INACTIVE = false;
+  private static final Integer NUMBER_OF_ITEMS_TO_GENERATE = 1;
+  private static final Boolean ACTIVE = true;
+  private static final Boolean INACTIVE = false;
 
-	/**
-	 * @description To test if teams are available if active or inactive
-	 */
-	@IsTest
-	private static void hasTeams()
-	{
-		SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
-		SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, INACTIVE);
+  /**
+   * @description To test if teams are available if active or inactive
+   */
+  @IsTest
+  private static void hasTeams()
+  {
+    SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
+    SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, INACTIVE);
 
-		Test.startTest();
+    Test.startTest();
 
-		List<CMN_Team__c> teams = CMN_DAL_Team.getAll();
+    List<CMN_Team__c> teams = CMN_DAL_Team.getAll();
 
-		Test.stopTest();
+    Test.stopTest();
 
-		// Total teams should match
-		Assert.areEqual(2, teams.size(), 'Did not match the expected total teams. Expected 2 but returned ' + teams.size());
-	}
+    // Total teams should match
+    Assert.areEqual(2, teams.size(), 'Did not match the expected total teams. Expected 2 but returned ' + teams.size());
+  }
 
-	/**
-	 * @description To test if teams are available if active
-	 */
-	@IsTest
-	private static void hasActiveTeams()
-	{
-		SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
+  /**
+   * @description To test if teams are available if active
+   */
+  @IsTest
+  private static void hasActiveTeams()
+  {
+    SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
 
-		Test.startTest();
+    Test.startTest();
 
-		List<CMN_Team__c> teams = CMN_DAL_Team.getAllActive();
+    List<CMN_Team__c> teams = CMN_DAL_Team.getAllActive();
 
-		Test.stopTest();
+    Test.stopTest();
 
-		// Total teams should match
-		Assert.areEqual(NUMBER_OF_ITEMS_TO_GENERATE, teams.size(), 'Did not match the expected total teams. Expected ' + NUMBER_OF_ITEMS_TO_GENERATE + ' but returned ' + teams.size());
-	}
+    // Total teams should match
+    Assert.areEqual(NUMBER_OF_ITEMS_TO_GENERATE, teams.size(), 'Did not match the expected total teams. Expected ' + NUMBER_OF_ITEMS_TO_GENERATE + ' but returned ' + teams.size());
+  }
 
-	/**
-	 * @description To test if teams are available thru IDs
-	 */
-	@IsTest
-	private static void hasTeamsById()
-	{
-		List<CMN_Team__c> newTeams = SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
+  /**
+   * @description To test if teams are available thru IDs
+   */
+  @IsTest
+  private static void hasTeamsById()
+  {
+    List<CMN_Team__c> newTeams = SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
 
-		Set<String> teamIds = new Set<String>();
-		for(CMN_Team__c team : newTeams)
-		{
-			teamIds.add(team.Id);
-		}
+    Set<String> teamIds = new Set<String>();
+    for(CMN_Team__c team : newTeams)
+    {
+      teamIds.add(team.Id);
+    }
 
-		Test.startTest();
+    Test.startTest();
 
-		List<CMN_Team__c> teams = CMN_DAL_Team.findById(teamIds);
+    List<CMN_Team__c> teams = CMN_DAL_Team.findById(teamIds);
 
-		Test.stopTest();
+    Test.stopTest();
 
-		// Should have active teams
-		Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created');
-	}
+    // Should have active teams
+    Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created');
+  }
 
-	/**
-	 * @description To test if teams are available thru email
-	 */
-	@IsTest
-	private static void hasTeamsByEmail()
-	{
-		List<CMN_Team__c> newTeams = SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
-		CMN_Team__c team = newTeams.iterator().next();
+  /**
+   * @description To test if teams are available thru email
+   */
+  @IsTest
+  private static void hasTeamsByEmail()
+  {
+    List<CMN_Team__c> newTeams = SVC_DAL_DataFactory.generateTeams(NUMBER_OF_ITEMS_TO_GENERATE, ACTIVE);
+    CMN_Team__c team = newTeams.iterator().next();
 
-		Test.startTest();
+    Test.startTest();
 
-		List<CMN_Team__c> teams = CMN_DAL_Team.getByEmail(team.CMN_Email__c);
+    List<CMN_Team__c> teams = CMN_DAL_Team.getByEmail(team.CMN_Email__c);
 
-		Test.stopTest();
+    Test.stopTest();
 
-		// Should have teams according to email
-		Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created using email: ' + team.CMN_Email__c);
-	}
+    // Should have teams according to email
+    Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created using email: ' + team.CMN_Email__c);
+  }
 
-	/**
-	 * @description To test if teams are available thru Country Code
-	 */
-	@IsTest
-	private static void hasTeamsByCountryCode()
-	{
-		Test.startTest();
+  /**
+   * @description To test if teams are available thru Country Code
+   */
+  @IsTest
+  private static void hasTeamsByCountryCode()
+  {
+    Test.startTest();
 
-		Boolean hasStateAndCountryPicklists = Schema.SObjectType.CMN_Team__c.fields.getMap().containsKey(CMN_DAL_Team.FIELD_COUNTRY_CODE);
+    Boolean hasStateAndCountryPicklists = Schema.SObjectType.CMN_Team__c.fields.getMap().containsKey(CMN_DAL_Team.FIELD_COUNTRY_CODE);
 
-		// State and Country should be enabled
-		Assert.areEqual(true, hasStateAndCountryPicklists, 'Expected result is true but returned ' + hasStateAndCountryPicklists);
+    // State and Country should be enabled
+    Assert.areEqual(true, hasStateAndCountryPicklists, 'Expected result is true but returned ' + hasStateAndCountryPicklists);
 
-		List<String> pickvals = CMN_UTIL_System.getPicklistValues(CMN_DAL_Team.OBJECT_NAME, CMN_DAL_Team.FIELD_COUNTRY_CODE);
+    List<String> pickvals = CMN_UTIL_System.getPicklistValues(CMN_DAL_Team.OBJECT_NAME, CMN_DAL_Team.FIELD_COUNTRY_CODE);
 
-		String countryCode = pickvals[0];
+    String countryCode = pickvals[0];
 
-		CMN_Team__c team = SVC_DAL_DataFactory.createNewTeam(ACTIVE);
-		team.CMN_CountryCode__c = countryCode;
-		insert team;
+    CMN_Team__c team = SVC_DAL_DataFactory.createNewTeam(ACTIVE);
+    team.CMN_CountryCode__c = countryCode;
+    insert team;
 
-		List<CMN_Team__c> teams = CMN_DAL_Team.findByCountryCode(countryCode);
+    List<CMN_Team__c> teams = CMN_DAL_Team.findByCountryCode(countryCode);
 
-		Test.stopTest();
+    Test.stopTest();
 
-		// Should have teams according to country code
-		Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created using country code: ' + countryCode);
-	}
+    // Should have teams according to country code
+    Assert.isTrue(teams.size() > 0, 'Expected to have a team but none was created using country code: ' + countryCode);
+  }
 
     @isTest
     static void testGetTeamIdFromName() {
-		Test.startTest();
+    Test.startTest();
         CMN_Team__c testTeam = CMP_DAL_DataFactory.createNewTeam(ACTIVE);
         insert testTeam;
 
         CMN_DAL_Team.TeamIdAndNameWrapper result = CMN_DAL_Team.getTeamIdFromName(testTeam.Name);
-		Test.stopTest();
+    Test.stopTest();
         Assert.isNotNull(result.teamName);
         Assert.areEqual(testTeam.Id, result.teamId);
     }
@@ -137,7 +137,7 @@ private class CMN_DAL_Team_TEST
 
     @isTest
     static void testGetTeamsByUserId() {
-		Test.startTest();
+    Test.startTest();
         User testUser = CMP_DAL_DataFactory.createUser('SVC Agent Banker');
 
 
@@ -147,7 +147,7 @@ private class CMN_DAL_Team_TEST
         insert testTeamMember;
 
         List<CMN_TeamMember__c> result = CMN_DAL_Team.getTeamsByUserId(testUser.Id);
-		Test.stopTest();
+    Test.stopTest();
         Assert.areEqual(1, result.size());
         Assert.areEqual(testTeam.Id, result[0].CMN_Team__c);
     }

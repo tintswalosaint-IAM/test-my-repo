@@ -13,7 +13,7 @@ public with sharing class INS_CTRL_QuoteConvert implements callable{
 
 	private static final String QUOTE_CONVERSION = 'QuoteConversion';
 	private static final String QUOTE_CONVERSION_RESPONSE = 'quoteConversionResponse';
-
+	private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_CTRL_QuoteConvert');
 	public Object call(String actionType, Map<String, Object> args) {
         if (actionType == QUOTE_CONVERSION) {
             Map<String, Object> input = (Map<String, Object>) args.get('input');            
@@ -35,13 +35,13 @@ public with sharing class INS_CTRL_QuoteConvert implements callable{
 				throw new AuraHandledException('Quote Id is required.');
 			}
             // validate quote against the actual quote
-            String accountId = (String) input.get('ProspectAccountId');
+            String accountId = (String) input.get('ProspectAccountId');			
 			if (String.isBlank(accountId)) {
 				throw new AuraHandledException('Unauthorised request.');
 			}
-
+			
 			List<Quote> quoteList =
-				new SEL_Quote().selectInProgressByAccIdsWoSharing(new List<Id>{ accountId });
+				new SEL_Quote().guestUserQuoteInProgressByAccIds(new List<Id>{ accountId });
 
 			Boolean matched = false;
 			for (Quote q : quoteList) {
@@ -53,6 +53,7 @@ public with sharing class INS_CTRL_QuoteConvert implements callable{
 			if (!matched) {
 				throw new AuraHandledException('Unauthorised request.');
 			}
+			
 
 			String payloadJson = generateRequestPayload(quoteId, input);
 
@@ -70,6 +71,7 @@ public with sharing class INS_CTRL_QuoteConvert implements callable{
 			try {
 				jsonResponseMap = (Map<String, Object>) JSON.deserializeUntyped(response);
 			} catch (Exception parseEx) {
+				LOGGER.error(parseEx.getMessage(),new String[]{'quoteConversionAPI',parseEx.getMessage()},parseEx);
 				return errorResponse(output, quoteConvert,
 					'Failed to parse Quote Convert response: ' + parseEx.getMessage());
 			}
@@ -99,14 +101,20 @@ public with sharing class INS_CTRL_QuoteConvert implements callable{
 			quoteConvert.put('hasError', false);
 			quoteConvert.put('policyNumber', policyNumber);
 			quoteConvert.put('status', policyPayload.get('status'));
-			
-
+			quoteConvert.put('policyPayload', policyPayload);
 			output.put(QUOTE_CONVERSION_RESPONSE, quoteConvert);
 			return quoteConvert;
 
 		} catch (Exception ex) {
-			return errorResponse(output, quoteConvert,
-				'Quote conversion failed: ' + ex.getMessage());
+
+			LOGGER.error(ex.getMessage(),new String[]{'quoteConversionAPI',ex.getMessage()},ex);
+
+			return errorResponse(
+				output,
+				quoteConvert,
+				'Quote conversion failed: ' + ex.getMessage()
+			);
+			
 		}
 	}
 

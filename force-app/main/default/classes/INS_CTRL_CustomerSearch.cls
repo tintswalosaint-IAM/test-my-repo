@@ -8,6 +8,7 @@
  * Created Date    : Mar 18, 2026
  * Author          : Irshad Alam
  * User Story      : SFP-55635
+ * LastModified    : Resolved input data for coutry, it will get value from Omni
  **/
 public without sharing class INS_CTRL_CustomerSearch implements Callable {
 
@@ -53,8 +54,7 @@ public without sharing class INS_CTRL_CustomerSearch implements Callable {
                 outputMap = new Map<String, Object>();
             }
 
-            SearchRequest request = new SearchRequest(inputMap);
-
+            SearchRequest request = new SearchRequest(inputMap);            
             String validationError = request.validate();
             if (validationError != null) {
                 return buildErrorResponse(outputMap, validationError);
@@ -86,13 +86,13 @@ public without sharing class INS_CTRL_CustomerSearch implements Callable {
                 request.dateOfBirth,
                 request.identityNumber,
                 request.customerType,
-                resolveUserCountry()
+                request.country
             );
         } catch (Exception ex) {
             
             return buildErrorResponse(outputMap, 'Error searching for customer: ' + ex.getMessage());
         }
-
+       
         outputMap.put('existingAccount', buildExistingAccountNode(accountsToReturn));
         return outputMap;
     }
@@ -106,27 +106,13 @@ public without sharing class INS_CTRL_CustomerSearch implements Callable {
         }
 
         existingAccount.put('CustomerFound',       true);
-        existingAccount.put('existingAccountId',           accounts[0].Id);       
+        existingAccount.put('existingAccountId',           accounts[0].Id);            
         return existingAccount;
     }
 
     // =========================================================================
     // PRIVATE HELPERS
     // =========================================================================
-
-    private static String resolveUserCountry() {
-
-        List<User> users = new SEL_User().getUsersByIds(
-            new Set<Id>{ UserInfo.getUserId() }
-        );
-
-        if (users.isEmpty() || users[0].User_Country__c == null) {
-            return '';
-        }
-
-        return users[0].User_Country__c;
-    }
-
     private static Map<String, Object> buildErrorResponse(
         Map<String, Object> outputMap,
         String errorMessage
@@ -148,13 +134,14 @@ public without sharing class INS_CTRL_CustomerSearch implements Callable {
         public String identityNumber;
         public String customerType;
         public Date   dateOfBirth;
+        public String country;
 
         private final Boolean hasInput;
         private final Boolean hasPersonalInformation;
 
         public SearchRequest(Map<String, Object> inputMap) {
             hasInput = inputMap != null;
-
+            System.debug('inputMap=='+ JSON.serialize(inputMap));
             Map<String, Object> personalInformation = hasInput
                 ? (Map<String, Object>) inputMap.get('PersonalInformation')
                 : null;
@@ -166,6 +153,7 @@ public without sharing class INS_CTRL_CustomerSearch implements Callable {
                 dobStr         = (String) personalInformation.get('OS_DateOfBirth');
                 identityNumber = (String) personalInformation.get('IdNumber');
                 customerType   = (String) inputMap.get('CustomerType');
+                country        = (String) inputMap.get('Country');
             }
         }
 

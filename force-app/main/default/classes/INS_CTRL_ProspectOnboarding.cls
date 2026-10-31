@@ -133,7 +133,7 @@ public without sharing class INS_CTRL_ProspectOnboarding implements Callable{
         } catch (Exception e) {
             throw new AuraHandledException('Account creation failed: ' + e.getMessage());
         }
-
+        ensureIndividualLinked(acc.Id, pi, dateOfBirth);
         output.put('ProspectAccountId', acc.Id);
         return output;
     }
@@ -145,7 +145,7 @@ public without sharing class INS_CTRL_ProspectOnboarding implements Callable{
 
     private static Object createOpportunity(Map<String, Object> input, Map<String, Object> output) {
         Object sourceValue = input.get('OpportunitySource');        
-        String accountId  = getString(input, 'accountId');
+        String accountId  = getString(input, 'ProspectAccountId');
         String userId     = (String) input.get('assistedUserId');
         String contactId  = (String) input.get('assistedContactId');
         String pbeId      = (String) input.get('PricebookEntryId');
@@ -154,7 +154,7 @@ public without sharing class INS_CTRL_ProspectOnboarding implements Callable{
         Decimal pbeUnitPrice = (Decimal) input.get('PricebookEntryUnitPrice');
 
         Map<String, Object> quoteDetails = getRequiredMap(input, 'CreateQuoteResponse');
-        Map<String, Object> insProduct   = getRequiredMap(input, 'INS_Products');
+        Map<String, Object> insProduct   = getRequiredMap(input, 'INS_Products__mdt');
 
         if (String.isBlank(accountId)) {
             throw new AuraHandledException('accountId is required to create an Opportunity.');
@@ -290,6 +290,43 @@ public without sharing class INS_CTRL_ProspectOnboarding implements Callable{
 
         output.put('hasOppUpdated', 'true');
         return output;
+    }
+
+        /**
+     * @description Ensures the Person Account has a linked Individual. Salesforce
+     *              auto-creates these for internal users but not for the
+     *              Experience Cloud guest user, so one is created here when
+     *              absent rather than assuming either behaviour.
+     */
+    private static void ensureIndividualLinked(Id accountId, Map<String, Object> pi, Date dateOfBirth) {
+        List<Account> accounts = new INS_Get_Account().getAccountById(accountId);
+        if (!accounts.isEmpty() && accounts[0].PersonIndividualId != null) {
+            return;
+        }
+
+        Individual individual = new Individual(
+            FirstName = getString(pi, 'FirstName'),
+            LastName  = getString(pi, 'LastName'),
+            BirthDate = dateOfBirth
+        );
+
+        try {
+            sbgplatform.fflib_SObjectUnitOfWork uow =
+                (sbgplatform.fflib_SObjectUnitOfWork) ORG_Application.unitOfWork.newInstance();
+            uow.registerNew(individual);
+            uow.commitWork();
+
+            sbgplatform.fflib_SObjectUnitOfWork linkUow =
+                (sbgplatform.fflib_SObjectUnitOfWork) ORG_Application.unitOfWork.newInstance();
+            linkUow.registerDirty(new Account(
+                Id = accountId,
+                PersonIndividualId = individual.Id
+            ));
+            linkUow.commitWork();
+
+        } catch (Exception e) {
+            throw new AuraHandledException('Individual creation failed: ' + e.getMessage());
+        }
     }
 
     /**

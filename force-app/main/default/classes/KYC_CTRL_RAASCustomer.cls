@@ -10,7 +10,8 @@
 ***************************************************************************************
 * Last Modified By  Alexandr Goryachko
 * Last Modified Date 17/12/2025
-* Last Modified Description: SFP-53455
+* Last Modified Description: Added logic to send quote id for rely comply process
+* User Story: SFP-53455 
 ****************************************************************************************/
 public without sharing class KYC_CTRL_RAASCustomer {
     public static final String SERVICE_NAME = KYC_CTRL_RAASCustomer.class.getName();
@@ -33,14 +34,16 @@ public without sharing class KYC_CTRL_RAASCustomer {
 
     /**
      * @description method used to call RAASCustomer API
-     * @param ppId 
-     * @param params 
+     * @param ppId party profile id
+     * @param quoteId quote id 
      * @return KYC_DTO_Response
      */
     public static KYC_DTO_Response callRAASCustomer(String ppId, String quoteId) {
         try {
+            System.debug('ENtering Class');
             return KYC_SRV_RAASCustomer.callRAASCustomer(ppId, null, quoteId);
         } catch(exception ex) {
+            System.debug('Brendon Test' + ex.getMessage());
             LOGGER.error(ex.getMessage(), new String[] {SERVICE_NAME,ex.getMessage()}, ex);
             throw new AuraHandledException(ex.getMessage());
         }

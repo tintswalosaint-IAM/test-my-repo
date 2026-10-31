@@ -23,63 +23,90 @@ public without sharing class INS_DotsureService {
 * @param leadRecord Lead record to sync
 * @param accessToken OAuth access token (cached at batch level)
 **/
-    public static void syncLeadToDotsure(
-        Lead leadRecord, 
-        String accessToken, 
-        INS_Insurance_Lead_Settings__mdt settings
-    ) {
-        try {
-            String jsonPayload = INS_DTO_DotsureLead.buildJsonPayload(leadRecord, settings);
-            LOGGER.debug('Dotsure payload: ' + jsonPayload);
-            
-            INS_Leads_API apiCall = new INS_Leads_API(jsonPayload, accessToken, 'POST');
+ public static void syncLeadToDotsure(
+    Lead leadRecord, 
+    String accessToken, 
+    INS_Insurance_Lead_Settings__mdt settings
+) {
+    try {
+        String jsonPayload = INS_DTO_DotsureLead.buildJsonPayload(leadRecord, settings);
+        LOGGER.debug('Dotsure payload: ' + jsonPayload);
+        
+        INS_Leads_API apiCall = new INS_Leads_API(jsonPayload, accessToken, 'POST');
+        //apiCall.setChannelId(String.valueOf(settings.INS_TargetSystemCode__c));
+        apiCall.setChannelId('109');
 
-            //apiCall.setChannelId(string.valueOf(settings.INS_TargetSystemCode__c));
-            apiCall.setChannelId('109');
+        CMN_WebserviceCallQueue__c queue = 
+            CMN_DAL_DataFactory.newOutboundWebserviceQueue(INS_Leads_API.SERVICE_NAME);
+        apiCall.process(queue);
+        
+        INS_SRV_DotsureLeadResponse.ResponseResult result =
+            INS_SRV_DotsureLeadResponse.parse(
+                apiCall.getResponseStatusCode(),
+                apiCall.getResponseBody()
+            );
+        
 
-			system.debug('before queuing the request');
-            CMN_WebserviceCallQueue__c queue = 
-                CMN_DAL_DataFactory.newOutboundWebserviceQueue(INS_Leads_API.SERVICE_NAME);
-			system.debug('After queuing the request');
-            apiCall.process(queue);
+        if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.SUCCESS) {
             
-            system.debug('api code : ' + apiCall.getResponseStatusCode());
-            system.debug('api body : ' + apiCall.getResponseBody());
+            // SUCCESS — Reference number store karo
+            leadRecord.Referred_System_Reference_Number__c = result.leadReferenceNumber;
+            leadRecord.Dialer_Failure_Reason__c = null;  // Clear old error
+            leadRecord.Lead_Closing_Comment__c = null;   // Clear old comment
             
-            INS_SRV_DotsureLeadResponse.ResponseResult result =
-                INS_SRV_DotsureLeadResponse.parse(
-                    apiCall.getResponseStatusCode(),
-                    apiCall.getResponseBody()
-                );
+            LOGGER.info('Dotsure sync SUCCESS for Lead: ' + leadRecord.Id 
+                + ' | Ref: ' + result.leadReferenceNumber);
             
-            if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.SUCCESS) {
-                leadRecord.Referred_System_Reference_Number__c = result.leadReferenceNumber;
-            } else if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.CLIENT_ERROR) {
-                leadRecord.Dialer_Failure_Reason__c = result.failureMessage;
-                leadRecord.Lead_Closing_Comment__c = result.failureMessage;
-                leadRecord.Referred_System_Reference_Number__c = 'Dotsure Failed';
-            } else if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.SERVER_ERROR) {
-                leadRecord.Dialer_Failure_Reason__c = result.failureMessage;
-                leadRecord.Referred_System_Reference_Number__c = 'Dotsure Pending';
-            }
+        } else if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.CLIENT_ERROR) {
             
-            //update leadRecord;
-           // Database.update(leadRecord, AccessLevel.SYSTEM_MODE);
-           // 
-                       sbgplatform.fflib_SObjectUnitOfWork uow =
-                new sbgplatform.fflib_SObjectUnitOfWork(
-                    new List<SObjectType>{Lead.SObjectType},
-                    new INS_UTIL_SystemModeDML()
-                );
+            // CLIENT ERROR (400/401/403) — Failure store karo
+            leadRecord.Dialer_Failure_Reason__c = result.failureMessage;
+            leadRecord.Lead_Closing_Comment__c = result.failureMessage;
+            leadRecord.Referred_System_Reference_Number__c = 'Dotsure Failed';
             
-            uow.registerDirty(leadRecord);
-            uow.commitWork();
+            LOGGER.warn('Dotsure sync CLIENT_ERROR for Lead: ' + leadRecord.Id 
+                + ' | HTTP: ' + result.httpStatusCode 
+                + ' | Error: ' + result.failureMessage);
             
-            uow.registerDirty(leadRecord);
-            uow.commitWork();
-        } catch (Exception e) {
-            LOGGER.error('INS_DotsureService Exception: ' + e.getMessage() + ' | ' + e.getStackTraceString());
-            throw e;
+        } else if (result.status == INS_SRV_DotsureLeadResponse.ResponseStatus.SERVER_ERROR) {
+            
+            // SERVER ERROR (5xx) — Pending mark karo
+            leadRecord.Dialer_Failure_Reason__c = result.failureMessage;
+            leadRecord.Referred_System_Reference_Number__c = 'Dotsure Pending';
+            
+            LOGGER.warn('Dotsure sync SERVER_ERROR for Lead: ' + leadRecord.Id 
+                + ' | HTTP: ' + result.httpStatusCode 
+                + ' | Error: ' + result.failureMessage);
+            
+        } else {
+            
+
+            String unknownError = String.isNotBlank(result.failureMessage) 
+                ? result.failureMessage 
+                : 'Unknown response from Dotsure';
+            
+            leadRecord.Dialer_Failure_Reason__c = unknownError;
+            leadRecord.Referred_System_Reference_Number__c = 'Dotsure Failed';
+            
+            LOGGER.error('Dotsure sync UNKNOWN status for Lead: ' + leadRecord.Id 
+                + ' | HTTP: ' + result.httpStatusCode 
+                + ' | Error: ' + unknownError);
         }
+        
+        // UoW commit
+        sbgplatform.fflib_SObjectUnitOfWork uow =
+            new sbgplatform.fflib_SObjectUnitOfWork(
+                new List<SObjectType>{Lead.SObjectType},
+                new INS_UTIL_SystemModeDML()
+            );
+        
+        uow.registerDirty(leadRecord);
+        uow.commitWork();
+        
+    } catch (Exception e) {
+        LOGGER.error('INS_DotsureService Exception: ' + e.getMessage() 
+            + ' | ' + e.getStackTraceString());
+        throw e;
     }
+}
 }

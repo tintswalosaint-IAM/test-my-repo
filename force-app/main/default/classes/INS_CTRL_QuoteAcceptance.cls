@@ -13,7 +13,7 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 
 	private static final String QUOTE_ACCEPTANCE = 'QuoteAcceptance';  
 	private static final String QUOTE_ACCEPTANCE_RESPONSE = 'quoteAcceptResponse'; 
-
+	private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_CTRL_QuoteAcceptance');
 	public Object call(String actionType, Map<String, Object> args) {
         if (actionType == QUOTE_ACCEPTANCE) {
             Map<String, Object> input = (Map<String, Object>) args.get('input');            
@@ -35,7 +35,7 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 			quickQuoteAcceptanceService.setExceptionOnError(false); 							
 			response = quickQuoteAcceptanceService.quoteAcceptance(payloadJson, quoteId);
 			statusCode = quickQuoteAcceptanceService.getStatusCode();		
-			if (String.isBlank(response)) {
+			if (String.isBlank(response)) {				
 				throw new AuraHandledException('Quote Acceptance API returned empty response. StatusCode=' + statusCode);
 			}			
 
@@ -46,13 +46,13 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 				Map<String, Object> validation = (Map<String, Object>) jsonResponseMap.get('ValidationResult');
 				if (validation != null && 'Success'.equalsIgnoreCase((String) validation.get('ResultStatus'))) {
 					quoteAcceptance.put('ResultStatus', 'Success');
-					quoteAcceptance.put('hasError', 'false'); 
+					quoteAcceptance.put('hasError', false); 
 	
 					output.put(QUOTE_ACCEPTANCE_RESPONSE,quoteAcceptance);
 				}
 				
 			} else {
-				quoteAcceptance.put('hasError', 'true');
+				quoteAcceptance.put('hasError', true);
 				Map<String, Object> errorMap = (Map<String, Object>) jsonResponseMap.get('error');
 				String errorDescription = response;
 				if(errorMap != null){
@@ -65,6 +65,7 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 		}Catch(Exception ex){
 			quoteAcceptance.put('hasError', true);
 			quoteAcceptance.put(QUOTE_ACCEPTANCE_RESPONSE,ex.getMessage());
+			LOGGER.error(ex.getMessage(),new String[]{'quoteAcceptanceAPI',ex.getMessage()},ex);
 			throw new AuraHandledException('Quote acceptance failed ' + ex.getMessage());
 		}        
 
@@ -74,11 +75,17 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 
 	}
 
-	public static String generateRequestPayload(String quoteId, Map<String, Object> input) {
-
-		Map<String, Object> productsMetadata = (Map<String, Object>) input.get('INS_Products');        
-		Map<String, Object> paymentDetails   = (Map<String, Object>) input.get('PaymentDetails');
-		Map<String, Object> membersWrapper   = (Map<String, Object>) input.get('MembersDetails');
+	public static String generateRequestPayload(String quoteId, Map<String, Object> input) {		
+		Map<String, Object> productsMetadata = (Map<String, Object>) input.get('INS_Products__mdt');        
+		Map<String, Object> paymentDetails   = (Map<String, Object>) input.get('PaymentDetails');		
+		Map<String, Object> membersWrapper = extractMap(input, 'MembersDetails');
+        if (membersWrapper == null || membersWrapper.isEmpty()) {
+            membersWrapper = extractMap(input, 'PersonalInformation');
+        }
+        if (membersWrapper == null) {
+            throw new AuraHandledException(
+                'Neither MembersDetails nor PersonalInformation was supplied.');
+        }
 
 		String debitOrderDayStr = (String) paymentDetails.get('CollectionDay');
 		String walletNumber;
@@ -110,8 +117,8 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 
 		Map<String, Object> payload = new Map<String, Object>();
 
-		payload.put('CoverEffectiveDate',  System.now().formatGMT('yyyy-MM-dd\'T\'HH:mm:ss\'Z\''));// String.valueOf(System.now())
-		payload.put('BankingDetails', bankingDetails); // IMPORTANT: capital B
+		payload.put('CoverEffectiveDate',  System.now().formatGMT('yyyy-MM-dd\'T\'HH:mm:ss\'Z\''));
+		payload.put('BankingDetails', bankingDetails); 
 		payload.put('UnderwriterNotes', '');
 		payload.put('premiumTypes', 1);
 		payload.put('referralOverrideIndicator', true);
@@ -120,11 +127,19 @@ public with sharing class INS_CTRL_QuoteAcceptance implements callable{
 		payload.put('policyId', quoteId);
 		payload.put('QuoteNumber', quoteId);
 		payload.put('prorataPremium', 0);
-			
-	
-		System.debug('Quote Acceptance Payload == ' + JSON.serializePretty(payload));
-
 		return JSON.serialize(payload);
 	}
+
+
+	/**
+     * @description Returns a nested map from the input, or null when the key is
+     *              absent or does not hold a map.
+     */
+    private static Map<String, Object> extractMap(Map<String, Object> source, String key) {
+        Object value = source == null ? null : source.get(key);
+        return value instanceof Map<String, Object>
+            ? (Map<String, Object>) value
+            : null;
+    }
 
 }

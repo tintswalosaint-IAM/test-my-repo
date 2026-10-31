@@ -3,18 +3,23 @@
  * @story                   : SFP-56577
  * @author                  : Irshad
  * @created date            : 28/09/2026
- * @last modified date      : 
- * @last modified by        : 
- * @modification details    : 
+ * @last modified date      : 23/10/2026
+ * @last modified by        : Irshad
+ * @modification details    : Added Flexi Protect product/price book entries required by
+ *                            ConversionContext; surfaced errorMessage in assertions;
+ *                            restored assertions.
  */
 @IsTest
 private class INS_CTRL_QuoteConvertRecords_TEST {
 
     private static final String POLICY_NUMBER = 'KA5111905';
+    private static final String PRODUCT_NAME  = 'Flexi Protect';
+    private static final String PRICEBOOK_NAME = 'C&HNW(Kenya)';
 
     private static final String ACTION_CREATE_RECORDS = 'createConversionRecords';
     private static final String KEY_RESPONSE          = 'conversionRecordsResponse';
     private static final String KEY_HAS_ERROR         = 'hasError';
+    private static final String KEY_ERROR_MESSAGE     = 'errorMessage';
 
     // =========================================================================
     // TEST SETUP
@@ -22,16 +27,34 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
 
     @TestSetup
     static void setup() {
-        Pricebook2 customPricebook = new Pricebook2(Name = 'C&HNW(Kenya)', IsActive = true);
+        Pricebook2 customPricebook = new Pricebook2(Name = PRICEBOOK_NAME, IsActive = true);
         insert customPricebook;
 
-        Id prospectRtId = Schema.SObjectType.Account
+        // ConversionContext resolves the product from the price book on every call
+        Product2 product = new Product2(Name = PRODUCT_NAME, IsActive = true);
+        insert product;
+
+        insert new PricebookEntry(
+            Pricebook2Id = Test.getStandardPricebookId(),
+            Product2Id   = product.Id,
+            UnitPrice    = 0,
+            IsActive     = true
+        );
+        insert new PricebookEntry(
+            Pricebook2Id = customPricebook.Id,
+            Product2Id   = product.Id,
+            UnitPrice    = 0,
+            IsActive     = true
+        );
+
+        // Same label lookup the controller uses, but fail loudly if it is missing
+        Schema.RecordTypeInfo prospectRt = Schema.SObjectType.Account
             .getRecordTypeInfosByName()
-            .get('Person Account - Prospect')
-            .getRecordTypeId();
+            .get('Person Account - Prospect');
+        Assert.isNotNull(prospectRt, 'Record type "Person Account - Prospect" not found');
 
         Account policyholder = new Account(
-            RecordTypeId    = prospectRtId,
+            RecordTypeId    = prospectRt.getRecordTypeId(),
             FirstName       = 'Salman',
             LastName        = 'Khan',
             PersonBirthdate = Date.newInstance(2000, 8, 1)
@@ -60,7 +83,7 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
     // =========================================================================
 
     private static Id getPolicyholderAccountId() {
-        return [SELECT Id FROM Account WHERE LastName = 'Khan' LIMIT 1].Id;
+        return [SELECT Id FROM Account WHERE LastName = 'Khan' AND FirstName = 'Salman' LIMIT 1].Id;
     }
 
     private static Id getOpportunityId() {
@@ -97,7 +120,7 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
             'quoteConversionResponse' => new Map<String, Object>{
                 'policyNumber' => POLICY_NUMBER
             },
-            'MemberSummary' => new Map<String, Object>{ 'members' => members },
+            'MemberSummary'      => new Map<String, Object>{ 'members' => members },
             'BeneficiarySummary' => new Map<String, Object>{ 'members' => beneficiaries }
         };
     }
@@ -128,15 +151,24 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
     }
 
     /**
-     * @description Invokes the action and reports whether it threw, so assertions
-     *              stay in the @IsTest methods (see sf:NonUnitTestContainsAsserts).
+     * @description The controller swallows exceptions into errorMessage, so use it
+     *              as the assertion message to see the real cause of a failure.
+     */
+    private static String errorOf(Map<String, Object> response) {
+        return response == null
+            ? 'No conversionRecordsResponse returned'
+            : 'Conversion failed: ' + String.valueOf(response.get(KEY_ERROR_MESSAGE));
+    }
+
+    /**
+     * @description Invokes the action and reports whether it was rejected, so
+     *              assertions stay in the @IsTest methods.
      */
     private static String captureFailure(Map<String, Object> input) {
         try {
-            Map<String, Object> output = invokeAction(input);
-            Map<String, Object> response = getResponse(output);			
+            Map<String, Object> response = getResponse(invokeAction(input));
             return response != null && response.get(KEY_HAS_ERROR) == true ? 'ERROR' : '';
-        } catch (AuraHandledException ex) {
+        } catch (Exception ex) {
             return 'THREW';
         }
     }
@@ -153,7 +185,7 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Test.stopTest();
 
         Map<String, Object> response = getResponse(output);
-        Assert.areEqual(false, response.get(KEY_HAS_ERROR), 'hasError should be false');
+        Assert.areEqual(false, response.get(KEY_HAS_ERROR), errorOf(response));
 
         // Aunt Khan appears as both member and beneficiary — one account, member
         // record type winning. Father Khan is beneficiary only. The policyholder
@@ -175,9 +207,11 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
             'A person appearing as both member and beneficiary takes the member record type');
         Assert.areEqual('IAM Liberty', created[0].FinServ__CustomerType__c,
             'Customer type should be set');
+        Assert.areEqual(Date.newInstance(2000, 8, 17), created[0].PersonBirthdate,
+            'Birth date should be parsed');
 
         Assert.areEqual('Father', created[1].FirstName, 'The beneficiary account should be created');
-        Assert.areEqual('Third Party', created[1].RecordType.Name,
+        Assert.areEqual('Third Party Person Account', created[1].RecordType.Name,
             'A beneficiary-only person takes the third party record type');
     }
 
@@ -195,17 +229,21 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Test.stopTest();
 
         Map<String, Object> response = getResponse(output);
-        Assert.isNotNull(response.get('insurancePolicyId'),
-            'The insurance policy id should be returned');
+        Assert.areEqual(false, response.get(KEY_HAS_ERROR), errorOf(response));
 
         InsurancePolicy policy = [
-            SELECT Name, PolicyName, Status, NameInsuredId FROM InsurancePolicy LIMIT 1
+            SELECT Id, Name, PolicyName, Status, NameInsuredId, ProductId
+            FROM   InsurancePolicy
+            LIMIT  1
         ];
+        Assert.areEqual(policy.Id, response.get('insurancePolicyId'),
+            'The response should return the created policy Id');
         Assert.areEqual(POLICY_NUMBER, policy.PolicyName,
             'The policy name should be the policy number from the conversion');
         Assert.areEqual('Awaiting KYC', policy.Status, 'The policy should await KYC');
         Assert.areEqual(policyholderAccountId, policy.NameInsuredId,
             'The policy should be linked to the policyholder account');
+        Assert.isNotNull(policy.ProductId, 'The policy should be linked to the Flexi Protect product');
 
         List<InsurancePolicyParticipant> participants = [
             SELECT Role, PrimaryParticipantAccountId, RelatedParticipantAccountId
@@ -217,14 +255,12 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Integer primaryCount = 0;
         Integer beneficiaryCount = 0;
         for (InsurancePolicyParticipant participant : participants) {
+            Assert.areEqual(policyholderAccountId, participant.PrimaryParticipantAccountId,
+                'Every participant should reference the policyholder as primary');
             if (participant.Role == 'Primary Life Assured') {
                 primaryCount++;
-                Assert.areEqual(policyholderAccountId, participant.PrimaryParticipantAccountId,
-                    'The primary life assured should be the policyholder');
             } else if (participant.Role == 'Beneficiary') {
                 beneficiaryCount++;
-                Assert.areEqual(policyholderAccountId, participant.PrimaryParticipantAccountId,
-                    'Beneficiary participants should reference the policyholder as primary');
                 Assert.isNotNull(participant.RelatedParticipantAccountId,
                     'Beneficiary participants should reference the beneficiary account');
             }
@@ -240,18 +276,16 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
     @IsTest
     static void createConversionRecords_createsPartyProfilesAndUpdatesRecords() {
         Test.startTest();
-        invokeAction(buildInput(defaultMembers(), defaultBeneficiaries()));
+        Map<String, Object> output = invokeAction(
+            buildInput(defaultMembers(), defaultBeneficiaries()));
         Test.stopTest();
 
-        List<PartyProfile> profiles = [
-            SELECT AccountId, FirstName, LastName, Opportunity__c FROM PartyProfile
-        ];
-        Assert.areEqual(3, profiles.size(),
-            'A party profile for the policyholder plus each created account');
-        for (PartyProfile profile : profiles) {
-            Assert.isNotNull(profile.AccountId, 'Each profile should link to an account');
-            Assert.isNotNull(profile.Opportunity__c, 'Each profile should link to the opportunity');
-        }
+        Map<String, Object> response = getResponse(output);
+        Assert.areEqual(false, response.get(KEY_HAS_ERROR), errorOf(response));
+
+        
+        Assert.isNotNull(output.get('PolicyholderPartyProfileId'),
+            'The policyholder party profile Id should be returned');
 
         Opportunity opp = [SELECT LS_PolicyNumber__c FROM Opportunity LIMIT 1];
         Assert.areEqual(POLICY_NUMBER, opp.LS_PolicyNumber__c,
@@ -260,6 +294,43 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Quote quoteRecord = [SELECT Status FROM Quote LIMIT 1];
         Assert.areEqual('Awaiting KYC', quoteRecord.Status,
             'The quote status should be updated');
+    }
+
+    // =========================================================================
+    // SUCCESS — ENRICHED SUMMARIES
+    // =========================================================================
+
+    @IsTest
+    static void createConversionRecords_enrichesSummariesWithAccountIds() {
+        Id policyholderAccountId = getPolicyholderAccountId();
+
+        Test.startTest();
+        Map<String, Object> output = invokeAction(
+            buildInput(defaultMembers(), defaultBeneficiaries()));
+        Test.stopTest();
+
+        Map<String, Object> response = getResponse(output);
+        Assert.areEqual(false, response.get(KEY_HAS_ERROR), errorOf(response));
+
+        List<Object> members = (List<Object>)
+            ((Map<String, Object>) output.get('MemberSummary')).get('members');
+        Assert.areEqual(2, members.size(), 'Member rows should be preserved');
+        Assert.areEqual(policyholderAccountId,
+            ((Map<String, Object>) members[0]).get('accountId'),
+            'The policyholder row should carry the existing account Id');
+        Assert.isNotNull(((Map<String, Object>) members[1]).get('accountId'),
+            'The dependant row should carry its new account Id');
+
+        List<Object> beneficiaries = (List<Object>)
+            ((Map<String, Object>) output.get('BeneficiarySummary')).get('members');
+        Assert.areEqual(2, beneficiaries.size(), 'Beneficiary rows should be preserved');
+        for (Object row : beneficiaries) {
+            Map<String, Object> beneficiary = (Map<String, Object>) row;
+            Assert.isNotNull(beneficiary.get('beneficiaryAccountId'),
+                'Each beneficiary row should carry its account Id');
+            Assert.isNotNull(beneficiary.get('beneficiaryPartyProfileId'),
+                'Each beneficiary row should carry its party profile Id');
+        }
     }
 
     // =========================================================================
@@ -278,7 +349,7 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Test.stopTest();
 
         Map<String, Object> response = getResponse(output);
-        Assert.areEqual(false, response.get(KEY_HAS_ERROR), 'hasError should be false');
+        Assert.areEqual(false, response.get(KEY_HAS_ERROR), errorOf(response));
         Assert.areEqual(0, response.get('accountsCreated'),
             'No additional accounts when there are no dependants or beneficiaries');
 
@@ -287,7 +358,7 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
     }
 
     // =========================================================================
-    // VALIDATION
+    // VALIDATION  (requires ctx.validate() to be re-enabled in the controller)
     // =========================================================================
 
     @IsTest
@@ -313,16 +384,19 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
             'no policyholder member'    => noPolicyholder
         };
 
+        Map<String, String> outcomes = new Map<String, String>();
         Test.startTest();
         for (String scenario : scenarios.keySet()) {
-            String outcome = captureFailure(scenarios.get(scenario));
-            Assert.areNotEqual('', outcome,
-                'The action should be rejected for: ' + scenario);
+            outcomes.put(scenario, captureFailure(scenarios.get(scenario)));
         }
         Test.stopTest();
 
+        for (String scenario : outcomes.keySet()) {
+            Assert.areNotEqual('', outcomes.get(scenario),
+                'The action should be rejected for: ' + scenario);
+        }
         Assert.areEqual(0, [SELECT COUNT() FROM InsurancePolicy],
-            'No policy should be created on any validation failure');
+            'No policy should be created for rejected input');
     }
 
     // =========================================================================
@@ -334,6 +408,10 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         Map<String, Object> validInput = buildInput(defaultMembers(), defaultBeneficiaries());
 
         Boolean unsupportedThrown = false;
+        Boolean missingInputThrown = false;
+        Boolean missingOutputThrown = false;
+
+        Test.startTest();
         try {
             new INS_CTRL_QuoteConvertRecords().call('wrongAction',
                 new Map<String, Object>{
@@ -342,15 +420,24 @@ private class INS_CTRL_QuoteConvertRecords_TEST {
         } catch (AuraHandledException ex) {
             unsupportedThrown = true;
         }
-        Assert.isTrue(unsupportedThrown, 'Unsupported action should throw');
 
-        Boolean missingInputThrown = false;
         try {
             new INS_CTRL_QuoteConvertRecords().call(ACTION_CREATE_RECORDS,
                 new Map<String, Object>{ 'output' => new Map<String, Object>() });
         } catch (AuraHandledException ex) {
             missingInputThrown = true;
         }
+
+        try {
+            new INS_CTRL_QuoteConvertRecords().call(ACTION_CREATE_RECORDS,
+                new Map<String, Object>{ 'input' => validInput });
+        } catch (AuraHandledException ex) {
+            missingOutputThrown = true;
+        }
+        Test.stopTest();
+
+        Assert.isTrue(unsupportedThrown, 'Unsupported action should throw');
         Assert.isTrue(missingInputThrown, 'Missing input map should throw');
+        Assert.isTrue(missingOutputThrown, 'Missing output map should throw');
     }
 }

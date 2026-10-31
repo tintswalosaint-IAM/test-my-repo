@@ -10,7 +10,7 @@
 @isTest
 private class INS_CTRL_ProductsRules_TEST {
 
-    private static final String TEST_PRODUCT_CODE = '12';
+    private static final String TEST_PRODUCT_CODE = '32';
     private static final String PRODUCT_CODE = 'Product_Code__c';
 
 
@@ -109,8 +109,8 @@ private class INS_CTRL_ProductsRules_TEST {
         invokeAction(new Map<String, Object>());
         Test.stopTest();
 
-        Assert.isTrue(mock.capturedEndpoint.contains('8'),
-            'Blank product code should fall back to default code 8');
+        Assert.isTrue(mock.capturedEndpoint.contains('32'),
+            'Blank product code should fall back to default code 32');
     }
 
     @IsTest

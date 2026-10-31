@@ -756,6 +756,36 @@ public with sharing class INS_PLI_UpdateProspectRecord_Test {
 
         Assert.areEqual('https://tinyurl.com/test123', shortened, 'Expected shortened URL returned');
     }
+
+    @IsTest
+    static void testGetShortUrl_BlankUrl_ThrowsHandledException() {
+        try {
+            INS_PLI_UpdateProspectRecord.getShortUrl(null);
+            Assert.fail('A blank URL should not be accepted.');
+        } catch (AuraHandledException expectedException) {
+            Assert.isNotNull(expectedException, 'The controller should wrap the URL validation error.');
+        }
+    }
+
+    @IsTest
+    static void testInitiateOnboardingProcess_InvalidDate_ThrowsHandledException() {
+        String payload = JSON.serialize(new Map<String, Object>{
+            'FirstName' => 'Invalid',
+            'LastName' => 'Date',
+            'DateOfBirth' => 'not-a-date',
+            'IdNumber' => 'INVALID-DATE-TEST',
+            'Email' => 'invalid.date@example.com',
+            'PhoneNumber' => '712345678',
+            'Gender' => 'Male'
+        });
+
+        try {
+            INS_PLI_UpdateProspectRecord.initiateOnboardingProcess(payload);
+            Assert.fail('An invalid date should not initiate onboarding.');
+        } catch (AuraHandledException expectedException) {
+            Assert.isNotNull(expectedException, 'The controller should wrap the invalid-date error.');
+        }
+    }
 	
     @isTest
     static void testUpdateAddress_Success() {
@@ -809,6 +839,20 @@ public with sharing class INS_PLI_UpdateProspectRecord_Test {
             Assert.fail('Unexpected exception type: ' + e.getTypeName());
         }
         Test.stopTest();        
+    }
+
+    @IsTest
+    static void testUpdateAddress_MissingAccountId_ThrowsHandledException() {
+        String payload = JSON.serialize(new Map<String, Object>{
+            'AddressInformation' => new Map<String, Object>{ 'AddressLine1' => '123 Main Street' }
+        });
+
+        try {
+            INS_PLI_UpdateProspectRecord.updateAddress(payload);
+            Assert.fail('A missing Account Id should not be accepted.');
+        } catch (AuraHandledException expectedException) {
+            Assert.isNotNull(expectedException, 'The controller should wrap the validation error.');
+        }
     }
     @isTest
     static void testUpdateQuotingProcess_Success() {
@@ -1034,6 +1078,15 @@ public with sharing class INS_PLI_UpdateProspectRecord_Test {
     
         System.assertEquals('DSA Stanbic', result);
  }    
+
+    @IsTest
+    static void testResolveOpportunitySource_Web() {
+        Assert.areEqual(
+            'WEB Liberty',
+            INS_PLI_UpdateProspectRecord.resolveOpportunitySource('Liberty', new List<User>()),
+            'A Liberty page should use the Liberty web source.'
+        );
+    }
     
     @isTest
     static void testResolveOpportunitySource_FSC() {

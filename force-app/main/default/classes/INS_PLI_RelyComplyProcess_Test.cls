@@ -136,9 +136,9 @@ public class INS_PLI_RelyComplyProcess_Test {
                     'opportunityId' => opp.Id,
                     'opportunityStatus' => 'Underwriting Review'
                 });
-                List<Opportunity> opps = [SELECT Id FROM Opportunity WHERE StageName = 'Underwriting Review'];
-                Assert.isFalse(opps.isEmpty(), 'Opportunity was not updated');
             }
+            Opportunity updatedOpp = [SELECT StageName FROM Opportunity WHERE Id = :opp.Id];
+            Assert.areEqual('Underwriting Review', updatedOpp.StageName, 'Opportunity was not updated');
         Test.stopTest();
     }
 

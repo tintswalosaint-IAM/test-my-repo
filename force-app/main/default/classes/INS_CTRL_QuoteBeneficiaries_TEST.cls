@@ -178,6 +178,45 @@ private class INS_CTRL_QuoteBeneficiaries_TEST {
         Assert.areEqual(1, ids.size(), 'Valid ids should still be returned');
     }
 
+    @IsTest
+    static void callBeneficiaries_existingBeneficiary_usesPut() {
+        Map<String, Object> input = buildValidInput();
+        Map<String, Object> summaryInput =
+            (Map<String, Object>) input.get('BeneficiarySummary');
+        List<Object> members = (List<Object>) summaryInput.get('members');
+        ((Map<String, Object>) members[0]).put('beneficiaryId', 'ben-existing');
+
+        BeneficiariesMock mock = registerMock(200, BODY_SUCCESS);
+        Test.startTest();
+        Map<String, Object> summary = getSummary(invokeAction(input));
+        Test.stopTest();
+
+        Assert.areEqual(false, summary.get(KEY_HAS_ERROR),
+            'Existing beneficiary update should succeed');
+        Assert.areEqual('PUT', mock.capturedMethod,
+            'Existing beneficiary must use PUT');
+    }
+
+    @IsTest
+    static void callBeneficiaries_emptyMembers_returnsEmptySummary() {
+        Map<String, Object> input = new Map<String, Object>{
+            'quoteId' => TEST_QUOTE_ID,
+            'BeneficiarySummary' => new Map<String, Object>{
+                'members' => new List<Object>()
+            }
+        };
+
+        Test.startTest();
+        Map<String, Object> summary = getSummary(invokeAction(input));
+        Test.stopTest();
+
+        Assert.areEqual(false, summary.get(KEY_HAS_ERROR),
+            'Empty input should not produce an API error');
+        Assert.areEqual(0,
+            ((List<Object>) summary.get(KEY_BENEFICIARIES)).size(),
+            'Empty input should return no beneficiary IDs');
+    }
+
     // =========================================================================
     // ERROR PATHS
     // =========================================================================
@@ -260,16 +299,16 @@ private class INS_CTRL_QuoteBeneficiaries_TEST {
     // =========================================================================
 
     @IsTest
-    static void buildPayload_missingSummary_returnsEmptyBeneficiaries() {
-        String payloadJson = INS_CTRL_QuoteBeneficiaries.buildBeneficiaryPayload(
-            TEST_QUOTE_ID, new Map<String, Object>{ 'quoteId' => TEST_QUOTE_ID });
+    static void buildPayload_emptyList_returnsEmptyBeneficiaries() {
+        String payloadJson = INS_CTRL_QuoteBeneficiaries.buildBeneficiaryPayloadFor(
+            TEST_QUOTE_ID, new List<Object>());
 
         Map<String, Object> payload =
             (Map<String, Object>) JSON.deserializeUntyped(payloadJson);
         Assert.areEqual(TEST_QUOTE_ID, payload.get('referenceNumber'),
             'referenceNumber should still be set');
         Assert.areEqual(0, ((List<Object>) payload.get(KEY_BENEFICIARIES)).size(),
-            'Missing BeneficiarySummary should yield empty beneficiaries');
+            'Empty beneficiary list should yield an empty payload list');
     }
 
     @IsTest
@@ -280,14 +319,8 @@ private class INS_CTRL_QuoteBeneficiaries_TEST {
         member.put('Allocation__c', null);
         member.put('BirthDate__c', 'garbage-date');
 
-        Map<String, Object> input = new Map<String, Object>{
-            'quoteId' => TEST_QUOTE_ID,
-            'BeneficiarySummary' => new Map<String, Object>{
-                'members' => new List<Object>{ member }
-            }
-        };
-
-        String payloadJson = INS_CTRL_QuoteBeneficiaries.buildBeneficiaryPayload(TEST_QUOTE_ID, input);
+        String payloadJson = INS_CTRL_QuoteBeneficiaries.buildBeneficiaryPayloadFor(
+            TEST_QUOTE_ID, new List<Object>{ member });
         Map<String, Object> payload =
             (Map<String, Object>) JSON.deserializeUntyped(payloadJson);
         Map<String, Object> ben =
@@ -300,4 +333,146 @@ private class INS_CTRL_QuoteBeneficiaries_TEST {
         Assert.isNull(ben.get('dateOfBirth'),
             'Invalid DOB should serialize as null');
     }
+    
+@IsTest
+static void deleteBeneficiary_success() {
+    BeneficiariesMock mock = registerMock(200, BODY_SUCCESS);
+
+    Map<String, Object> input = buildValidInput();
+
+    // Existing beneficiary being deleted
+    Map<String, Object> summary =
+        (Map<String, Object>) input.get('BeneficiarySummary');
+
+    List<Object> members =
+        (List<Object>) summary.get('members');
+
+    Map<String, Object> member =
+        (Map<String, Object>) members[0];
+
+    member.put('beneficiaryId', 'ben-001');
+
+    Test.startTest();
+
+    Map<String, Object> result =
+        (Map<String, Object>) INS_CTRL_QuoteBeneficiaries.deleteBeneficiary(
+            TEST_QUOTE_ID,
+            input
+        );
+
+    Test.stopTest();
+
+    Assert.areEqual(
+        false,
+        result.get(KEY_HAS_ERROR),
+        'Deletion should succeed'
+    );
+
+    Assert.areEqual(
+        TEST_QUOTE_ID,
+        result.get('referenceNumber'),
+        'Reference number should be mapped'
+    );
+
+    Assert.areEqual(
+        'PUT',
+        mock.capturedMethod,
+        'Delete beneficiary must use PUT'
+    );
+
+    Assert.isTrue(
+        mock.capturedEndpoint.contains(
+            '/api/quotes/' + TEST_QUOTE_ID + '/beneficiaries'
+        ),
+        'Endpoint should contain quote ID'
+    );
+
+    Map<String, Object> payload =
+        (Map<String, Object>) JSON.deserializeUntyped(
+            mock.capturedRequestBody
+        );
+
+    List<Object> beneficiaries =
+        (List<Object>) payload.get(KEY_BENEFICIARIES);
+
+    Assert.areEqual(
+        1,
+        beneficiaries.size(),
+        'Only one beneficiary should be sent'
+    );
+
+    Map<String, Object> beneficiary =
+        (Map<String, Object>) beneficiaries[0];
+
+    Assert.areEqual(
+        'ben-001',
+        beneficiary.get('beneficiaryId'),
+        'Existing beneficiary ID should be sent'
+    );
+}
+
+@IsTest
+static void deleteBeneficiary_apiError() {
+    registerMock(500, '{"error":"Internal Server Error"}');
+
+    Test.startTest();
+
+    Map<String, Object> result =
+        (Map<String, Object>) INS_CTRL_QuoteBeneficiaries.deleteBeneficiary(
+            TEST_QUOTE_ID,
+            buildValidInput()
+        );
+
+    Test.stopTest();
+
+    Assert.areEqual(
+        true,
+        result.get(KEY_HAS_ERROR),
+        'API error should set hasError=true'
+    );
+
+    Assert.isTrue(
+        String.valueOf(result.get('error')).contains('API error 500'),
+        'Expected API error message'
+    );
+}
+
+    @IsTest
+    static void deleteBeneficiary_invalidInput() {
+        Boolean missingQuoteThrown = false;
+        Boolean missingBeneficiaryThrown = false;
+    
+        Test.startTest();
+    
+        try {
+            INS_CTRL_QuoteBeneficiaries.deleteBeneficiary(
+                null,
+                buildValidInput()
+            );
+        } catch (AuraHandledException ex) {
+            missingQuoteThrown = true;
+        }
+    
+        try {
+            INS_CTRL_QuoteBeneficiaries.deleteBeneficiary(
+                TEST_QUOTE_ID,
+                new Map<String, Object>()
+            );
+        } catch (AuraHandledException ex) {
+            missingBeneficiaryThrown = true;
+        }
+    
+        Test.stopTest();
+    
+        Assert.isTrue(
+            missingQuoteThrown,
+            'Missing quote ID should throw AuraHandledException'
+        );
+    
+        Assert.isTrue(
+            missingBeneficiaryThrown,
+            'Missing beneficiary should throw AuraHandledException'
+        );
+    }
+
 }

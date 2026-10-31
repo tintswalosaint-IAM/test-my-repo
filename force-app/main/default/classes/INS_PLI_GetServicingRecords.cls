@@ -9,7 +9,7 @@
  * Last Modified Description: Added a new field ProductName
  * User Story : SFP-59435
 **/
-public without sharing class INS_PLI_GetServicingRecords {
+public with sharing class INS_PLI_GetServicingRecords {
  private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_PLI_GetServicingRecords');
     /**
      * @description Get connected customer details for servicing
@@ -19,7 +19,7 @@ public without sharing class INS_PLI_GetServicingRecords {
      * @return String JSON containing customer details
      */
     @AuraEnabled(Cacheable=false)
-    public static String getConnectedCustomerDetails(String userId){
+    public static String getConnectedCustomerDetails(String userId){       
         Map<String, Object> personAccountDetails;
         try{
             // Validate input
@@ -120,7 +120,7 @@ public without sharing class INS_PLI_GetServicingRecords {
                 return result;
             }
             for (InsurancePolicy p : policies) {
-                result.add(new PolicyWrapper(p.Id, p.Name, p.ProductId != null ? p.Product.Name : null, p.NameInsured.Name, p.TotalSumInsured, p.PremiumAmount));
+                result.add(new PolicyWrapper(p.Id, p.Name, p.Product != null ? p.Product.Name : null, p.NameInsured.Name, p.TotalSumInsured, p.PremiumAmount));
             }
         }catch(Exception e){
             LOGGER.error(e.getMessage(), new String[]{'INS_PLI_GetServicingRecords.getPoliciesForUser', e.getMessage()},e);
@@ -129,42 +129,6 @@ public without sharing class INS_PLI_GetServicingRecords {
         return result;
     }
 
-    /**
-     * @description Get Insurance Products for Logged in User
-     * @author Vic Wafula
-     * @date 31-07-2026
-     * @return List<PolicyWrapper> Policies for the user per product
-     */
-
-    @AuraEnabled(cacheable=true)
-    public static List<PolicyWrapper> getPoliciesForUserByProductName(String productName) {
-        List<PolicyWrapper> result;
-        try{
-            Id userId = UserInfo.getUserId();
-            User usr = new SEL_User().selectUserById(userId);
-
-            if (usr.Contact.AccountId == null) {
-                //User not Found. Set result to Empty
-                PolicyWrapper errorWrapper = new PolicyWrapper();
-                errorWrapper.errorMessage = 'No Account found for your user';
-                result.add(errorWrapper);
-                return result;
-            }
-        
-        List<InsurancePolicy> policies = new SEL_InsurancePolicy().selectPoliciesByNameInsuredAndProduct(productName,String.valueOf(usr.Contact.AccountId));
-        for (InsurancePolicy p : policies) {
-                result.add(new PolicyWrapper(p.Id, p.Name, p.ProductId != null ? p.Product.Name : null, p.NameInsured.Name, p.TotalSumInsured, p.PremiumAmount));
-            }
-
-        }catch(Exception e){
-            LOGGER.error(e.getMessage(), new String[]{'INS_PLI_GetServicingRecords.getPoliciesForUserByProductName', e.getMessage()},e);
-			throw new AuraHandledException('Failed to get Policies for User by Product Name' + e.getMessage()); 
-        }
-        return result;
-        
-    }
-
-    
     public class PolicyWrapper {
         @AuraEnabled public String id;
         @AuraEnabled public String productName;

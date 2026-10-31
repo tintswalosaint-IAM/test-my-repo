@@ -168,9 +168,6 @@ public without sharing class INS_UTIL_ConnexLead {
         }
         else if (decision.infoChanged) {
             result.qualifiedLeads.add(lead);
-        System.debug(
-    'Product Changed Path'
-);
         }
     }
     

@@ -47,7 +47,7 @@ private class INS_CTRL_QuoteAcceptance_TEST {
     private static Map<String, Object> buildValidInput() {
         return new Map<String, Object>{
             'quoteId' => TEST_QUOTE_ID,
-            'INS_Products' => new Map<String, Object>{
+            'INS_Products__mdt' => new Map<String, Object>{
                 'Country__c'            => 'KE',
                 'Country_of_Issue__c'   => 'KE',
                 'MPESA_Branch_Code__c'  => '000000'
@@ -94,7 +94,7 @@ private class INS_CTRL_QuoteAcceptance_TEST {
         Map<String, Object> resp = (Map<String, Object>) output.get(QUOTE_ACCEPT_RESPONSE);
         Assert.isNotNull(resp, 'quoteAcceptResponse should be present in output');
         Assert.areEqual('Success', resp.get('ResultStatus'), 'ResultStatus should be Success');
-        Assert.areEqual('false', resp.get('hasError'), 'hasError should be false');
+        Assert.areEqual(false, resp.get('hasError'), 'hasError should be false');
     }
 
     // =========================================================================
@@ -110,7 +110,7 @@ private class INS_CTRL_QuoteAcceptance_TEST {
         Test.stopTest();
 
         Map<String, Object> resp = (Map<String, Object>) output.get(QUOTE_ACCEPT_RESPONSE);
-        Assert.areEqual('true', resp.get('hasError'), 'hasError should be true');
+        Assert.areEqual(true, resp.get('hasError'), 'hasError should be true');
         Assert.areEqual('Wallet number failed validation', resp.get(QUOTE_ACCEPT_RESPONSE),
             'errorDescription should be surfaced');
     }
@@ -124,7 +124,7 @@ private class INS_CTRL_QuoteAcceptance_TEST {
         Test.stopTest();
 
         Map<String, Object> resp = (Map<String, Object>) output.get(QUOTE_ACCEPT_RESPONSE);
-        Assert.areEqual('true', resp.get('hasError'), 'hasError should be true');
+        Assert.areEqual(true, resp.get('hasError'), 'hasError should be true');
         Assert.areEqual(BODY_ERROR_NO_MAP, resp.get(QUOTE_ACCEPT_RESPONSE),
             'Raw response should be surfaced when no error map present');
     }

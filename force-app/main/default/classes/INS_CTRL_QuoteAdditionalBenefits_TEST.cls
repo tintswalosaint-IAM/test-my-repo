@@ -134,15 +134,23 @@ private class INS_CTRL_QuoteAdditionalBenefits_TEST {
             'paymentFrequency should come from PersonalisedQuote');
 
         List<Object> benefits = (List<Object>) payload.get('additionalBenefits');
-        String cashbackValue;
+        
+        Boolean cashbackValue = null;
+        
         for (Object b : benefits) {
             Map<String, Object> benefit = (Map<String, Object>) b;
+        
             if ('CashBackOption'.equals(benefit.get('benefitType'))) {
-                cashbackValue = (String) benefit.get('benefitValue');
+                cashbackValue = (Boolean) benefit.get('benefitValue');
             }
         }
-        Assert.areEqual('false', cashbackValue,
-            'CashbackBenefit = No should send benefitValue false');
+        
+        Assert.areEqual(
+            false,
+            cashbackValue,
+            'CashbackBenefit = No should send Boolean false'
+        );
+
     }
 
     // =========================================================================

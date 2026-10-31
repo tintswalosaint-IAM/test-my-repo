@@ -26,7 +26,7 @@ public with sharing class INS_PLI_CustomerQuotes {
             Map<Id, Opportunity> opportunitiesById = getOpportunities(quoteList);
             List<Quote> availableQuotes = filterAvailableQuotes(quoteList, opportunitiesById);
             Map<Id, Date> opportunityCloseDates = getOpportunityCloseDates(opportunitiesById);
-            List<QuoteWrapper> wrapperList = createQuoteWrappers(quoteList, opportunityCloseDates);
+            List<QuoteWrapper> wrapperList = createQuoteWrappers(availableQuotes, opportunityCloseDates);
             return addEmptyResultMessage(wrapperList);
         }catch(Exception e){
           LOGGER.error(e.getMessage(),new String[]{'INS_PLI_CustomerQuotes.getCustomerQuotes',e.getMessage()},e);          
@@ -117,7 +117,6 @@ public with sharing class INS_PLI_CustomerQuotes {
         List<QuoteWrapper> wrapperList = new List<QuoteWrapper>();
         for (Quote quoteRecord : quoteList) {
             QuoteWrapper wrapper = new QuoteWrapper();
-            wrapper.Id = quoteRecord.Id;
             wrapper.name = quoteRecord.Name;
             wrapper.policyNumber = quoteRecord.QuoteNumber;
             wrapper.estimatedPayment = getEstimatedPayment(quoteRecord);
@@ -192,145 +191,11 @@ public with sharing class INS_PLI_CustomerQuotes {
         return wrapper;
     }
 
-    @AuraEnabled(cacheable=true)
-    public static List<QuoteWrapper> getCustomerQuoteById(String quoteId) {
-        try {
-            User usr = new SEL_User().selectUserById(UserInfo.getUserId());
-
-            if (hasNoAccount(usr)) {
-                return createErrorResult('No Account found for the logged-in user.');
-            }
-
-            if (String.isBlank(quoteId)) {
-                return createErrorResult('Quote Id is required.');
-            }
-
-            List<Quote> quoteList = new SEL_Quote().selectByIdsWoSharing(
-                new List<Id>{ (Id) quoteId }
-            );
-
-            if (quoteList.isEmpty()) {
-                return createErrorResult('Quote not found.');
-            }
-
-            Quote quoteRecord = quoteList[0];
-
-            // Get Opportunity
-            Opportunity opportunity;
-            if (quoteRecord.OpportunityId != null) {
-                opportunity = getOpportunitiesByQuote(quoteRecord.OpportunityId);
-            }
-
-            // Get Account
-            Account account;
-            if (quoteRecord.AccountId != null) {
-                List<Account> accountList = new SEL_Account().selectByIdsWoSharing(
-                    new Set<Id>{ quoteRecord.Opportunity.AccountId }
-                );
-
-                if (!accountList.isEmpty()) {
-                    account = accountList[0];
-                }
-            }
-
-            // Create Quote Wrapper
-            QuoteWrapper wrapper = new QuoteWrapper();
-
-            wrapper.Id = quoteRecord.Id;
-            wrapper.name = quoteRecord.Name;
-            wrapper.policyNumber = quoteRecord.QuoteNumber;
-           // wrapper.estimatedPayment = getEstimatedPayment(quoteRecord);
-            wrapper.expires = String.valueOf(quoteRecord.ExpirationDate);
-
-            // Opportunity Details
-            if (opportunity != null) {
-                OpportunityWrapper opportunityDetails = new OpportunityWrapper();
-
-                opportunityDetails.Id = opportunity.Id;
-                opportunityDetails.coverAmount =
-                    String.valueOf(opportunity.Total_Cover_Amount__c);
-                opportunityDetails.monthlyPremium =
-                    String.valueOf(opportunity.Total_Monthly_Premium__c);
-
-                wrapper.opportunityDetails = opportunityDetails;
-            }
-
-            // Account Details
-            if (account != null) {
-                AccountWrapper accountDetails = new AccountWrapper();
-
-                accountDetails.Id = account.Id;
-                accountDetails.firstName = account.FirstName;
-                accountDetails.lastName = account.LastName;
-                accountDetails.email = account.PersonEmail;
-                accountDetails.phone = account.Phone;
-                accountDetails.dateofBirth = String.valueOf(account.Date_of_Birth__c);
-                accountDetails.identityNumber = String.valueOf(account.AOB_IdentityNumber__c);
-
-                wrapper.accountDetails = accountDetails;
-            }
-
-            List<QuoteWrapper> wrapperList = new List<QuoteWrapper>();
-            wrapperList.add(wrapper);
-
-            return addEmptyResultMessage(wrapperList);
-
-        } catch (Exception e) {
-            LOGGER.error(
-                e.getMessage(),
-                new String[]{
-                    'INS_PLI_CustomerQuotes.getCustomerQuoteById',
-                    e.getMessage()
-                },
-                e
-            );
-
-            throw new AuraHandledException(
-                'Failed to get customer quote ' + e.getMessage()
-            );
-        }
-    }
-
-    public static Opportunity getOpportunitiesByQuote(Id opportunityId) {
-
-        if (opportunityId == null) {
-            return null;
-        }
-
-        List<Opportunity> opportunityList = new SEL_Opportunity().selectByIdsWoSharing(
-            new Set<Id>{ opportunityId }
-        );           
-
-        if (opportunityList.isEmpty()) {
-            return null;
-        }
-
-        return opportunityList[0];
-    }
-    
-
     public class QuoteWrapper {
-        @AuraEnabled public String Id;
         @AuraEnabled public String name;
         @AuraEnabled public String policyNumber;
         @AuraEnabled public String estimatedPayment;
         @AuraEnabled public String expires;
         @AuraEnabled public String errorMessage;
-        @AuraEnabled public OpportunityWrapper opportunityDetails;
-        @AuraEnabled public AccountWrapper accountDetails;
-    }
-    public class OpportunityWrapper {
-        @AuraEnabled public String Id;
-        @AuraEnabled public String coverAmount;
-        @AuraEnabled public String monthlyPremium;
-    }
-    public class AccountWrapper {
-        @AuraEnabled public String Id;
-        @AuraEnabled public String firstName;
-        @AuraEnabled public String lastName;
-        @AuraEnabled public String email;
-        @AuraEnabled public String phone;
-        @AuraEnabled public String dateofBirth;
-        @AuraEnabled public String identityNumber;
     }
 }

@@ -1,17 +1,17 @@
-/*------------------------------------------------------------
-Author:        Given Khupai
-Description:   Bulk service that records Case ownership/team transfers
-               on CMN_History_Tracker__c whenever Case.OwnerId changes.
-               Replaces the record-triggered Flow originally proposed for
-               SFP-51816 - the TDA review flagged that a Flow recalculating
-               Transfer Sequence/Duration per record would hit the 101 SOQL
-               query limit under bulk owner reassignment, so this logic is
-               implemented as a single bulkified Apex pass instead.
-Test Class:    INS_SRV_CaseTransferHistory_TEST
-
-02-09-2026     Given Khupai     Initial version (SFP-51816)
-
-------------------------------------------------------------*/
+/**
+ * @description Records Case ownership and team transfers on CMN_History_Tracker__c
+ *              whenever Case.OwnerId changes.
+ *              <br/>SFP-51816
+ *
+ * @author Given Khupai
+ *
+ * @date September 2026
+ *
+ * @see INS_SRV_CaseTransferHistory_TEST
+ *
+ * Lastmodified: September 2026 : SFP-51816
+ * @lastModified Given Khupai - Initial version
+ */
 public with sharing class INS_SRV_CaseTransferHistory {
 
     private static final sbgplatform.rflib_Logger LOGGER =
@@ -23,78 +23,76 @@ public with sharing class INS_SRV_CaseTransferHistory {
     private static final String OWNER_TYPE_USER = 'User';
     private static final String OWNER_TYPE_QUEUE = 'Queue';
 
-    // Group (Queue) record IDs always start with this key prefix - the same
-    // check the original Flow design used to distinguish a Queue owner from a User owner.
+    // Queue (Group) Ids share this key prefix, which tells a Queue owner apart from a User owner.
     private static final String QUEUE_ID_PREFIX =
-        Group.SObjectType.getDescribe().getKeyPrefix();
+        Group.SObjectType.getDescribe(SObjectDescribeOptions.DEFERRED).getKeyPrefix();
 
-    /*------------------------------------------------------------
-    *   Purpose:  Prevents instantiation - all entry points are static.
-    *--------------------------------------------------------------*/
+    /**
+     * @description Prevents instantiation - all entry points are static.
+     */
     private INS_SRV_CaseTransferHistory() {
     }
 
-    /*------------------------------------------------------------
-    *   Purpose:  Bulk entry point - called from SVC_TRH_Case.andFinally().
-    *             For every Case whose OwnerId changed, creates one
-    *             CMN_History_Tracker__c record capturing the previous
-    *             and current owner (User or Queue), how long the previous
-    *             owner held the case, and this transfer's
-    *             sequence number on the case.
-    *   Parameters: newCases    - Case records after the update (Trigger.new values)
-    *               oldCaseById - old Case values (Trigger.old), keyed by Id
-    *   Returns:    void
-    *   Throws:     None - exceptions are logged, not re-thrown, so a
-    *               failure here never rolls back the Case DML that
-    *               triggered it. This mirrors INS_SRV_CaseMilestoneMetrics.
-    *--------------------------------------------------------------*/
+    /**
+     * @description Bulk entry point called from SVC_TRH_Case.andFinally(). Creates one
+     *              CMN_History_Tracker__c record for every Case whose OwnerId changed.
+     *              Records are created for every transfer, whoever makes it (agents, managers,
+     *              Omni-Channel routing, integration users), so the history has no gaps.
+     *              Failures are logged and never re-thrown, so a history failure never
+     *              rolls back the Case save that triggered it.
+     *              <br/>SFP-51816
+     *
+     * @param newCases Case records after the update (Trigger.new values)
+     * @param oldCaseById Case records before the update (Trigger.old), keyed by Id
+     */
     public static void recordTransfers(List<Case> newCases, Map<Id, Case> oldCaseById) {
-        if (newCases == null || newCases.isEmpty() || oldCaseById == null) {
-            return;
-        }
-
-        if (!hasRequiredCrudAccess()) {
-            LOGGER.error(
-                'Skipping transfer history processing - running user lacks CRUD access on CMN_History_Tracker__c',
-                LOG_AREA,
-                new List<Object>(),
-                null
-            );
-            return;
-        }
-
         List<Case> ownerChangedCases = filterOwnerChangedCases(newCases, oldCaseById);
-        if (ownerChangedCases.isEmpty()) {
-            return;
+
+        if (!ownerChangedCases.isEmpty()) {
+            insertTrackers(ownerChangedCases, oldCaseById);
         }
+    }
 
+    /**
+     * @description Returns the Cases whose OwnerId changed, so that updates to other fields
+     *              never create a transfer record.
+     *
+     * @param newCases Case records after the update
+     * @param oldCaseById Case records before the update, keyed by Id
+     *
+     * @return List<Case> Cases whose OwnerId changed; empty when either input is null
+     */
+    private static List<Case> filterOwnerChangedCases(List<Case> newCases, Map<Id, Case> oldCaseById) {
+        List<Case> ownerChangedCases = new List<Case>();
+        List<Case> candidateCases = (newCases == null || oldCaseById == null) ? new List<Case>() : newCases;
+
+        for (Case newCase : candidateCases) {
+            Case oldCase = oldCaseById.get(newCase.Id);
+            if (oldCase != null && oldCase.OwnerId != newCase.OwnerId) {
+                ownerChangedCases.add(newCase);
+            }
+        }
+        return ownerChangedCases;
+    }
+
+    /**
+     * @description Builds and inserts one tracker per transferred Case in a single DML.
+     *
+     * @param ownerChangedCases Cases whose OwnerId changed
+     * @param oldCaseById Case records before the update, keyed by Id
+     */
+    private static void insertTrackers(List<Case> ownerChangedCases, Map<Id, Case> oldCaseById) {
         try {
-            Map<Id, List<CMN_History_Tracker__c>> priorTransfersByCaseId =
-                mapPriorTransfersByCaseId(ownerChangedCases);
+            TransferContext context = new TransferContext(ownerChangedCases, oldCaseById);
 
-            OwnerLookups lookups = resolveOwnerLookups(ownerChangedCases, oldCaseById);
-
-            sbgplatform.fflib_SObjectUnitOfWork unitOfWork =
-                (sbgplatform.fflib_SObjectUnitOfWork)
-                    ORG_Application.unitOfWork.newInstance();
-
-            Datetime changedDate = Datetime.now();
-
+            List<CMN_History_Tracker__c> trackers = new List<CMN_History_Tracker__c>();
             for (Case newCase : ownerChangedCases) {
-                Case oldCase = oldCaseById.get(newCase.Id);
-                CMN_History_Tracker__c tracker = buildTracker(
-                    newCase,
-                    oldCase,
-                    changedDate,
-                    lookups,
-                    priorTransfersByCaseId.get(newCase.Id)
-                );
-                unitOfWork.registerNew(tracker);
+                trackers.add(buildTracker(newCase, oldCaseById.get(newCase.Id), context));
             }
 
-            unitOfWork.commitWork();
-
+            new TrackerSystemAccess().insertTrackers(trackers);
         } catch (Exception ex) {
+            // Deliberately broad: transfer history must never roll back the Case save that triggered it.
             LOGGER.error(
                 'Failed to record transfer history for Cases {0}',
                 LOG_AREA,
@@ -104,207 +102,247 @@ public with sharing class INS_SRV_CaseTransferHistory {
         }
     }
 
-    /*------------------------------------------------------------
-    *   Purpose:  Verifies the running user has create access on
-    *             CMN_History_Tracker__c before any DML is attempted.
-    *--------------------------------------------------------------*/
-    private static Boolean hasRequiredCrudAccess() {
-        return Schema.sObjectType.CMN_History_Tracker__c.isCreateable();
-    }
+    /**
+     * @description Builds one tracker (not yet inserted) for a single Case transfer.
+     *
+     * @param newCase Case after the update
+     * @param oldCase Case before the update
+     * @param context Data resolved once for the whole batch
+     *
+     * @return CMN_History_Tracker__c the populated tracker record
+     */
+    private static CMN_History_Tracker__c buildTracker(Case newCase, Case oldCase, TransferContext context) {
+        CMN_History_Tracker__c tracker = new CMN_History_Tracker__c();
+        tracker.CMN_Case__c = newCase.Id;
+        tracker.CMN_TransferDate__c = context.changedDate;
 
-    /*------------------------------------------------------------
-    *   Purpose:  Narrows the batch down to Cases whose OwnerId actually
-    *             changed - Case Milestone/other unrelated field updates
-    *             on the same Case must not create a spurious transfer record.
-    *--------------------------------------------------------------*/
-    private static List<Case> filterOwnerChangedCases(List<Case> newCases, Map<Id, Case> oldCaseById) {
-        List<Case> changed = new List<Case>();
-        for (Case newCase : newCases) {
-            Case oldCase = oldCaseById.get(newCase.Id);
-            if (oldCase != null && oldCase.OwnerId != newCase.OwnerId) {
-                changed.add(newCase);
-            }
+        // SVC_CaseOwnerTeam__c is set by the before-save flow SVC_SetCaseOwnerTeamValue earlier
+        // in the same save, so Trigger.old/new already hold the correct previous and current team.
+        tracker.CMN_PreviousOwnerTeam__c = oldCase.SVC_CaseOwnerTeam__c;
+        tracker.CMN_CurrentOwnerTeam__c = newCase.SVC_CaseOwnerTeam__c;
+
+        // The previous user owns the record so role-hierarchy reports stay visible to them and
+        // their managers. Queues cannot own this object (it is not added to their QueueSobject
+        // list), so when the previous owner was a Queue the running user stays the owner.
+        if (!isQueueId(oldCase.OwnerId)) {
+            tracker.OwnerId = oldCase.OwnerId;
         }
-        return changed;
+
+        populatePreviousOwner(tracker, oldCase.OwnerId, context.queueNameById);
+        populateCurrentOwner(tracker, newCase.OwnerId, context.queueNameById);
+
+        // Earlier transfers are ordered latest first, so index 0 is when the previous owner
+        // received the Case. The first transfer is measured from Case creation.
+        List<CMN_History_Tracker__c> priorTransfersForCase = context.priorTransfersByCaseId.get(newCase.Id);
+        Datetime heldSince = newCase.CreatedDate;
+        tracker.CMN_TransferCount__c = 1;
+        if (priorTransfersForCase != null) {
+            tracker.CMN_TransferCount__c = priorTransfersForCase.size() + 1;
+            heldSince = priorTransfersForCase[0].CMN_TransferDate__c;
+        }
+        tracker.CMN_DurationWithPreviousOwnerHour__c =
+            businessHoursBetween(newCase.BusinessHoursId, heldSince, context.changedDate);
+
+        return tracker;
     }
 
-    /*------------------------------------------------------------
-    *   Purpose:  Single bulk query for all existing transfer history on
-    *             the affected Cases, grouped and ordered (descending) by
-    *             Transfer Date so index 0 per Case is always the latest
-    *             prior transfer. Used to derive both Transfer Sequence
-    *             (list size + 1) and Duration With Previous Owner
-    *             (elapsed time since index 0's Transfer Date).
-    *--------------------------------------------------------------*/
-    private static Map<Id, List<CMN_History_Tracker__c>> mapPriorTransfersByCaseId(List<Case> cases) {
-        Set<Id> caseIds = new Map<Id, Case>(cases).keySet();
+    /**
+     * @description Sets the previous owner type and either the previous User or Queue name.
+     *
+     * @param tracker Tracker record being built
+     * @param ownerId Previous Case owner (User or Queue Id)
+     * @param queueNameById Queue names keyed by Queue Id
+     */
+    private static void populatePreviousOwner(
+        CMN_History_Tracker__c tracker,
+        Id ownerId,
+        Map<Id, String> queueNameById
+    ) {
+        if (isQueueId(ownerId)) {
+            tracker.CMN_PreviousOwnerType__c = OWNER_TYPE_QUEUE;
+            tracker.CMN_PreviousOwnerQueueName__c = queueNameById.get(ownerId);
+        } else {
+            tracker.CMN_PreviousOwnerType__c = OWNER_TYPE_USER;
+            tracker.CMN_PreviousOwnerUser__c = ownerId;
+        }
+    }
 
+    /**
+     * @description Sets the current owner type and either the current User or Queue name.
+     *
+     * @param tracker Tracker record being built
+     * @param ownerId New Case owner (User or Queue Id)
+     * @param queueNameById Queue names keyed by Queue Id
+     */
+    private static void populateCurrentOwner(
+        CMN_History_Tracker__c tracker,
+        Id ownerId,
+        Map<Id, String> queueNameById
+    ) {
+        if (isQueueId(ownerId)) {
+            tracker.CMN_CurrentOwnerType__c = OWNER_TYPE_QUEUE;
+            tracker.CMN_CurrentOwnerQueueName__c = queueNameById.get(ownerId);
+        } else {
+            tracker.CMN_CurrentOwnerType__c = OWNER_TYPE_USER;
+            tracker.CMN_CurrentOwnerUser__c = ownerId;
+        }
+    }
+
+    /**
+     * @description Loads all earlier transfers for the Cases in one query and groups them
+     *              by Case, latest transfer first. The query runs in system mode, so transfers
+     *              owned by other users are counted even though the running user cannot see them.
+     *
+     * @param cases Cases whose OwnerId changed
+     *
+     * @return Map<Id, List<CMN_History_Tracker__c>> earlier transfers keyed by Case Id
+     */
+    private static Map<Id, List<CMN_History_Tracker__c>> mapPriorTransfersByCaseId(List<Case> cases) {
         Map<Id, List<CMN_History_Tracker__c>> priorTransfersByCaseId =
             new Map<Id, List<CMN_History_Tracker__c>>();
 
-        for (CMN_History_Tracker__c priorTransfer :
-                SEL_CMN_HistoryTracker.newInstance().selectByCaseIds(caseIds)) {
+        Set<Id> caseIds = new Map<Id, Case>(cases).keySet();
+        for (CMN_History_Tracker__c priorTransfer : new TrackerSystemAccess().selectByCaseIds(caseIds)) {
             if (!priorTransfersByCaseId.containsKey(priorTransfer.CMN_Case__c)) {
                 priorTransfersByCaseId.put(priorTransfer.CMN_Case__c, new List<CMN_History_Tracker__c>());
             }
             priorTransfersByCaseId.get(priorTransfer.CMN_Case__c).add(priorTransfer);
         }
-
         return priorTransfersByCaseId;
     }
 
-    /*------------------------------------------------------------
-    *   Purpose:  Small value holder for the bulk-resolved Queue
-    *             display names needed to populate every tracker
-    *             record in the batch.
-    *--------------------------------------------------------------*/
-    private class OwnerLookups {
+    /**
+     * @description Resolves every old and new Queue owner in the batch to its name in one query.
+     *              Team is not resolved here; it is copied from Case.SVC_CaseOwnerTeam__c.
+     *
+     * @param ownerChangedCases Cases whose OwnerId changed
+     * @param oldCaseById Case records before the update, keyed by Id
+     *
+     * @return Map<Id, String> Queue names keyed by Queue Id
+     */
+    private static Map<Id, String> mapQueueNameById(List<Case> ownerChangedCases, Map<Id, Case> oldCaseById) {
         Map<Id, String> queueNameById = new Map<Id, String>();
-    }
-
-    /*------------------------------------------------------------
-    *   Purpose:  Resolves, in bulk, every distinct old/new Queue owner
-    *             Id in the batch to its display Name.
-    *
-    *             Note: this does NOT resolve Team. An earlier version
-    *             of this service tried to derive Team independently via
-    *             CMN_TeamMember__c.CMN_PrimaryTeam__c (never populated
-    *             org-wide - 0 of 21 records) and SVC_QueueTeamMapping__mdt
-    *             (inconsistently keyed by Name vs DeveloperName), both of
-    *             which proved unreliable. CMN_PreviousOwnerTeam__c/
-    *             CMN_CurrentOwnerTeam__c are populated in buildTracker()
-    *             instead, by copying Case.SVC_CaseOwnerTeam__c directly off
-    *             Trigger.old/new - that field is already correctly resolved
-    *             by the existing before-save flow SVC_SetCaseOwnerTeamValue,
-    *             for both User and Queue owners, before this trigger runs.
-    *--------------------------------------------------------------*/
-    private static OwnerLookups resolveOwnerLookups(List<Case> ownerChangedCases, Map<Id, Case> oldCaseById) {
-        OwnerLookups lookups = new OwnerLookups();
 
         Set<Id> queueIds = new Set<Id>();
-
         for (Case newCase : ownerChangedCases) {
             collectQueueId(oldCaseById.get(newCase.Id).OwnerId, queueIds);
             collectQueueId(newCase.OwnerId, queueIds);
         }
 
-        for (Group g : [SELECT Id, Name FROM Group WHERE Id IN :queueIds]) {
-            lookups.queueNameById.put(g.Id, g.Name);
+        if (!queueIds.isEmpty()) {
+            for (Group queue : new SEL_Group().selectByIds(queueIds)) {
+                queueNameById.put(queue.Id, queue.Name);
+            }
         }
-
-        return lookups;
+        return queueNameById;
     }
 
+    /**
+     * @description Adds the owner Id to the set when it is a Queue.
+     *
+     * @param ownerId Case owner (User or Queue Id)
+     * @param queueIds Queue Ids being collected
+     */
     private static void collectQueueId(Id ownerId, Set<Id> queueIds) {
-        if (ownerId != null && isQueueId(ownerId)) {
+        if (isQueueId(ownerId)) {
             queueIds.add(ownerId);
         }
     }
 
+    /**
+     * @description Checks whether an owner Id belongs to a Queue rather than a User.
+     *
+     * @param ownerId Case owner Id
+     *
+     * @return Boolean true if the Id is a Queue Id
+     */
     private static Boolean isQueueId(Id ownerId) {
         return ownerId != null && String.valueOf(ownerId).startsWith(QUEUE_ID_PREFIX);
     }
 
-    /*------------------------------------------------------------
-    *   Purpose:  Builds one fully-populated (but not yet inserted)
-    *             CMN_History_Tracker__c for a single Case transfer.
-    *--------------------------------------------------------------*/
-    private static CMN_History_Tracker__c buildTracker(
-        Case newCase,
-        Case oldCase,
-        Datetime changedDate,
-        OwnerLookups lookups,
-        List<CMN_History_Tracker__c> priorTransfersForCase
-    ) {
-        CMN_History_Tracker__c tracker = new CMN_History_Tracker__c();
-        tracker.CMN_Case__c = newCase.Id;
-        tracker.CMN_TransferDate__c = changedDate;
-
-        // SVC_CaseOwnerTeam__c is set by the existing before-save flow
-        // SVC_SetCaseOwnerTeamValue, which runs earlier in the same save -
-        // so Trigger.old/new already carry the correct previous/current team
-        // for both User and Queue owners, with no query needed here at all.
-        tracker.CMN_PreviousOwnerTeam__c = oldCase.SVC_CaseOwnerTeam__c;
-        tracker.CMN_CurrentOwnerTeam__c = newCase.SVC_CaseOwnerTeam__c;
-
-        // Owner = previous owner, so Private-OWD role-hierarchy reports remain
-        // visible to the agent/team who just lost the case, matching the
-        // original design intent captured in the TD's data model diagram.
-        // Only done when the previous owner was a User: Queues can only own
-        // object types explicitly whitelisted for them via QueueSobject, and
-        // CMN_History_Tracker__c isn't (and realistically won't be) added to
-        // every routing Queue's whitelist - assigning to a Queue here throws
-        // an invalid-owner DML error, which would otherwise be silently
-        // swallowed by this method's caller. When the previous owner was a
-        // Queue, OwnerId is left as the running user (automation context).
-        if (!isQueueId(oldCase.OwnerId)) {
-            tracker.OwnerId = oldCase.OwnerId;
-        }
-
-        populateOwnerSide(tracker, oldCase.OwnerId, lookups, true);
-        populateOwnerSide(tracker, newCase.OwnerId, lookups, false);
-
-        if (priorTransfersForCase == null || priorTransfersForCase.isEmpty()) {
-            tracker.CMN_TransferSequence__c = 1;
-            tracker.CMN_DurationWithPreviousOwner__c =
-                businessHoursBetween(newCase.BusinessHoursId, newCase.CreatedDate, changedDate);
-        } else {
-            tracker.CMN_TransferSequence__c = priorTransfersForCase.size() + 1;
-            // priorTransfersForCase is ordered by Transfer Date descending,
-            // so index 0 is this Case's most recent prior transfer.
-            tracker.CMN_DurationWithPreviousOwner__c =
-                businessHoursBetween(newCase.BusinessHoursId, priorTransfersForCase[0].CMN_TransferDate__c, changedDate);
-        }
-
-        return tracker;
-    }
-
-    private static void populateOwnerSide(
-        CMN_History_Tracker__c tracker,
-        Id ownerId,
-        OwnerLookups lookups,
-        Boolean isPreviousSide
-    ) {
-        Boolean isQueue = isQueueId(ownerId);
-        String queueName = isQueue ? lookups.queueNameById.get(ownerId) : null;
-
-        if (isPreviousSide) {
-            tracker.CMN_PreviousOwnerType__c = isQueue ? OWNER_TYPE_QUEUE : OWNER_TYPE_USER;
-            if (isQueue) {
-                tracker.CMN_PreviousOwnerQueueName__c = queueName;
-            } else {
-                tracker.CMN_PreviousUserOwner__c = ownerId;
-            }
-        } else {
-            tracker.CMN_CurrentOwnerType__c = isQueue ? OWNER_TYPE_QUEUE : OWNER_TYPE_USER;
-            if (isQueue) {
-                tracker.CMN_CurrentOwnerQueueName__c = queueName;
-            } else {
-                tracker.CMN_CurrentUserOwner__c = ownerId;
-            }
-        }
-    }
-
-    /*------------------------------------------------------------
-    *   Purpose:  Business-hours-aware elapsed time, matching the
-    *             pattern INS_SRV_CaseMilestoneMetrics already uses
-    *             for Case TAT calculations - raw wall-clock time
-    *             would count nights/weekends the case sat untouched
-    *             as "duration with owner", inflating the figure.
-    *             Falls back to null (rather than raw wall-clock time)
-    *             when the Case has no Business Hours assigned, since
-    *             INS_UTIL_BusinessHoursCalcHelper cannot compute an
-    *             hours-aware duration without one.
-    *--------------------------------------------------------------*/
+    /**
+     * @description Calculates elapsed business hours, matching INS_SRV_CaseMilestoneMetrics.
+     *              Wall-clock time would count nights and weekends as time with the owner.
+     *              Returns null when the Case has no Business Hours, because
+     *              INS_UTIL_BusinessHoursCalcHelper cannot calculate without them.
+     *
+     * @param businessHoursId Business Hours of the Case
+     * @param startDate Start of the period
+     * @param endDate End of the period
+     *
+     * @return Decimal elapsed business hours, or null if any input is null
+     */
     private static Decimal businessHoursBetween(Id businessHoursId, Datetime startDate, Datetime endDate) {
-        if (businessHoursId == null || startDate == null || endDate == null) {
-            return null;
+        Decimal elapsedHours;
+        if (businessHoursId != null && startDate != null && endDate != null) {
+            Long elapsedMilliseconds = INS_UTIL_BusinessHoursCalcHelper.calculateElapsedMilliSeconds(
+                businessHoursId,
+                startDate,
+                endDate
+            );
+            elapsedHours = INS_UTIL_BusinessHoursCalcHelper.convertMilliSecondsToHours(elapsedMilliseconds);
         }
-        Long elapsedMs = INS_UTIL_BusinessHoursCalcHelper.calculateElapsedMilliSeconds(
-            businessHoursId,
-            startDate,
-            endDate
-        );
-        return INS_UTIL_BusinessHoursCalcHelper.convertMilliSecondsToHours(elapsedMs);
+        return elapsedHours;
+    }
+
+    /**
+     * @description Holds the data resolved once per batch (transfer time, Queue names and
+     *              earlier transfers), so each record is built without further queries.
+     */
+    private class TransferContext {
+        private final Datetime changedDate = Datetime.now();
+        private final Map<Id, String> queueNameById;
+        private final Map<Id, List<CMN_History_Tracker__c>> priorTransfersByCaseId;
+
+        /**
+         * @description Resolves Queue names and earlier transfers for the whole batch.
+         *
+         * @param ownerChangedCases Cases whose OwnerId changed
+         * @param oldCaseById Case records before the update, keyed by Id
+         */
+        private TransferContext(List<Case> ownerChangedCases, Map<Id, Case> oldCaseById) {
+            queueNameById = mapQueueNameById(ownerChangedCases, oldCaseById);
+            priorTransfersByCaseId = mapPriorTransfersByCaseId(ownerChangedCases);
+        }
+    }
+
+    /**
+     * @description Reads and writes transfer history in system mode (Design Authority exception,
+     *              SFP-51816). Transfer history is system audit data, like standard Field History
+     *              Tracking, so it must not depend on the running user's access:
+     *              <br/>- Earlier transfers are owned by other users and are Private, so a query in
+     *              user mode would miss them and reset Transfer Count and Duration.
+     *              <br/>- An agent who transfers a Case to a queue they are not a member of loses read
+     *              access to that Case in the same save, and Salesforce then rejects the CMN_Case__c
+     *              lookup (INSUFFICIENT_ACCESS_ON_CROSS_REFERENCE_ENTITY).
+     *              <br/>- Users without the Case Transfer History permission set (Omni-Channel routing,
+     *              managers, integration users) must still leave a record, or the history has gaps.
+     *              Who can view the records is controlled by OWD Private, the role hierarchy and the
+     *              Case Transfer History permission set (Read only).
+     */
+    private without sharing class TrackerSystemAccess {
+
+        /**
+         * @description Retrieves every earlier transfer for the Cases, whoever owns them.
+         *
+         * @param caseIds Case record Ids
+         *
+         * @return List<CMN_History_Tracker__c> earlier transfers, latest first
+         */
+        private List<CMN_History_Tracker__c> selectByCaseIds(Set<Id> caseIds) {
+            return SEL_CMN_HistoryTracker.newInstance().selectByCaseIds(caseIds);
+        }
+
+        /**
+         * @description Inserts the trackers in a single DML through the Unit of Work.
+         *
+         * @param trackers Tracker records to insert
+         */
+        private void insertTrackers(List<SObject> trackers) {
+            sbgplatform.fflib_SObjectUnitOfWork unitOfWork =
+                (sbgplatform.fflib_SObjectUnitOfWork) ORG_Application.unitOfWork.newInstance();
+            unitOfWork.registerNew(trackers);
+            unitOfWork.commitWork();
+        }
     }
 }

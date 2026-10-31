@@ -1,69 +1,95 @@
 /**
-* @description  Sends a POST request to the CMN_Generate_Token_Helper  class to  API endpoint with the provided Request.
-* @author Khaliq Abdul(khaliq.abdul@standardbank.co.za)
-* @param
-* @return
-* @date Feb 19th 2024
-***************************************************************************************
-* Last Modified By  Alexandr Goryachko
-* Last Modified Date 23/03/2026
-* Last Modified Description: Added logic to resend http request on error
-* User Story : SFP-53455
-***************************************************************************************
-*/
-public class CMN_Generate_Token_Helper {
+ * @description Mints OAuth Bearer tokens via the CHNW_IAM_INS_LibertyOAuthN Named Credential
+ *   for downstream Liberty insurance API callouts (Funeral Claims, RealPay, etc.). Migrated
+ *   from raw Http.send to the sbgplatform.ApiService framework so tests can intercept the
+ *   token mint via the framework mock — removing the per-caller test-bypass workaround.
+ * @author Khaliq Abdul (khaliq.abdul@standardbank.co.za)
+ * @date Feb 19th 2024
+ * @LastModified: March, 2026
+ * @Author Alexandr Goryachko
+ * @UserStory: SFP-53455
+ * @LastModifiedReason: Added retry loop (up to 3 attempts) on non-200 / empty body
+ * @LastModified: May, 2026
+ * @Author Ross Kshirsagar
+ * @UserStory: SFP-60467
+ * @LastModifiedReason: API Code Remediation — extend sbgplatform.ApiService, replace raw Http.send
+ *   with framework post(). Retry loop preserved.
+ */
+public with sharing class CMN_Generate_Token_Helper extends sbgplatform.ApiService {
+    private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory()
+        .createLogger('CMN_Generate_Token_Helper');
+
+    private static final String NAMED_CREDENTIAL = 'CHNW_IAM_INS_LibertyOAuthN';
+    private static final String EC_NAME = 'CHNW_IAM_INS_LibertyOAuthE';
+    private static final String CONTENT_TYPE_FORM_URLENCODED = 'application/x-www-form-urlencoded';
+    private static final Integer MAX_ATTEMPTS = 3;
+
+    public CMN_Generate_Token_Helper() {
+        super(NAMED_CREDENTIAL);
+        setTimeout(30000);
+        setExceptionOnError(false);
+    }
 
     /**
-    * @description Obtains the OAuth access token for making Generate_Token   for PING API requests.
-    *
-    * @return String representing the OAuth access token.
+     * @description Framework extension point. The NC URL targets the OAuth token endpoint in full
+     *   (no path appendage). We bypass the framework's path-prefixed endpoint construction by
+     *   building the request from scratch — calling super.prepareHttpRequest with the path-prefix
+     *   pattern triggers a CalloutException on this specific NC at platform level even though
+     *   the same `callout:NCName` works fine via raw Http.send. Both routes ultimately call
+     *   http.Send() — the difference is purely in how the platform resolves the endpoint.
     */
-    private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('CMN_Generate_Token_Helper');
-    public static final String HTTP_METHOD_POST = 'POST';
-    private static final String HEADER_CONTENT_TYPE = 'content-type';
-    private static final String HEADER_CONTENT_TYPE_VALUE = 'application/x-www-form-urlencoded';
+    public override HttpRequest prepareHttpRequest(String path, String method, Object requestBody, String contentType) {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:' + NAMED_CREDENTIAL);
+        req.setMethod(method);
+        req.setTimeout(30000);
+        if (String.isNotBlank(contentType)) {
+            req.setHeader('content-type', contentType);
+        }
+        if (requestBody != null && requestBody instanceof String) {
+            req.setBody((String) requestBody);
+        }
+        return req;
+    }
 
-    /*
+    /**
+     * @description Obtains an OAuth access token from the INS insurance-claims realm.
+     *   Retries up to MAX_ATTEMPTS times on non-200 / empty body (preserves Alexandr's behavior).
     * @return String representing the OAuth access token.
 	*/
     public static String getAccessToken() {
-        try{
-            // Create HTTP request for OAuth token
-            HttpRequest request = new HttpRequest();
-            request.setEndpoint('callout:INS_InsuranceClaimsAccess');
-            request.setMethod(HTTP_METHOD_POST);
-            request.setTimeout(30000);
-            request.setHeader(HEADER_CONTENT_TYPE, HEADER_CONTENT_TYPE_VALUE);
-            Final String clientId = '{!$Credential.INS_InsuranceClaimsAccessToken.client_id}';
-            Final String clientSecret = '{!$Credential.INS_InsuranceClaimsAccessToken.client_secret}';
+        try {
+            final String clientId = '{!$Credential.' + EC_NAME + '.client_id}';
+            final String clientSecret = '{!$Credential.' + EC_NAME + '.client_secret}';
+            final String payload =
+                'client_id=' +
+                clientId +
+                '&client_secret=' +
+                clientSecret +
+                '&grant_type=client_credentials&scope=insurance-claims.*.*';
 
-
-            String payload = 'grant_type=client_credentials&scope=insurance-claims.*.*';
-            request.setBody('client_id='+clientId+'&client_secret='+clientSecret + '&'+ payload);
-
-            // Send HTTP request
-            Http http = new Http();
-            HttpResponse response;
-            Map <String, Object> responseMap;
-            Integer requestCounter = 0;
+            CMN_Generate_Token_Helper svc = new CMN_Generate_Token_Helper();
+            String responseBody = null;
+            Integer attempts = 0;
             do {
-                response = http.send(request);
-                requestCounter++;
-            } while ((response.getStatusCode() != 200 || String.isBlank(response.getBody())) && requestCounter <= 3);
+                responseBody = (String) svc.post('', payload, CONTENT_TYPE_FORM_URLENCODED);
+                attempts++;
+            } while ((svc.getStatusCode() != 200 || String.isBlank(responseBody)) && attempts < MAX_ATTEMPTS);
 
-            // Handle response
-            if (response.getStatusCode() == 200) {
-                // Parse JSON response to retrieve the access token
-                responseMap = (Map <String, Object> ) JSON.deserializeUntyped(response.getBody());
-            } else {
-                // Log error response for debugging purposes
-
-                LOGGER.error('CMN_Generate_Token_Helper.getAccessToken', new String[] {'CMN_Generate_Token_Helper.getAccessToken', response.getStatusCode() + response.getBody()});
-                responseMap = (Map <String, Object> ) JSON.deserializeUntyped(response.getBody());
+            if (svc.getStatusCode() != 200) {
+                LOGGER.error(
+                    'CMN_Generate_Token_Helper.getAccessToken',
+                    new List<String>{
+                        'CMN_Generate_Token_Helper.getAccessToken',
+                        String.valueOf(svc.getStatusCode()) +
+                        ' ' +
+                        responseBody
             }
+                );
+            }
+            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
             return (String) responseMap.get('access_token');
-        } Catch(Exception ex) {
-            // Log error response for debugging purposes
+        } catch (Exception ex) {
             LOGGER.error('CMN_Generate_Token_Helper.getAccessToken', ex);
             throw new INS_CustomException(ex.getMessage());
         }

@@ -46,23 +46,26 @@ public without sharing class INS_CTRL_GetQuoteDetails implements Callable {
      * @param output Populated with quoteFound and QuoteDetails
      * @return       The populated output map
      */
-    private static Object queryQuote(Map<String, Object> input, Map<String, Object> output) {
+    public static Object queryQuote(Map<String, Object> input, Map<String, Object> output) {
         Id accountId = resolveAccountId(input);
 
         List<Quote> quoteList;
         try {
-            quoteList = new SEL_Quote().selectByAccIds(new List<Id>{ accountId });
+            quoteList = new SEL_Quote().guestUserQuoteInProgressByAccIds(new List<Id>{ accountId });
+            
         } catch (Exception e) {
            throw new AuraHandledException('Failed to retrieve quote details: ' + e.getMessage());
         }
 
         if (quoteList == null || quoteList.isEmpty()) {
-            output.put(KEY_QUOTE_FOUND, false);
-            output.put(KEY_EXISTING_QUOTE_DETAILS, new Map<String, Object>());
+            output.put(KEY_EXISTING_QUOTE_DETAILS, new Map<String, Object>{
+                KEY_QUOTE_FOUND => false
+            });
+            
             return output;
         }
 
-        output.put(KEY_QUOTE_FOUND, true);
+        
         output.put(KEY_EXISTING_QUOTE_DETAILS, buildQuoteDetails(quoteList[0]));
 
         return output;
@@ -96,6 +99,7 @@ public without sharing class INS_CTRL_GetQuoteDetails implements Callable {
      */
     private static Map<String, Object> buildQuoteDetails(Quote quoteRecord) {
         return new Map<String, Object>{
+             KEY_QUOTE_FOUND         => true,
             'quoteId'                => quoteRecord.Id,
             'quoteNumber'            => quoteRecord.QuoteNumber,
             'quoteName'              => quoteRecord.Name,

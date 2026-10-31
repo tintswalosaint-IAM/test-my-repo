@@ -12,6 +12,12 @@
  * Last Modified Date 24/07/2026
  * Last Modified Description: Added additional method to query by OpportunityId
  * User Story : SFP-59435
+ ***************************************************
+ * Last Modified By Irshad
+ * Last Modified Date 15/10/2026
+ * Last Modified Description: Added additional method to query by accountId for Guest user
+ * User Story : SFP-56540
+ 
 **/
 
 public inherited sharing class SEL_Quote extends sbgplatform.fflib_SObjectSelector{
@@ -147,6 +153,10 @@ public inherited sharing class SEL_Quote extends sbgplatform.fflib_SObjectSelect
         fieldQueryFactory.selectFields(getSObjectFieldList());
         return Database.query(fieldQueryFactory.toSOQL());
     }
+    
+    public List<Quote> guestUserQuoteInProgressByAccIds(List<Id> accIds) {
+        return new NoQuoteSharing().guestUserQuoteInProgressByAccIds(this, accIds);
+    }
 
     /**
      * @description Is used for omitting sharing setting, when needed
@@ -186,5 +196,21 @@ public inherited sharing class SEL_Quote extends sbgplatform.fflib_SObjectSelect
         public List<Quote> selectByIds(SEL_Quote selQuote, List<Id> ids) {
             return selQuote.selectByIds(ids);
         }
+        /**
+        * @description Returns list of quotes by ids without sharing
+        *
+        * @param selQuote SEL_Quote Quote selector instance
+        * @param ids List<Id> list of account ids
+        *
+        * @return list of selected quotes
+        */
+        public List<Quote> guestUserQuoteInProgressByAccIds(SEL_Quote selQuote, List<Id> accIds) {            
+            sbgplatform.fflib_QueryFactory fieldQueryFactory = selQuote.newQueryFactory(false, false, true);
+            fieldQueryFactory.setCondition('AccountId IN :accIds AND Status = :QUOTE_STATUS_IN_PROGRESS');
+            return Database.query(fieldQueryFactory.toSOQL());
+            
+        }  
     }
+    
+    
 }

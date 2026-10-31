@@ -10,6 +10,7 @@
 * @last modified by  : Ikyatha Naidu
 * @ Modification Description : SFP-36380, used new field signing arrangement SBO UK
 * @Modification  Description: SFP-58241: Added selectByProductNameAndPBName method
+* @LastModifiedBy : SFP-55635: NoPbeSharing class created for guest user this must run without sharing
 */
 public inherited sharing class SEL_PriceBookEntry extends sbgplatform.fflib_SObjectSelector {
     private static Set<String> fields=new Set<String>{
@@ -73,7 +74,7 @@ public inherited sharing class SEL_PriceBookEntry extends sbgplatform.fflib_SObj
             fieldQueryFactory.selectFields(fields);
             return Database.query(fieldQueryFactory.toSOQL());
         }
-    /**
+        /**
         * @description Method to fetch  PricebookEntry based on productName and PricebookName
         * @param Product2Id
         * @param pBName
@@ -85,5 +86,36 @@ public inherited sharing class SEL_PriceBookEntry extends sbgplatform.fflib_SObj
             fieldQueryFactory.selectFields(fields);
             return Database.query(fieldQueryFactory.toSOQL());
         }
-    
+        
+        /**
+        * @description Method to fetch  PricebookEntry based on productName and PricebookName for Guest user
+        * @param Product2Id
+        * @param pBName
+        * @return PricebookEntry
+        **/
+        public PricebookEntry selectByProdNameAndPBNameWOSharing(String productName ,string pBName) {
+            return new NoPbeSharing().selectByProdNameAndPBNameWOSharing(this,productName,pBName);
+        }
+
+    /**
+     * @description Is used for omitting sharing setting, when needed
+     */
+    private without sharing class NoPbeSharing {
+
+       /**
+        * @description Method to fetch  PricebookEntry based on productName and PricebookName
+        * @param Product2Id
+        * @param pBName
+        * @return PricebookEntry
+        **/
+        public PricebookEntry  selectByProdNameAndPBNameWOSharing(SEL_PriceBookEntry selPbe,String ProductName ,string pBName) {         
+            
+            sbgplatform.fflib_QueryFactory fieldQueryFactory = selPbe.newQueryFactory(false, false, false);
+            fieldQueryFactory.setCondition('Product2.Name =:ProductName  and Pricebook2.Name =:pBName');
+            fieldQueryFactory.selectFields(fields);
+            return Database.query(fieldQueryFactory.toSOQL());
+            
+        }  
+
+    }
 }

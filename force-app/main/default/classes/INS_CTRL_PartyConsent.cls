@@ -65,14 +65,13 @@ public without sharing class INS_CTRL_PartyConsent implements Callable {
                 throw new AuraHandledException('ProspectAccountId is required.');
             }
 
-            String captureSource = resolveCaptureSource();
-            System.debug('captureSource=='+captureSource);
+            String captureSource = resolveCaptureSource();           
             if (String.isBlank(captureSource)) {
                 throw new AuraHandledException('consentCaptureSource is required.');
             }
 
             Id individualId = resolveIndividualId(accountId);            
-            BusinessBrand brand = new SEL_BusinessBrand().selectByName(BUSINESS_BRAND);
+            BusinessBrand brand = new SEL_BusinessBrand().selectByNameWoSharing(BUSINESS_BRAND);
 
             List<PartyConsent> consents = new List<PartyConsent>();
 
@@ -110,6 +109,8 @@ public without sharing class INS_CTRL_PartyConsent implements Callable {
                 'consentsCreated' => consents.size()
             });
 
+            
+
         } catch (Exception e) {
             output.put('partyConsentResponse', new Map<String, Object>{
                 'hasError'     => true,
@@ -134,7 +135,7 @@ public without sharing class INS_CTRL_PartyConsent implements Callable {
     private static Id resolveIndividualId(Id accountId) {
         Set<Id> accountIds = new Set<Id>();
         accountIds.add(accountId);        
-        List<Account> accounts = new SEL_Account().selectByIdsWithPersonIndividualId(accountIds);  
+        List<Account> accounts = new INS_Get_Account().getAccountById(accountId);
         if (accounts.isEmpty()) {
             AuraHandledException e = new AuraHandledException('Account not found: ' + accountId);
             e.setMessage('Account not found: ' + accountId);
@@ -227,6 +228,7 @@ public without sharing class INS_CTRL_PartyConsent implements Callable {
         if (String.isNotBlank(siteUrl)) {
             return Site.getBaseRequestUrl() + siteUrl;
         }
-        return URL.getOrgDomainUrl().toExternalForm();
+        String urlStr = URL.getOrgDomainUrl().toExternalForm();       
+        return urlStr;
     }
 }

@@ -1,3 +1,4 @@
+
 /**
 * @description       : Test for INS_BATCH_ConnexLead
 * @author            : Raja Arsalan
@@ -67,6 +68,18 @@ private class INS_BATCH_ConnexLead_Test {
         } else if (scenario == 'IncorrectNumber') {
             lead.MobilePhone = '12';
             lead.Phone = '23';
+        } else if (scenario == 'ExpressedInterestChanged') {
+            // ── ADDED ─────────────────────────────────────────────────────────
+            // This scenario represents a lead that was previously created in the
+            // dialler (it has a Referred_System_Reference_Number__c) and whose
+            // Expressed_Interest_Product__c has just changed.
+            //
+            // The two-step flow requires:
+            //   1. A non-blank ref# so the PUT can target /<refNum>/LeadEnhancement
+            //   2. A valid Dialler_Queue_ID__c (set by factory default 'Queue1')
+            //   3. A valid MobilePhone (set by factory default '0720000000')
+            // ──────────────────────────────────────────────────────────────────
+            lead.Referred_System_Reference_Number__c = 'existing-ref';
         }
         
         return lead;
@@ -287,7 +300,15 @@ private class INS_BATCH_ConnexLead_Test {
         
         Lead updated = [SELECT Referred_System_Reference_Number__c, Dialer_Failure_Reason__c FROM Lead WHERE Id = :setup.lead.Id];
         Assert.areEqual('mock-ref-id', updated.Referred_System_Reference_Number__c,'Reference Number matches');
-        Assert.areEqual(null, updated.Dialer_Failure_Reason__c, 'Update Successful, failure Reason Should be Null');
+        // ── CHANGED (test fix) ────────────────────────────────────────────────
+        // BEFORE: Assert.areEqual(null, ...) — incorrect expectation.
+        // parsePutResponse sets Dialer_Failure_Reason__c = '' (empty string, not null)
+        // on success so the field gets cleared in the DML update. A null assertion
+        // would fail because the database stores '' and returns '' on query.
+        // AFTER: Assert blank (covers both null and '') which is the correct
+        // post-success state for this field.
+        // ─────────────────────────────────────────────────────────────────────
+        Assert.isTrue(String.isBlank(updated.Dialer_Failure_Reason__c), 'Update Successful, failure Reason Should be blank');
     }
     
     /**
@@ -332,10 +353,15 @@ private class INS_BATCH_ConnexLead_Test {
     
     /**
 * @description Test parseNestedError with valid nested JSON containing 'errors' array
+*
+* WHY THIS CALLS INS_SRV_DiallerLeadResponse:
+*   parseNestedError was originally in INS_UTIL_ConnexLeads but was moved to
+*   INS_SRV_DiallerLeadResponse during the response-parsing refactor. The test
+*   must call the class where the method now lives.
 */
     @isTest static void testParseNestedErrorWithErrorsArray() {
         String nestedJson = '{"errors":[{"detail":"This is an error detail","title":"Error Title"}]}';
-        String result = INS_UTIL_ConnexLeads.parseNestedError(nestedJson);
+        String result = INS_SRV_DiallerLeadResponse.parseNestedError(nestedJson);
         
         Assert.areEqual('This is an error detail', result, 'Should extract the detail from errors array');
     }
@@ -345,13 +371,17 @@ private class INS_BATCH_ConnexLead_Test {
 */
     @isTest static void testParseNestedErrorWithErrorMessage() {
         String nestedJson = '{"error":{"errorMessage":"Nested error message here"}}';
-        String result = INS_UTIL_ConnexLeads.parseNestedError(nestedJson);
+        String result = INS_SRV_DiallerLeadResponse.parseNestedError(nestedJson);
         
         Assert.areEqual('Nested error message here', result, 'Should extract the errorMessage from nested error');
     }
     
     /**
 * @description Test extractFromErrorsArray directly
+*
+* WHY THIS CALLS INS_SRV_DiallerLeadResponse:
+*   extractFromErrorsArray was moved to INS_SRV_DiallerLeadResponse with the
+*   response-parsing refactor. Same reason as parseNestedError above.
 */
     @isTest static void testExtractFromErrorsArrayDirect() {
         List<Object> errorsList = new List<Object>{
@@ -359,7 +389,7 @@ private class INS_BATCH_ConnexLead_Test {
                 new Map<String, Object>{ 'detail' => 'Second detail', 'title' => 'Second title' }
         };
             
-            String result = INS_UTIL_ConnexLeads.extractFromErrorsArray(errorsList);
+        String result = INS_SRV_DiallerLeadResponse.extractFromErrorsArray(errorsList);
         Assert.areEqual('First detail', result, 'Should return the detail of the first error object');
     }
     
@@ -371,19 +401,21 @@ private class INS_BATCH_ConnexLead_Test {
             new Map<String, Object>{ 'title' => 'Only title here' }
         };
             
-            String result = INS_UTIL_ConnexLeads.extractFromErrorsArray(errorsList);
+        String result = INS_SRV_DiallerLeadResponse.extractFromErrorsArray(errorsList);
         Assert.areEqual('Only title here', result, 'Should fallback to title when detail is missing');
     }
     
     /**
 * @description Test extractErrorMessage using actual DTO structure
+*
+* extractErrorMessage is public on INS_SRV_DiallerLeadResponse — no @TestVisible needed.
 */
     @isTest static void testExtractErrorMessageWithDTO() {
         INS_DTO_ConnexLeadsResponse dto1 = new INS_DTO_ConnexLeadsResponse();
         dto1.error = new INS_DTO_ConnexLeadsResponse.ConnexError();
         dto1.error.errorDescription = '{"error":[{"detail":"Provided credentials are invalid","title":"Unauthorized"}]}';
         
-        String result1 = INS_UTIL_ConnexLeads.extractErrorMessage(dto1, 'Default error');
+        String result1 = INS_SRV_DiallerLeadResponse.extractErrorMessage(dto1, 'Default error');
         Assert.areEqual('Provided credentials are invalid', result1, 'Should extract detail from nested errorDescription');
     }
     
@@ -392,4 +424,243 @@ private class INS_BATCH_ConnexLead_Test {
     
     
     
+    // ══════════════════════════════════════════════════════════════════════════
+    // EXPRESSED INTEREST CHANGED TESTS
+    //
+    // WHY THESE TESTS EXIST:
+    //   When a lead's Expressed_Interest_Product__c changes and it already has a
+    //   Referred_System_Reference_Number__c (i.e. it already exists in the dialler),
+    //   the requirement is to run a two-step flow:
+    //
+    //   Step 1 — PUT with expiry status code
+    //     Removes the lead from the old dialler queue so it is no longer worked
+    //     by agents under the wrong product line.
+    //
+    //   Step 2 — POST (only if PUT succeeded)
+    //     Re-creates the lead under the new queue that matches the updated product.
+    //
+    //   If the PUT fails, the POST must be blocked so we never create a duplicate
+    //   dialler record while the old one is still active.
+    //
+    //   These tests fire the batch with isExpressedInterestChanged=true, which
+    //   routes to processExpressedInterestChangedLeads() in INS_UTIL_ConnexLeads.
+    //   They use the same INS_LeadsAPI_Mock as the rest of the file — the mock
+    //   already returns distinct PUT vs POST responses based on the HTTP method.
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * @description Helper: fires the batch with isExpressedInterestChanged=true.
+     *
+     * WHY A SEPARATE HELPER:
+     *   The existing executeBatch() helper omits the isExpressedInterestChanged
+     *   constructor argument (uses the 6-param overload which defaults it to false).
+     *   We need the 7-param constructor to route into the expressed-interest path.
+     */
+    private static void executeExpressedInterestBatch(TestSetup setup, String mockScenario) {
+        INS_Leads_API.mockScenario = mockScenario;
+        INS_Leads_API.testLeadId = setup.lead.Id;
+        Test.setMock(HttpCalloutMock.class, new INS_LeadsAPI_Mock());
+
+        INS_BATCH_ConnexLead batchJob = new INS_BATCH_ConnexLead(
+            false,                          // expireLeads — false: we're not scheduling expiry
+            null,                           // expiredStatuses — not used here
+            setup.mockSettings.INS_LeadType__c,
+            setup.mockSettings.INS_ProductFamily__c,
+            setup.mockSettings.INS_LeadDate__c != null
+                ? setup.mockSettings.INS_LeadDate__c.date()
+                : null,
+            new List<Id>{ setup.lead.Id },  // explicit lead Ids so the batch fetches exactly this lead
+            true                            // isExpressedInterestChanged=true → routes to
+                                            // INS_UTIL_ConnexLeads.processExpressedInterestChangedLeads()
+        );
+
+        Database.executeBatch(batchJob, 15);
+    }
+
+    /**
+     * @description Verifies the happy path: PUT succeeds, then POST succeeds.
+     *
+     * SETUP:
+     *   Lead has Referred_System_Reference_Number__c = 'existing-ref' (already in dialler)
+     *   and a valid Dialler_Queue_ID__c and MobilePhone (set by the factory).
+     *
+     * WHAT THE MOCK RETURNS:
+     *   PUT 'success' → errorCode '' → parsePutResponse returns Lead(Dialer_Failure_Reason__c='')
+     *   POST 'success' → contact_data_id 'mock-ref-id' → parsePostResponse sets new ref#
+     *
+     * ASSERTIONS:
+     *   1. Referred_System_Reference_Number__c = 'mock-ref-id'
+     *      The old ref ('existing-ref') is gone, replaced by the new one from the POST.
+     *      This proves Step 1 cleared the old ref and Step 2 wrote the new one.
+     *
+     *   2. Dialer_Failure_Reason__c is blank
+     *      Both PUT and POST succeeded — no failure reason should remain.
+     */
+    @isTest
+    static void testExpressedInterestChanged_PutSuccessPostSuccess() {
+        // Arrange: lead with an existing dialler reference number, representing a lead
+        // that was previously sent to the dialler and now has its product changed.
+        TestSetup setup = createTestSetup('ExpressedInterestChanged');
+
+        Test.startTest();
+        executeExpressedInterestBatch(setup, 'success');
+        Test.stopTest();
+
+        Lead updated = [
+            SELECT Referred_System_Reference_Number__c, Dialer_Failure_Reason__c
+            FROM Lead
+            WHERE Id = :setup.lead.Id
+        ];
+
+        // The old ref 'existing-ref' was cleared when PUT succeeded (Step 1).
+        // The POST (Step 2) assigned a new ref from the dialler response.
+        Assert.areEqual(
+            'mock-ref-id',
+            updated.Referred_System_Reference_Number__c,
+            'POST should have written the new dialler reference number after successful PUT expiry'
+        );
+
+        // Both steps succeeded — no failure reason.
+        Assert.isTrue(
+            String.isBlank(updated.Dialer_Failure_Reason__c),
+            'Dialer_Failure_Reason__c should be blank after a fully successful PUT+POST flow'
+        );
+    }
+
+    /**
+     * @description Verifies that when the PUT fails, the POST is blocked.
+     *
+     * SETUP:
+     *   Same as above — lead already exists in dialler.
+     *
+     * WHAT THE MOCK RETURNS:
+     *   PUT 'failure' → errorCode 'PUT_FAILED', message 'Lead not found'
+     *   The mock checks request.getMethod().equalsIgnoreCase('PUT') and returns
+     *   the failure response. POST is never called because processExpressedInterestChangedLeads
+     *   gates the POST on PUT success.
+     *
+     * ASSERTIONS:
+     *   1. Referred_System_Reference_Number__c = 'existing-ref' (unchanged)
+     *      The old ref must NOT be cleared — the PUT failed so the lead is still
+     *      active in the dialler under the old ref. If we cleared it, a retry would
+     *      try a fresh POST against an existing dialler record.
+     *
+     *   2. Dialer_Failure_Reason__c is non-blank
+     *      The PUT failure reason must be persisted so the lead appears in the
+     *      Failed Connex Leads report and can be retried.
+     */
+    @isTest
+    static void testExpressedInterestChanged_PutFailureBlocksPost() {
+        // Arrange
+        TestSetup setup = createTestSetup('ExpressedInterestChanged');
+
+        Test.startTest();
+        executeExpressedInterestBatch(setup, 'failure');
+        Test.stopTest();
+
+        Lead updated = [
+            SELECT Referred_System_Reference_Number__c, Dialer_Failure_Reason__c
+            FROM Lead
+            WHERE Id = :setup.lead.Id
+        ];
+
+        // PUT failed — old ref must remain so the lead is still identifiable in
+        // the dialler. The POST was correctly blocked.
+        Assert.areEqual(
+            'existing-ref',
+            updated.Referred_System_Reference_Number__c,
+            'Old dialler reference must not be cleared when PUT fails — POST must have been blocked'
+        );
+
+        // Failure reason must be written back to the lead so it surfaces in the
+        // Failed Connex Leads report for manual retry.
+        Assert.isTrue(
+            String.isNotBlank(updated.Dialer_Failure_Reason__c),
+            'Dialer_Failure_Reason__c should be populated when the PUT fails'
+        );
+    }
+
+    /**
+     * @description Verifies that a lead with a missing Referred_System_Reference_Number__c
+     * is rejected during validation before any callout is made.
+     *
+     * WHY THIS MATTERS:
+     *   The two-step flow requires an existing dialler reference to PUT against.
+     *   validateProductChangedLead() checks for this upfront to avoid a wasted callout.
+     *   A lead without a ref# cannot have its dialler record expired — the PUT endpoint
+     *   is /<refNum>/LeadEnhancement, so the ref# is mandatory.
+     *
+     * SETUP:
+     *   Lead has Referred_System_Reference_Number__c = null (never sent to dialler).
+     *   selectDialerLeadsByRecIds() only returns this lead if it passes the condition:
+     *   Dialer_Failure_Reason__c = null OR (Dialer_Failure_Reason__c != null AND mobile+queue present)
+     *   Since it has no failure reason and a valid mobile+queue, it will be fetched.
+     *
+     * ASSERTION:
+     *   Dialer_Failure_Reason__c is populated with the validation message.
+     *   No PUT or POST callout is made (mock never receives a request).
+     */
+    @isTest
+    static void testExpressedInterestChanged_MissingReferenceNumber() {
+        // Arrange: lead with no dialler reference — validation should fail before callout
+        TestSetup setup = createTestSetup('SuccessResponse'); // no ref# set by this scenario
+
+        Test.startTest();
+        executeExpressedInterestBatch(setup, 'success');
+        Test.stopTest();
+
+        Lead updated = [
+            SELECT Dialer_Failure_Reason__c
+            FROM Lead
+            WHERE Id = :setup.lead.Id
+        ];
+
+        // validateProductChangedLead() catches the missing ref# and writes the reason
+        // back without making any API call.
+        Assert.areEqual(
+            'Cannot expire the existing Dialler lead because its reference number is missing.',
+            updated.Dialer_Failure_Reason__c,
+            'Leads without a reference number must be rejected before any callout is attempted'
+        );
+    }
+
+    /**
+     * @description Verifies that a 502 gateway error on the PUT is handled gracefully.
+     *
+     * WHY THIS MATTERS:
+     *   A 502 is caught by isPutResponseError() in INS_SRV_DiallerLeadResponse before
+     *   reaching processSuccessfulPutResponse(). handlePutResponse() returns buildErrorLead()
+     *   directly. The POST must be blocked and the error reason persisted.
+     *
+     * ASSERTIONS:
+     *   1. Referred_System_Reference_Number__c unchanged — PUT failed, old ref stands.
+     *   2. Dialer_Failure_Reason__c is non-blank — error persisted for retry.
+     */
+    @isTest
+    static void testExpressedInterestChanged_Put502ErrorBlocksPost() {
+        // Arrange
+        TestSetup setup = createTestSetup('ExpressedInterestChanged');
+
+        Test.startTest();
+        executeExpressedInterestBatch(setup, '502Error');
+        Test.stopTest();
+
+        Lead updated = [
+            SELECT Referred_System_Reference_Number__c, Dialer_Failure_Reason__c
+            FROM Lead
+            WHERE Id = :setup.lead.Id
+        ];
+
+        // 502 is treated as a PUT failure — old ref must not be cleared.
+        Assert.areEqual(
+            'existing-ref',
+            updated.Referred_System_Reference_Number__c,
+            'Old dialler reference must not be cleared on a PUT 502 error'
+        );
+
+        Assert.isTrue(
+            String.isNotBlank(updated.Dialer_Failure_Reason__c),
+            'Dialer_Failure_Reason__c should be populated after a PUT 502 error'
+        );
+    }
 }

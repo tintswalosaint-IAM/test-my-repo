@@ -9,24 +9,14 @@
  */
 public with sharing class INS_CTRL_QuoteBenefitsRequestBuilder {
 
-    private static final String DEFAULT_FREQUENCY =
-        'MONTHLY';
-
-    private static final String MAIN_BENEFIT_ID =
-        '1-MAINFUNERAL';
-    private static final String MAIN_BENEFIT_KEY =
-        '1.MAINFUNERAL';
-    private static final String MAIN_BENEFIT_TYPE =
-        'MAINFUNERAL';
-
-    private static final String KEY_CREATE_QUOTE_RESPONSE =
-        'CreateQuoteResponse';
-    private static final String KEY_MEMBER_ID =
-        'memberId';
-    private static final String KEY_BENEFITS =
-        'benefits';
-    private static final String KEY_BENEFIT_AMOUNT =
-        'BenefitAmount';
+    private static final String DEFAULT_FREQUENCY       = 'MONTHLY';
+    private static final String MAIN_BENEFIT_ID         = '1-MAINFUNERAL';
+    private static final String MAIN_BENEFIT_KEY        ='1.MAINFUNERAL';
+    private static final String MAIN_BENEFIT_TYPE       ='MAINFUNERAL';
+    private static final String KEY_CREATE_QUOTE_RESPONSE ='CreateQuoteResponse';
+    private static final String KEY_MEMBER_ID           ='memberId';
+    private static final String KEY_BENEFITS            ='benefits';
+    private static final String KEY_BENEFIT_AMOUNT      ='BenefitAmount';
 
 
      /**

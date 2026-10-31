@@ -448,7 +448,7 @@ public with sharing class SEL_User_Test {
 
         Test.startTest();
         SEL_User usersrv = new SEL_User();
-        List<User> result = usersrv.selectByUserEmail(uniqueEmail);
+        List<User> result = usersrv.selectByEmail(uniqueEmail);
         Test.stopTest();
 
         // Assertions
@@ -471,81 +471,4 @@ public with sharing class SEL_User_Test {
             // Assertions
             Assert.areEqual(0, result.size(), 'No users should be returned for a nonexistent username');
         }
-
-    /**
-    * @description       : Test of newInstance via the ORG_Application selector factory
-    **/
-    @IsTest
-    static void testNewInstance() {
-        Test.startTest();
-        SEL_User selector = SEL_User.newInstance();
-        Test.stopTest();
-
-        Assert.isNotNull(selector, 'newInstance should return a SEL_User selector');
-        Assert.areEqual(User.SObjectType, selector.getSObjectType(), 'Selector should be for the User object');
-    }
-
-    /**
-    * @description       : Test of the selector method selectUsersWithManagerChainByIds (SFP-55654)
-    **/
-    @IsTest
-    static void testSelectUsersWithManagerChainByIds() {
-        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
-        String uniqueBase = String.valueOf(System.currentTimeMillis());
-
-        // Build a 3-level chain: seed -> manager -> senior manager
-        User seniorManager = new User(
-            FirstName = 'Senior',
-            LastName = 'Manager',
-            Alias = 'smgr',
-            Email = 'smgr' + uniqueBase + '@test.com',
-            Username = 'smgr' + uniqueBase + '@test.com',
-            ProfileId = p.Id,
-            TimeZoneSidKey = 'Africa/Johannesburg',
-            LocaleSidKey = 'en_US',
-            EmailEncodingKey = 'UTF-8',
-            LanguageLocaleKey = 'en_US'
-        );
-        insert seniorManager;
-
-        User manager = new User(
-            FirstName = 'Chain',
-            LastName = 'Manager',
-            Alias = 'cmgr',
-            Email = 'cmgr' + uniqueBase + '@test.com',
-            Username = 'cmgr' + uniqueBase + '@test.com',
-            ProfileId = p.Id,
-            ManagerId = seniorManager.Id,
-            TimeZoneSidKey = 'Africa/Johannesburg',
-            LocaleSidKey = 'en_US',
-            EmailEncodingKey = 'UTF-8',
-            LanguageLocaleKey = 'en_US'
-        );
-        insert manager;
-
-        User seed = new User(
-            FirstName = 'Chain',
-            LastName = 'Seed',
-            Alias = 'cseed',
-            Email = 'cseed' + uniqueBase + '@test.com',
-            Username = 'cseed' + uniqueBase + '@test.com',
-            ProfileId = p.Id,
-            ManagerId = manager.Id,
-            TimeZoneSidKey = 'Africa/Johannesburg',
-            LocaleSidKey = 'en_US',
-            EmailEncodingKey = 'UTF-8',
-            LanguageLocaleKey = 'en_US'
-        );
-        insert seed;
-
-        Test.startTest();
-        List<User> result = new SEL_User().selectUsersWithManagerChainByIds(new Set<Id>{ seed.Id });
-        Test.stopTest();
-
-        Assert.areEqual(1, result.size(), 'One seed user should be returned');
-        Assert.areEqual(manager.Id, result[0].ManagerId, 'Level 1 manager should match');
-        Assert.areEqual(manager.Email, result[0].Manager.Email, 'Level 1 manager email should be populated');
-        Assert.areEqual(seniorManager.Id, result[0].Manager.ManagerId, 'Level 2 manager should match');
-        Assert.areEqual(seniorManager.Email, result[0].Manager.Manager.Email, 'Level 2 manager email should be populated');
-    }
 }

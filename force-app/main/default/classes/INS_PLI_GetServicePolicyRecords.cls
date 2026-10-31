@@ -8,10 +8,18 @@
  * Last Modified Date 07/04/2026
  * Last Modified Description: get beneficiaries logic is using SF database
  * User Story : SFP-57247
+ ***************************************************
+ * Last Modified By Shams Arifeen
+ * Last Modified Date 23/10/2026
+ * Last Modified Description: Added Account override for unit test setup
  **/
-public without sharing class INS_PLI_GetServicePolicyRecords {
+public with sharing class INS_PLI_GetServicePolicyRecords {
 
     private static final sbgplatform.rflib_Logger LOGGER = sbgplatform.rflib_LoggerUtil.getFactory().createLogger('INS_PLI_GetServicePolicyRecords');
+
+    @TestVisible
+    private static Id accountIdOverride;
+
 	/**
      * @description Retrieves Policies for logged in user
      * @author            : Madito Tsilo
@@ -26,19 +34,24 @@ public without sharing class INS_PLI_GetServicePolicyRecords {
         try {
             Id userId = UserInfo.getUserId();
             User usr = new SEL_User().selectUserById(userId);
+            Id accountId = usr != null && usr.Contact != null ? usr.Contact.AccountId : null;
 
-            if (usr == null || usr.Contact == null || usr.Contact.AccountId == null) {
+            if (accountIdOverride != null) {
+                accountId = accountIdOverride;
+            }
+
+            if (accountId == null) {
                 wrapper.errorMessage = 'No Account found for the logged-in user.';
                 return wrapper;
             }
 
-            List<InsurancePolicy> polList = new SEL_InsurancePolicy().selectByNameInsuredId(String.valueOf(usr.Contact.AccountId));
-            System.debug('Policies retrieved: ' + polList);
-			if (polList == null || polList.isEmpty() ) {
+            List<InsurancePolicy> policies = new SEL_InsurancePolicy()
+                .selectByNameInsuredId(String.valueOf(accountId));
+            if (policies.isEmpty()) {
                 wrapper.errorMessage = 'No Insurance Policy found for the logged-in user.';
                 return wrapper;
             }
-            InsurancePolicy pol = polList[0]; // Assuming we want the first policy for the user
+            InsurancePolicy pol = policies[0];
             // Base policy data
             wrapper.productName = pol.ProductNameFormula__c;
             wrapper.policyNumber = pol.Name;

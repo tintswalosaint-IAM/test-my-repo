@@ -15,7 +15,18 @@
 * @last modified by  : Shams
 * @ Modification Description :SFP-58522, added selectByIdentityNumbersAndRecordType and
 *                              selectByNameDobAndRecordType for two-step beneficiary account search
+*
+*@LastModifiedReason : SFP-55759 - Added the following Account fields to the
+*                      selector method to support the Moonstone
+*                      Disclosure implementation:
+*                      OwnerId, CMN_IdentityNumber__pc,
+*
+*@LastModified by : Gigyasu Jain
+*Group : SBFC
+*Last Modified Date : 15-07-2026
 */
+
+ 
 public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSelector {
     /**
    * @description declaration of fields
@@ -33,7 +44,9 @@ public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSele
             'FinServ__PrimaryAddressIsMailing__pc','Registration_Number__c','Company_Address__c',
             'Date_of_Incorporation__c','FinServ__MailingAddress__pc','WI_Address__c','percentage_of_the_Business_which_owned__c','GUID__c'
             ,'CMN_IdentityNumber__pc','ExternalIdentifier__c','RelationshipMgrCode__c','OwnerId','VIPIndicator__c','ExternalSystemId__c','ExternalCIFCountry__c',
-            'Owner.IsActive', 'Owner.RM_AE_Code__c', 'NatureofBusiness__c', 'FinServ__CurrentEmployer__pc','Staff_Indicator__c','Gross_Income__c'
+            'Owner.IsActive', 'Owner.RM_AE_Code__c', 'NatureofBusiness__c', 'FinServ__CurrentEmployer__pc','WI_VisaPermitExpiryDate__pc',
+            'Staff_Indicator__c','Gross_Income__c','PersonMailingCountry',
+            'FinServ__BranchCode__c','FinServ__BranchName__c','PersonMailingPostalCode','PersonMailingStreet','PersonIndividualId'
     };
 
 
@@ -92,6 +105,10 @@ public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSele
         fieldQueryFactory.selectFields(fields);
         String query = String.escapeSingleQuotes(fieldQueryFactory.toSOQL());
         return Database.query(query);
+    }
+
+    public List<Account> selectByIdsWoSharing(Set<Id> ids) {
+        return new NoAccountSharing().selectByIds(this, ids);
     }
 
     /**
@@ -246,10 +263,24 @@ public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSele
      * @return Account with related Opportunities
      */
     public List<Account> selectByIdentityNumberWithOpportunities(String idNumber) {
+        return selectByIdentityNumberWithOpportunities(idNumber, null);
+    }
+
+    /**
+     * @description Method to fetch Account with Opportunities by Identity Number and customer type
+     * @param idNumber String
+     * @param customerType String
+     * @return Account with related Opportunities
+     */
+    public List<Account> selectByIdentityNumberWithOpportunities(String idNumber, String customerType) {
         sbgplatform.fflib_QueryFactory queryFactory = newQueryFactory(false, false, true);
 
         // Set condition for identity number
-        queryFactory.setCondition('CMN_IdentityNumber__pc = :idNumber');
+        String condition = 'CMN_IdentityNumber__pc = :idNumber';
+        if (String.isNotBlank(customerType)) {
+            condition += ' AND FinServ__CustomerType__c = :customerType';
+        }
+        queryFactory.setCondition(condition);
 
         // Select Account fields
         queryFactory.selectFields(new List <String>{
@@ -294,27 +325,15 @@ public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSele
      * @user story SFP-58864
      * @param ids Set<Id>
      * @return List<Account>
-    **/ 
+     **/
     public List<Account> selectByIdsWithPersonIndividualId(Set<Id> ids) {
         if (ids == null || ids.isEmpty()) {
             return new List<Account>();
         }
-
-        List<Account> accounts = [
-        SELECT Id, PersonIndividualId
-        FROM Account
-        WHERE Id IN :ids WITH SYSTEM_MODE
-        LIMIT 1
-        ];
-
-        return accounts;
-    }
-
-
-        /*sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
         fieldQueryFactory.setCondition('Id IN :ids');
         fieldQueryFactory.selectField('PersonIndividualId');
-        return Database.query(fieldQueryFactory.toSOQL());/*
+        return Database.query(fieldQueryFactory.toSOQL());
     }
     /**
      * @description Method to fetch FSC Person Account based on PersonEmail
@@ -372,56 +391,60 @@ public inherited sharing class SEL_Account extends sbgplatform.fflib_SObjectSele
     }
 
     /**
-        * @description Method list of Account based on id
-        * @param accountId
-        * @return List<Account>
-    **/
-    public List<Account> selectOpportunityByAccountId(Id accountId) {
-        sbgplatform.fflib_QueryFactory accountQueryFactory = newQueryFactory();
-
-        // Select Account fields
-        accountQueryFactory.selectFields(new List <String>{
-                'PersonEmail', 'PersonMobilePhone', 'FinServ__Gender__pc', 'CMN_IdentityNumber__pc'
-        })
-                .setLimit(1);
-
-
-        accountQueryFactory.subselectQuery('Opportunities')
-                .selectFields(new List <String>{
-                        'Id', 'Name', 'INS_OnboardingStep__c', 'Total_Cover_Amount__c', 'Total_Monthly_Premium__c', 'StageName'
-                })
-                .setCondition('IsClosed = FALSE')
-                .setOrdering('CreatedDate', sbgplatform.fflib_QueryFactory.SortOrder.DESCENDING)
-                .setLimit(1);
-      
-        accountQueryFactory.setCondition('Id = :accountId');
-
-        String safeQuery = String.escapeSingleQuotes(accountQueryFactory.toSOQL());
-        return (List<Account>) Database.query(safeQuery);
-    }
-    /**
-    * @description Calls method selectByIdsWoSharing in without sharing context
-    * 'WoSharing' stands for 'Without Sharing'
-    * @author Shams
-    * @param ids list of account ids
-    *
-    * @return list of accounts
-    */
-    public List<Account> selectByIdsWoSharing(Set<Id> ids) {
-        return new NoAccountSharing().selectByIds(this, ids);
-    }
-    /**
-     * @description Is used for omitting sharing setting, when needed
+     * @description Searches Accounts by dynamic LIKE filter clauses and
+     *              record type IDs. Used by IAM_CTRL_ClientFinder to cast
+     *              a wide candidate net before in-memory refinement.
+     *              Note: filterClauses are pre-escaped by the caller;
+     *              String.escapeSingleQuotes is intentionally omitted here
+     *              to avoid double-escaping the embedded LIKE values.
+     * @author Preetham | 2026-07-21
+     * @param filterClauses List of pre-built, escaped LIKE conditions
+     *                      (e.g. "Name LIKE '%John%'")
+     * @param recordTypeIds Set of Account RecordTypeIds to restrict results to
+     * @param queryLimit    Maximum number of Accounts to return
+     * @return List<Account> Matching Account records
      */
+    public List<Account> selectBySearchCriteria(
+        List<String> filterClauses, Set<Id> recordTypeIds, Integer queryLimit
+    ) {
+        if (filterClauses == null || filterClauses.isEmpty()
+            || recordTypeIds == null || recordTypeIds.isEmpty()) {
+            return new List<Account>();
+        }
+        System.debug('Record Type IDs for search: ' + recordTypeIds);
+
+        sbgplatform.fflib_QueryFactory fieldQueryFactory = newQueryFactory(false, false, false);
+
+        // Build the combined condition: filter clauses OR'd together,
+        // then AND'd with the record type restriction via bind variable
+        String combinedFilter = '(' + String.join(filterClauses, ' AND ') + ')';
+        fieldQueryFactory.setCondition(
+            combinedFilter + ' AND RecordTypeId IN :recordTypeIds'
+        );
+
+        fieldQueryFactory.selectFields(new List<String>{
+            'Id', 'Name', 'FirstName', 'LastName', 'ExternalCIFId__c',
+            'Phone', 'PersonEmail', 'Registration_number__c',
+            'RecordTypeId', 'RecordType.Name', 'CMN_IdentityNumber__pc', 'PersonBirthdate'
+        });
+        fieldQueryFactory.setOrdering('Name', sbgplatform.fflib_QueryFactory.SortOrder.ASCENDING);
+        fieldQueryFactory.setLimit(queryLimit);
+
+        // Values in filterClauses are already escaped; skip final escape
+        // to prevent double-escaping that would break the LIKE patterns
+        System.debug('Query is ' + fieldQueryFactory.toSOQL());
+        return Database.query(fieldQueryFactory.toSOQL());
+    }
+
     private without sharing class NoAccountSharing {
         /**
-        * @description Select by Id for SBO-UK Project
-        * @param ids
-        * @return List<Account>
-        */
-        public List<Account> selectByIds(SEL_Account selAccount, Set<Id> ids) {
-            return selAccount.selectByIds(ids);  
+         * @description Returns Accounts by IDs without sharing.
+         * @param accountSelector Account selector instance
+         * @param ids Set of Account IDs
+         * @return List<Account>
+         */
+        public List<Account> selectByIds(SEL_Account accountSelector, Set<Id> ids) {
+            return accountSelector.selectByIds(ids);
         }
     }
-    
 }

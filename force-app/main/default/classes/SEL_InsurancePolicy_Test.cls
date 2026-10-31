@@ -72,6 +72,44 @@ public with sharing class SEL_InsurancePolicy_Test {
         return policy;
     }
 
+    private static InsurancePolicy createPolicyForOpportunity(String opportunityName) {
+        Account account = new Account(
+            RecordTypeId = getPersonAccountProspectRT(),
+            FirstName = 'Policy',
+            LastName = 'Customer',
+            PersonBirthdate = Date.newInstance(1990, 1, 1)
+        );
+        insert account;
+
+        Producer producer = new Producer(
+            Name = 'Policy Producer',
+            InternalUserId = UserInfo.getUserId(),
+            AccountId = account.Id
+        );
+        insert producer;
+
+        Opportunity opportunity = new Opportunity(
+            Name = opportunityName,
+            AccountId = account.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Country__c = 'KE'
+        );
+        insert opportunity;
+
+        InsurancePolicy policy = new InsurancePolicy(
+            Name = 'Opportunity Policy',
+            PolicyName = 'Platinum Life Policy',
+            NameInsuredId = account.Id,
+            ProducerId = producer.Id,
+            SourceOpportunityId = opportunity.Id,
+            Status = 'Active',
+            PremiumAmount = 500
+        );
+        insert policy;
+        return policy;
+    }
+
     @IsTest
     static void testSelectInsurancePolicyById_returnsPolicy() {
         CMN_DAL_SObjectUnitOfWork uow = new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
@@ -147,108 +185,37 @@ public with sharing class SEL_InsurancePolicy_Test {
     }
 
     @IsTest
-    static void testSelectByProducerId_returnsPolicy(){
-        CMN_DAL_SObjectUnitOfWork uow = new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
-                Account.SObjectType, InsurancePolicy.SObjectType, Producer.SObjectType
-        });
-        Account acc = createAccount(uow);
-        Producer pro = createProducer(uow, acc);
-        createInsurancePolicyWithProducer(uow, acc, pro);
-        uow.commitWork();
+    static void testSelectByProducerId_returnsPolicy() {
+        InsurancePolicy policy = createPolicyForOpportunity('Producer Policy Opportunity');
 
-        String producerId = UserInfo.getUserId();
-        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectByProducerId(producerId);
-        Assert.isTrue(results.size() >= 0, 'Should return a list without error for valid ProducerId');
+        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectByProducerId(UserInfo.getUserId());
+        Assert.areEqual(1, results.size(), 'Should return the policy for the producer.');
+        Assert.areEqual(policy.Id, results[0].Id, 'Should return the policy for the producer.');
     }
 
-    /**
-     * @description Creates an Opportunity to use as the policy's SourceOpportunity.
-     *              Quote_Id__c is set so Opportunity_Flow skips the record (no pricebook lookup).
-     */
-    private static Opportunity createSourceOpportunity(Account acc, String name) {
-        Opportunity opp = new Opportunity(
-                Name = name,
-                AccountId = acc.Id,
-                StageName = 'Prospecting',
-                CloseDate = Date.today().addDays(30),
-                Quote_Id__c = 'QUOTE-' + Crypto.getRandomInteger()
+    @IsTest
+    static void testSelectPolicyMethodsWithBlankInputs() {
+        SEL_InsurancePolicy selector = new SEL_InsurancePolicy();
+
+        Assert.isTrue(selector.selectByProducerId(null).isEmpty(), 'A null producer ID should return no policies.');
+        Assert.isTrue(selector.selectPlatinumLifePlociesByProducerId(' ').isEmpty(), 'A blank producer ID should return no policies.');
+        Assert.isTrue(selector.selectPoliciesByNameInsuredAndProduct(null, '%Platinum Life%').isEmpty(), 'A null insured ID should return no policies.');
+    }
+
+    @IsTest
+    static void testSelectPoliciesByProducerAndProduct() {
+        InsurancePolicy policy = createPolicyForOpportunity('Platinum Life Coverage');
+        SEL_InsurancePolicy selector = new SEL_InsurancePolicy();
+
+        List<InsurancePolicy> platinumLifePolicies = selector.selectPlatinumLifePlociesByProducerId(UserInfo.getUserId());
+        List<InsurancePolicy> policiesByProduct = selector.selectPoliciesByNameInsuredAndProduct(
+            policy.NameInsuredId,
+            '%Platinum Life%'
         );
-        insert opp;
-        return opp;
-    }
 
-    @IsTest
-    static void testSelectPlatinumLifePoliciesByProducerId_returnsPolicy() {
-        CMN_DAL_SObjectUnitOfWork uow = new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
-                Account.SObjectType, Producer.SObjectType
-        });
-        Account acc = createAccount(uow);
-        Producer pro = createProducer(uow, acc);
-        uow.commitWork();
-
-        Opportunity platinumOpp = createSourceOpportunity(acc, 'Platinum Life Test');
-        InsurancePolicy policy = new InsurancePolicy(
-                Name = 'Platinum Life Policy',
-                PolicyName = 'Platinum Life test',
-                NameInsuredId = acc.Id,
-                ProducerId = pro.Id,
-                SourceOpportunityId = platinumOpp.Id,
-                Status = 'Active',
-                PremiumAmount = 250
-        );
-        insert policy;
-
-        Test.startTest();
-        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectPlatinumLifePlociesByProducerId(UserInfo.getUserId());
-        Test.stopTest();
-
-        Assert.areEqual(1, results.size(), 'Should return the Platinum Life policy for the producer user');
-        Assert.areEqual(policy.Id, results[0].Id, 'Returned policy should match');
-        Assert.areEqual(250, results[0].PremiumAmount, 'PremiumAmount should be selected');
-    }
-
-    @IsTest
-    static void testSelectPlatinumLifePoliciesByProducerId_blankInput_returnsEmpty() {
-        Test.startTest();
-        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectPlatinumLifePlociesByProducerId('');
-        Test.stopTest();
-        Assert.areEqual(0, results.size(), 'Blank userId should return no records');
-    }
-
-    @IsTest
-    static void testSelectPoliciesByNameInsuredAndProduct_returnsPolicy() {
-        CMN_DAL_SObjectUnitOfWork uow = new CMN_DAL_SObjectUnitOfWork(new List<Schema.SObjectType>{
-                Account.SObjectType
-        });
-        Account acc = createAccount(uow);
-        uow.commitWork();
-
-        Opportunity flexiOpp = createSourceOpportunity(acc, 'Flexi Protect Test');
-        InsurancePolicy policy = new InsurancePolicy(
-                Name = 'Flexi Protect Policy',
-                PolicyName = 'Flexi Protect test',
-                NameInsuredId = acc.Id,
-                SourceOpportunityId = flexiOpp.Id,
-                Status = 'Active'
-        );
-        insert policy;
-
-        Test.startTest();
-        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectPoliciesByNameInsuredAndProduct(acc.Id, '%Flexi Protect%');
-        List<InsurancePolicy> otherProduct = new SEL_InsurancePolicy().selectPoliciesByNameInsuredAndProduct(acc.Id, '%Platinum Life%');
-        Test.stopTest();
-
-        Assert.areEqual(1, results.size(), 'Should return the Flexi Protect policy for the account');
-        Assert.areEqual(policy.Id, results[0].Id, 'Returned policy should match');
-        Assert.areEqual(acc.Id, results[0].NameInsuredId, 'NameInsuredId should be selected');
-        Assert.areEqual(0, otherProduct.size(), 'A different product should return no records');
-    }
-
-    @IsTest
-    static void testSelectPoliciesByNameInsuredAndProduct_blankInput_returnsEmpty() {
-        Test.startTest();
-        List<InsurancePolicy> results = new SEL_InsurancePolicy().selectPoliciesByNameInsuredAndProduct(null, '%Flexi Protect%');
-        Test.stopTest();
-        Assert.areEqual(0, results.size(), 'Blank accountId should return no records');
+        Assert.areEqual(1, platinumLifePolicies.size(), 'Should return the Platinum Life policy for the producer.');
+        Assert.areEqual(policy.Id, platinumLifePolicies[0].Id, 'Should return the expected Platinum Life policy.');
+        Assert.areEqual(1, policiesByProduct.size(), 'Should return the policy for the insured person and product.');
+        Assert.areEqual(policy.Id, policiesByProduct[0].Id, 'Should return the expected policy.');
     }
 }

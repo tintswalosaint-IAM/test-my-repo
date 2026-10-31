@@ -1,38 +1,34 @@
 /**
- * @description Selector Class for SVC Queue Team Mapping Custom Metadata.
- * @author Hlayisani Hlungwane
+ * @description Selector class for SVC Queue Team Mapping Custom Metadata.
+ * @author Hlayisani Hlungwani
  * @created Date 25 August 2026
- * 25- 09 -10      Hlayisani Hlungwani      SFP-55563 Insurance: Manual case creation 
- *                                                     should reflect status of new
+ * User Story: SFP-55563 Insurance: Manual case creation should reflect status of new
  */
 public inherited sharing class SVC_QueueTeamMappingSelector
-    extends sbgplatform.fflib_SObjectSelector
-{
-    // Fields used by the selector
-    private static final Set<String> fields = new Set<String>
-    {
-        'Label',
-        'SVC_Team__c',
-        'SVC_Queue__c'
-    };
+    extends sbgplatform.fflib_SObjectSelector {
 
     /**
-     * @description Returns the Custom Metadata SObject type used by this selector.
+     * @description Factory method to return a new selector instance.
+     * @return SVC_QueueTeamMappingSelector
+     */
+    public static SVC_QueueTeamMappingSelector newInstance() {
+        return new SVC_QueueTeamMappingSelector();
+    }
+
+    /**
+     * @description Returns the Custom Metadata SObject type.
      * @return Schema.SObjectType
      */
-    public override Schema.SObjectType getSObjectType()
-    {
+    public override Schema.SObjectType getSObjectType() {
         return SVC_QueueTeamMapping__mdt.SObjectType;
     }
 
     /**
-     * @description Returns the list of Custom Metadata fields available to the selector.
+     * @description Returns the fields available to the selector.
      * @return List<Schema.SObjectField>
      */
-    public override List<Schema.SObjectField> getSObjectFieldList()
-    {
-        return new List<Schema.SObjectField>
-        {
+    public override List<Schema.SObjectField> getSObjectFieldList() {
+        return new List<Schema.SObjectField>{
             SVC_QueueTeamMapping__mdt.Label,
             SVC_QueueTeamMapping__mdt.SVC_Team__c,
             SVC_QueueTeamMapping__mdt.SVC_Queue__c
@@ -42,21 +38,26 @@ public inherited sharing class SVC_QueueTeamMappingSelector
     /**
      * @description Retrieves queue mappings for a specified team.
      * @param teamName Team name used to find the queue mapping.
-     * @return List<SVC_QueueTeamMapping__mdt> Queue mappings for the team.
+     * @return Queue mappings for the team.
      */
-    public List<SVC_QueueTeamMapping__mdt> getQueues(String teamName)
-    {
-        if (String.isBlank(teamName))
-        {
+    public List<SVC_QueueTeamMapping__mdt> getQueues(String teamName) {
+        if (String.isBlank(teamName)) {
             return new List<SVC_QueueTeamMapping__mdt>();
         }
 
         sbgplatform.fflib_QueryFactory queryFactory =
-            newQueryFactory(false, false, false);
+            newQueryFactory(false, true, true);
 
         queryFactory.setCondition('SVC_Team__c = :teamName');
-        queryFactory.selectFields(fields);
 
-        return Database.query(queryFactory.toSOQL());
+        return (List<SVC_QueueTeamMapping__mdt>) Database.queryWithBinds(
+            queryFactory.toSOQL(),
+            new Map<String, Object>{
+                'teamName' => teamName.trim()
+            },
+            AccessLevel.SYSTEM_MODE
+        );
+
     }
+    
 }

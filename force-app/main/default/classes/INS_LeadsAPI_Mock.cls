@@ -1,8 +1,16 @@
 /**
  * @description Mock class for INS_Leads_API test coverage
+ *              Matches real Dotsure/Dialler API response structure:
+ *              - LeadGenerationResponse is an ARRAY
+ *              - Each item has leadId, id/errorCode, message
  * @author Raja Arsalan
  * @group Insurance
- * @last modified on 2026-09-17
+ * @last modified on 2026-10-29
+ * 
+ * Modifications Log
+ * Date         Author          Modification
+ * 2026-09-17   Raja Arsalan    Initial Version
+ * 2026-10-29   Raja Arsalan    Updated to match real API response structure
  **/
 @isTest
 public class INS_LeadsAPI_Mock extends CMN_API_HttpBaseOutboundMock {
@@ -27,11 +35,11 @@ public class INS_LeadsAPI_Mock extends CMN_API_HttpBaseOutboundMock {
             when 'failure' {
                 response.setBody(getFailureResponse(isPut));
             }
-            when 'Queuefailure' {
-                response.setBody(getQueueFailureResponse());
+            when 'mixed' {
+                response.setBody(getMixedResponse());
             }
-            when 'ServerError' {
-                response.setBody(getServerErrorResponse());
+            when 'globalError' {
+                response.setBody(getGlobalErrorResponse());
             }
             when '502Error' {
                 response.setStatusCode(502);
@@ -39,77 +47,113 @@ public class INS_LeadsAPI_Mock extends CMN_API_HttpBaseOutboundMock {
                 response.setBody(get502ErrorResponse());
             }
             when else {
-                response.setBody('{"status_code":500,"message":"Unknown mock scenario"}');
+                response.setBody(getSuccessResponse(isPut));
             }
         }
     }
     
     private Boolean isTokenRequest(HttpRequest request) {
         return request.getEndpoint().contains('/token.oauth2') 
-            || request.getEndpoint().contains('INS_InsuranceClaimsAccess');
+            || request.getEndpoint().contains('CHNW_IAM_INS_LibertyOAuthE');
     }
     
     private String getTokenResponse() {
         return '{ "access_token": "mocked_access_token" }';
     }
     
+    /**
+     * @description Success response — real API structure
+     *              POST: array with 1 item (leadId + id + message)
+     *              PUT:  array with 1 item (leadId + id + message)
+     **/
     private String getSuccessResponse(Boolean isPut) {
-    if (isPut) {
-        // LeadGenerationResponse must be an array — parsePutResponse loops over it.
-        // No errorCode = success. id = the Dialler reference that gets written back.
-        return '{'
-            + '"LeadGenerationResponse": ['
-            +   '{'
-            +     '"id": "mock-ref-id",'
-            +     '"message": "Lead updated successfully",'
-            +     '"errorCode": ""'
-            +   '}'
-            + ']'
-            + '}';
-    }
-    return '{ "status_code": 200, "LeadGenerationResponse": { "message": "[{'
-        + '\\\"index\\\":0,'
-        + '\\\"success\\\":true,'
-        + '\\\"contact_data_id\\\":\\\"mock-ref-id\\\",'
-        + '\\\"source_reference\\\":\\\"' + INS_Leads_API.testLeadId + '\\\",'
-        + '\\\"errors\\\":[]}]"} }';
-}
-
-private String getFailureResponse(Boolean isPut) {
-    if (isPut) {
-        // Non-blank errorCode = failure. parsePutResponse sets Dialer_Failure_Reason__c.
-        return '{'
-            + '"LeadGenerationResponse": ['
-            +   '{'
-            +     '"id": "mock-ref-id",'
-            +     '"message": "Lead not found",'
-            +     '"errorCode": "PUT_FAILED"'
-            +   '}'
-            + ']'
-            + '}';
-    }
-    return '{ "status_code": 200, "LeadGenerationResponse": { "message": "[{'
-        + '\\\"index\\\":0,'
-        + '\\\"success\\\":false,'
-        + '\\\"contact_data_id\\\":null,'
-        + '\\\"source_reference\\\":\\\"' + INS_Leads_API.testLeadId + '\\\",'
-        + '\\\"errors\\\":[{\\\"message\\\":\\\"Invalid phone\\\"}]}]" } }';
-}
-
-    private String getQueueFailureResponse() {
-        return '{ "status_code": 200, "LeadGenerationResponse": { "message": "[{' +
-            '\\\"index\\\":0,' +
-            '\\\"success\\\":false,' +
-            '\\\"contact_data_id\\\":null,' +
-            '\\\"source_reference\\\":\\\"' + INS_Leads_API.testLeadId + '\\\",' +
-            '\\\"errors\\\":[{\\\"message\\\":\\\"Invalid Queue\\\"}]}]" } }';
+        if (isPut) {
+            return '{' +
+                '"LeadGenerationResponse": [' +
+                    '{' +
+                        '"leadId": "' + INS_Leads_API.testLeadId + '",' +
+                        '"id": "mock-ref-id",' +
+                        '"message": "Success"' +
+                    '}' +
+                ']' +
+            '}';
+        }
+        
+        return '{' +
+            '"LeadGenerationResponse": [' +
+                '{' +
+                    '"leadId": "' + INS_Leads_API.testLeadId + '",' +
+                    '"id": "mock-ref-id",' +
+                    '"message": "Success"' +
+                '}' +
+            ']' +
+        '}';
     }
     
+    /**
+     * @description Failure response — real API structure (DUPLICATE_LEAD)
+     *              POST/PUT: array with 1 item (leadId + errorCode + message)
+     **/
+    private String getFailureResponse(Boolean isPut) {
+        return '{' +
+            '"LeadGenerationResponse": [' +
+                '{' +
+                    '"leadId": "' + INS_Leads_API.testLeadId + '",' +
+                    '"errorCode": "400",' +
+                    '"message": "Invalid Phone"' +
+                '}' +
+            ']' +
+        '}';
+    }
+    
+    /**
+     * @description Mixed response — partial success (2 success, 1 failure)
+     *              Used to test per-item handling
+     **/
+    private String getMixedResponse() {
+        return '{' +
+            '"LeadGenerationResponse": [' +
+                '{' +
+                    '"leadId": "lead-1",' +
+                    '"id": "ref-1",' +
+                    '"message": "Success"' +
+                '},' +
+                '{' +
+                    '"leadId": "lead-2",' +
+                    '"errorCode": "400",' +
+                    '"message": "DUPLICATE_LEAD"' +
+                '},' +
+                '{' +
+                    '"leadId": "lead-3",' +
+                    '"id": "ref-3",' +
+                    '"message": "Success"' +
+                '}' +
+            ']' +
+        '}';
+    }
+    
+    /**
+     * @description Global error response (auth/system failure)
+     *              No LeadGenerationResponse array
+     **/
+    private String getGlobalErrorResponse() {
+        return '{' +
+            '"error": {' +
+                '"errorCode": "401",' +
+                '"errorDescription": "{\\"error\\":{\\"errorMessage\\":\\"Provided credentials are invalid\\"}}"' +
+            '}' +
+        '}';
+    }
+    
+    /**
+     * @description 502 Bad Gateway response
+     **/
     private String get502ErrorResponse() {
-        return '{"error":{"errorCode":"502","errorDescription":"{\\"error\\":{\\"errorCode\\":\\"502\\",\\"errorDescription\\":\\" "}}"}}';
-    }
-    
-    private String getServerErrorResponse() {
-        return '{ "status_code": 400, "status": "required", "message": "Something went wrong" }';
+        return '{' +
+            '"error": {' +
+                '"errorCode": "502",' +
+                '"errorDescription": "{\\"error\\":{\\"errorMessage\\":\\"Bad Gateway\\"}}"' +
+            '}' +
+        '}';
     }
 }

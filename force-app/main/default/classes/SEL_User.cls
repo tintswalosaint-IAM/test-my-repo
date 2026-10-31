@@ -21,10 +21,6 @@
  *                                          manager chain in one SOQL, replacing multi-query hierarchy
  *                                          traversal in CMN_DAL_UserManagerHierarchy - SFP-55654
  * @history 21-08-2026  Shams              Added User.Name to selectUserById for producer creation - SFP-60046
- * @Last Modified By : Irshad
- * @Last Modified On : 09-02-2026
- * @Last Modified Reason : Select active users by useremail.
- * @User Story: SFP-55746
  */
 public inherited sharing class SEL_User extends sbgplatform.fflib_SObjectSelector {
   /**
@@ -60,6 +56,7 @@ public inherited sharing class SEL_User extends sbgplatform.fflib_SObjectSelecto
       User.Id,
       User.ManagerId,
       User.CMN_FinancialAccountRestrictionCodes__c
+      
     };
   }
 
@@ -213,6 +210,30 @@ public inherited sharing class SEL_User extends sbgplatform.fflib_SObjectSelecto
 
     return result;
   }
+    
+    
+    
+    /**
+   * @description Selects a user by their EmployeeNumber
+   * @param pNumbers 
+   * @return Map<String, User>
+   **/
+  public Map < String, User > selectByUserEmail(Set < String > emails) {
+    Map < String, User > result = new Map < String, User > ();
+
+    for (User u : Database.query(
+      newQueryFactory(false, false, true)
+      .selectField('email')
+      .setCondition('email IN :emails')
+      .toSOQL()
+    )) {
+      if (!String.isBlank(u.email)) {
+        result.put(u.email, u);
+      }
+    }
+
+    return result;
+  }  
 
   /**
    * @description Selects users by Contact Id
@@ -318,39 +339,4 @@ public inherited sharing class SEL_User extends sbgplatform.fflib_SObjectSelecto
       .toSOQL()
     );
   }
-
-  /**
-   * @description Selects users by username
-   * @author Irshad | 09-02-2026
-   * @param username
-   * @return List<User>
-   **/
-  public List < User > selectByUserEmail(String useremail) {
-    return Database.query(
-      newQueryFactory(false, false, true)
-      .setCondition('email =:useremail')
-      .toSOQL()
-    );
-  }
-    
-   /**
-	TEST METHOD, DONOT DELETE
-**/ 
-    
-   public Map < String, User > selectByUserEmail(Set<String> userEmails) {
-    Map < String, User > result = new Map < String, User > ();
-
-    for (User u : Database.query(
-      newQueryFactory(false, false, true)
-      .selectField('Email')
-      .setCondition('Email IN :userEmails')
-      .toSOQL()
-    )) {
-      if (!String.isBlank(u.Email)) {
-        result.put(u.Email, u);
-      }
-    }
-
-    return result;
-}
 }

@@ -56,6 +56,7 @@ public inherited sharing class SVC_TRH_Case extends CMN_TRH_BaseObject
 	@TestVisible
 	private final List<Case> caseMetricsBuffer = new List<Case>();
 
+    
 	/**
 	 * @description Per-invocation buffers of updated Cases (and their pre-update
 	 *              state) awaiting Case Transfer History processing - SFP-51816.
@@ -390,6 +391,7 @@ public inherited sharing class SVC_TRH_Case extends CMN_TRH_BaseObject
 	 * @param oldCase Old Case record
 	 * @param newCase New Case record
 	 */
+    
 	public static void publishPlatformEvent(Case oldCase, Case newCase)
 	{
 		List<SVC_Case_Refresh__e> refreshEvents = new List<SVC_Case_Refresh__e>();

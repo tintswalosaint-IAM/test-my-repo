@@ -16,7 +16,7 @@
  *   path). Bearer + IBM DataPower headers (client_id / client_secret / org_client_id via
  *   LibertyGatewayE Reg_* merge fields; country_code / channel / transaction_id / accept)
  *   injected via prepareHttpRequest override.
- * User Story : SFP-57763
+ * User Story : SFP-60467
  ***************************************************************************************
  **/
 public with sharing class INS_CVC_Verification extends sbgplatform.ApiService {
@@ -117,7 +117,10 @@ public with sharing class INS_CVC_Verification extends sbgplatform.ApiService {
             }
             return (VerificationResponse) JSON.deserialize(responseBody, VerificationResponse.class);
         } catch (Exception ex) {
-            LOGGER.error('INS_CVC_Verification.generateCVCVerificationCode', ex);
+            LOGGER.error(
+                'INS_CVC_Verification.generateCVCVerificationCode:Some Un-Handled Exception Occurred',
+                new List<String>{ 'INS_CVC_Verification.generateCVCVerificationCode', ex.getMessage() }
+            );
             throw new AuraHandledException(ex.getMessage());
         }
     }

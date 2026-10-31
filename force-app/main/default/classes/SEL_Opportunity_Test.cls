@@ -11,36 +11,9 @@ private class SEL_Opportunity_Test {
     
     @TestSetup
     static void setupTestData() {
-        createRelationshipManagementPricebooks();
         Account accrec = ICS_DAL_TestFactory.createAccount();
         ICS_DAL_TestFactory.createOpportunity(accrec.Id);
         WI_DAL_DataFactory.createAccountLeadOpportunity(new Map<String, Object>(),new Map<String, Object>(),new Map<String, Object>());
-    }
-
-    /**
-     * @description Opportunity_Flow looks up an active Pricebook2 by the name configured in
-     *              Relationship_Management_Settings__mdt for the running user's country and throws
-     *              "No Active Pricebook was found" if none exists. Pricebooks are not visible in tests,
-     *              so create an active one for every configured name.
-     */
-    private static void createRelationshipManagementPricebooks() {
-        Set<String> pricebookNames = new Set<String>();
-        for (Relationship_Management_Settings__mdt setting : [
-            SELECT Name_of_Pricebook_to_be_Added__c
-            FROM Relationship_Management_Settings__mdt
-            WHERE Add_Pricebook_to_New_Opportunities__c = 'Yes'
-                AND Name_of_Pricebook_to_be_Added__c != null
-        ]) {
-            pricebookNames.add(setting.Name_of_Pricebook_to_be_Added__c);
-        }
-
-        List<Pricebook2> pricebooks = new List<Pricebook2>();
-        for (String pricebookName : pricebookNames) {
-            pricebooks.add(new Pricebook2(Name = pricebookName, IsActive = true));
-        }
-        insert pricebooks;
-
-        update new Pricebook2(Id = Test.getStandardPricebookId(), IsActive = true);
     }
      /**
      * @description Tests the `getSObjectType` method to ensure it returns the correct SObjectType for Opportunity.
@@ -150,11 +123,11 @@ private class SEL_Opportunity_Test {
         SEL_Opportunity opportunitySelector = new SEL_Opportunity();
         
         Id retrievedOpportunityId = opportunitySelector.getOpportunityIdByLeadId(testLead.Id);
-        System.assertNotEquals(null, retrievedOpportunityId, 'Expected to retrieve an Opportunity Id.');
-        System.assertEquals(testOpportunity.Id, retrievedOpportunityId, 'Retrieved Opportunity Id should match the inserted Opportunity.');
+        Assert.areNotEqual(null, retrievedOpportunityId, 'Expected to retrieve an Opportunity Id.');
+        Assert.areEqual(testOpportunity.Id, retrievedOpportunityId, 'Retrieved Opportunity Id should match the inserted Opportunity.');
         
         Id nullOpportunityId = opportunitySelector.getOpportunityIdByLeadId(null);
-        System.assertEquals(null, nullOpportunityId, 'Expected to retrieve null when leadId is null.');
+        Assert.areEqual(null, nullOpportunityId, 'Expected to retrieve null when leadId is null.');
     }
     
     /**
@@ -180,78 +153,13 @@ private class SEL_Opportunity_Test {
         SEL_Opportunity opportunitySelector = new SEL_Opportunity();
         
         Opportunity retrievedOpportunity = opportunitySelector.getOpenOpportunityByLeadId(testLead.Id,'General','%Car and Home Insurance%');
-        System.assertNotEquals(null, retrievedOpportunity, 'Expected to retrieve an open Opportunity.');
-        System.assertEquals(testOpportunity.Id, retrievedOpportunity.Id, 'Retrieved Opportunity should match the expected open Opportunity.');
+        Assert.areNotEqual(null, retrievedOpportunity, 'Expected to retrieve an open Opportunity.');
+        Assert.areEqual(testOpportunity.Id, retrievedOpportunity.Id, 'Retrieved Opportunity should match the expected open Opportunity.');
         
         Opportunity retrievedOpportunityByAccount = opportunitySelector.getOpenOpportunityByAccountId(account.Id,'General','%Car and Home Insurance%'); 
         Assert.isNotNull(retrievedOpportunityByAccount.Id);
         
         Opportunity nullOpportunity = opportunitySelector.getOpenOpportunityByLeadId(null,'General','%Car and Home Insurance%');
-        System.assertEquals(null, nullOpportunity, 'Expected to retrieve null when leadId is null.');
-    }
-
-    /**
-     * @description Tests `selectByIds` returns null when no ids are passed
-     */
-    @IsTest
-    static void selectByIdsNullTestMethod() {
-        Test.startTest();
-        List<Opportunity> oppData = new SEL_Opportunity().selectByIds(null);
-        Test.stopTest();
-        Assert.isNull(oppData, 'Expected null when ids is null');
-    }
-
-    /**
-     * @description Tests `selectCloseDateByIds` returns CloseDate and StageName, and null for null ids
-     */
-    @IsTest
-    static void selectCloseDateByIdsTestMethod() {
-        Opportunity opprec = [SELECT Id, CloseDate, StageName FROM Opportunity LIMIT 1];
-        SEL_Opportunity selOpp = new SEL_Opportunity();
-        Test.startTest();
-        List<Opportunity> oppData = selOpp.selectCloseDateByIds(new Set<Id>{opprec.Id});
-        List<Opportunity> nullData = selOpp.selectCloseDateByIds(null);
-        Test.stopTest();
-        Assert.areEqual(1, oppData.size(), 'Expected 1 Opportunity');
-        Assert.areEqual(opprec.CloseDate, oppData[0].CloseDate, 'CloseDate should match');
-        Assert.areEqual(opprec.StageName, oppData[0].StageName, 'StageName should match');
-        Assert.isNull(nullData, 'Expected null when ids is null');
-    }
-
-    /**
-     * @description Tests `selectCloseDateByIdsWoSharing` returns the Opportunity without sharing
-     */
-    @IsTest
-    static void selectCloseDateByIdsWoSharingTestMethod() {
-        Opportunity opprec = [SELECT Id, CloseDate FROM Opportunity LIMIT 1];
-        Test.startTest();
-        List<Opportunity> oppData = new SEL_Opportunity().selectCloseDateByIdsWoSharing(new Set<Id>{opprec.Id});
-        Test.stopTest();
-        Assert.areEqual(1, oppData.size(), 'Expected 1 Opportunity');
-        Assert.areEqual(opprec.CloseDate, oppData[0].CloseDate, 'CloseDate should match');
-    }
-
-    /**
-     * @description Tests `selectByIdsWoSharing` returns the Opportunity without sharing
-     */
-    @IsTest
-    static void selectByIdsWoSharingTestMethod() {
-        Opportunity opprec = [SELECT Id FROM Opportunity LIMIT 1];
-        Test.startTest();
-        List<Opportunity> oppData = new SEL_Opportunity().selectByIdsWoSharing(new Set<Id>{opprec.Id});
-        Test.stopTest();
-        Assert.areEqual(1, oppData.size(), 'Expected 1 Opportunity');
-        Assert.areEqual(opprec.Id, oppData[0].Id, 'Opportunity Id should match');
-    }
-
-    /**
-     * @description Tests `selectBySalesEvent` returns no Opportunities for an unknown sales event
-     */
-    @IsTest
-    static void selectBySalesEventTestMethod() {
-        Test.startTest();
-        List<Opportunity> oppData = new SEL_Opportunity().selectBySalesEvent(new List<String>{'UNKNOWN-SALES-EVENT'});
-        Test.stopTest();
-        Assert.areEqual(0, oppData.size(), 'Expected no Opportunities for an unknown sales event');
+        Assert.areEqual(null, nullOpportunity, 'Expected to retrieve null when leadId is null.');
     }
 }

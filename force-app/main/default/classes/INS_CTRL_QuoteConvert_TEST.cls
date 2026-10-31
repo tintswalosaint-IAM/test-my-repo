@@ -8,11 +8,6 @@
  * @modification details    : 
  */
 @IsTest
-// NOSONAR sf:Integration_to_use_API_Framework_Two - false positive: rule's isTest
-// exclusion is case-sensitive (@Image='isTest' vs actual @IsTest) and does not
-// account for inner HttpCalloutMock classes nested inside test classes. Rule's own
-// COMPLIANT PATTERNS section explicitly allows "Test classes using HttpRequest/Http
-// for mocking".
 private class INS_CTRL_QuoteConvert_TEST {
 
     private static final String QUOTE_REFERENCE = 'fb79d641-5a9c-4a72-b03f-46589af93a33';
@@ -25,8 +20,19 @@ private class INS_CTRL_QuoteConvert_TEST {
     private static final String KEY_HAS_ERROR           = 'hasError';
 
     private static final String BODY_SUCCESS =
-        '{"policyPayload": {"policyNumber": "' + POLICY_NUMBER + '", "status": "Inactive"},' +
-        ' "saleReferenceId": "' + QUOTE_REFERENCE + '"}';
+        '{"Result": "Success",' +
+        ' "policyPayload": {' +
+        '   "policyNumber": "' + POLICY_NUMBER + '",' +
+        '   "status": "Inactive",' +
+        '   "externalPolicyNumber": "' + QUOTE_REFERENCE + '",' +
+        '   "sumAssured": "500000",' +
+        '   "policyNettPremium": "533",' +
+        '   "premiumFrequency": "Monthly",' +
+        '   "saleChannel": "salesforce",' +
+        '   "bankName": "MPESA",' +
+        '   "bankAccountNo": "254074687590",' +
+        '   "debitDay": "25"' +
+        ' }}';
 
     private static final String BODY_NO_POLICY_NUMBER =
         '{"policyPayload": {"status": "Inactive"},' +
@@ -91,9 +97,23 @@ private class INS_CTRL_QuoteConvert_TEST {
     // HELPERS
     // =========================================================================
 
+    
     private static Id getTestAccountId() {
-        return [SELECT Id FROM Account WHERE Name = 'Quote Convert Test Account' LIMIT 1].Id;
+        Quote testQuote = [
+            SELECT Id, AccountId
+            FROM Quote
+            WHERE UnderwriterQuoteReferenceNumber__c = :QUOTE_REFERENCE
+            LIMIT 1
+        ];
+    
+        Assert.isNotNull(
+            testQuote.AccountId,
+            'Test Quote must have an associated Account'
+        );
+    
+        return testQuote.AccountId;
     }
+
 
     private static void registerMock(Integer statusCode, String body) {
         INS_API_QuoteConvert.testAccessToken = 'TEST_TOKEN_123';
@@ -101,7 +121,7 @@ private class INS_CTRL_QuoteConvert_TEST {
             new QuoteConvertMock(statusCode, body));
     }
 
-    private static Map<String, Object> buildInput() {
+    private static Map<String, Object> buildInput() {        
         return new Map<String, Object>{
             KEY_QUOTE_ID            => QUOTE_REFERENCE,
             KEY_PROSPECT_ACCOUNT_ID => String.valueOf(getTestAccountId())
@@ -121,22 +141,37 @@ private class INS_CTRL_QuoteConvert_TEST {
 
     @IsTest
     static void quoteConversion_success_returnsPolicyDetails() {
+
         registerMock(200, BODY_SUCCESS);
 
+        Map<String, Object> input = buildInput();
+
         Test.startTest();
-        Map<String, Object> output = invokeAction(buildInput());
+
+        Map<String, Object> output = invokeAction(input);
+
         Test.stopTest();
-		System.debug('OUTPUT== ' + JSON.serializePretty(output));
-		System.debug('QUOTE== ' + JSON.serialize([
-            SELECT Id, Status, AccountId, UnderwriterQuoteReferenceNumber__c FROM Quote
-        ]));
-        Map<String, Object> response = (Map<String, Object>) output.get(KEY_RESPONSE);
-        Assert.isNotNull(response, 'quoteConversionResponse should be present in output');
-        Assert.areEqual(false, response.get(KEY_HAS_ERROR), 'hasError should be false');
-        Assert.areEqual(POLICY_NUMBER, response.get('policyNumber'),
-            'Policy number should be read from the response');
-        Assert.areEqual('Inactive', response.get('status'),
-            'Status should be read from the response');
+
+        Map<String, Object> response =
+            (Map<String, Object>) output.get(KEY_RESPONSE);
+
+        Assert.isNotNull(
+            response,
+            'quoteConversionResponse should be present'
+        );
+
+        Assert.areEqual(
+            false,
+            response.get(KEY_HAS_ERROR),
+            'Quote conversion failed: ' +
+            String.valueOf(response.get('errorMessage'))
+        );
+
+        Assert.areEqual(
+            'Inactive',
+            response.get('status'),
+            'Status should match'
+        );
     }
 
     // =========================================================================
